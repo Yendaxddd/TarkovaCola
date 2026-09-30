@@ -5,7 +5,7 @@ Uso:  python package.py            (compila cliente y servidor en Release y gene
 Genera:
   dist/TarkovaCola-<version>.zip          -> se extrae encima de la carpeta de SPT
         BepInEx/plugins/TarkovaCola/      cliente (dll + iconos + bundle del modelo en mano)
-        SPT/user/mods/TarkovaCola/        servidor (dll + bundles.json + bundle del item)
+        SPT_Runtime/user/mods/TarkovaCola/        servidor (dll + bundles.json + bundle del item)
         README.md
   dist/TarkovaCola-<version>-src.zip      -> codigo fuente (sin binarios ni la cache de Unity), como copia de seguridad
 """
@@ -41,9 +41,9 @@ def main():
         add(z, client_dll, "BepInEx/plugins/TarkovaCola/TarkovaCola.Client.dll")
         for f in assets.rglob("*"):
             if f.is_file(): add(z, f, "BepInEx/plugins/TarkovaCola/assets/" + str(f.relative_to(assets)))
-        add(z, server_dll, "SPT/user/mods/TarkovaCola/TarkovaCola.Server.dll")
+        add(z, server_dll, "SPT_Runtime/user/mods/TarkovaCola/TarkovaCola.Server.dll")
         for f in modfiles.rglob("*"):
-            if f.is_file(): add(z, f, "SPT/user/mods/TarkovaCola/" + str(f.relative_to(modfiles)))
+            if f.is_file(): add(z, f, "SPT_Runtime/user/mods/TarkovaCola/" + str(f.relative_to(modfiles)))
         add(z, ROOT / "Package" / "README.md", "README.md")
     print("->", out, round(out.stat().st_size / 1e6, 1), "MB")
 

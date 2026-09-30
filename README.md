@@ -27,9 +27,8 @@ You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1
 ### Installation
 Extract the zip **over your SPT folder** (the one with `EscapeFromTarkov.exe`). It creates:
 - `BepInEx/plugins/TarkovaCola/` (client)
-- `SPT/user/mods/TarkovaCola/` (server)
+- `SPT_Runtime/user/mods/TarkovaCola/` (server)
 
-If your install keeps the server in another folder (e.g. `SPT_Runtime/user/mods`), move the server's `TarkovaCola` folder there.
 Progress is saved per profile in `user/mods/TarkovaCola/profiles/` (keep it when updating).
 
 ### Configuration (F12, ConfigurationManager)

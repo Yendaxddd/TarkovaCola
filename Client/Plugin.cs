@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.client", "Tarkova-Cola", "1.0.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.0.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
