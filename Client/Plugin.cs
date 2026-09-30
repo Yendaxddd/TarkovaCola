@@ -33,6 +33,9 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgRaidPanel;
         internal static ConfigEntry<float> CfgSwapWindow;
         internal static ConfigEntry<float> CfgHandScale;
+        internal static ConfigEntry<bool> CfgJingle;
+        internal static ConfigEntry<float> CfgJingleVolume;
+        internal static Plugin Instance;
 
         private void Awake()
         {
@@ -50,6 +53,9 @@ namespace TarkovaCola.Client
             CfgIgnoreArmPenalty = Config.Bind("Perks", "Ignorar penalizacion de brazos", true,
                 "Con un brazo danado el juego anula el buff de recarga; con esto Speed Cola se mantiene");
             CfgOpenKey = Config.Bind("Menu", "Tecla para abrir Research", KeyCode.F9, "Atajo alternativo al botón Research del menú principal / Alternative shortcut to the Research button");
+            Instance = this;
+            CfgJingle = Config.Bind("Audio", "Cancion al beber", true, "Reproduce la cancion de Speed Cola al beberla / Play the jingle when drinking");
+            CfgJingleVolume = Config.Bind("Audio", "Volumen de la cancion", 0.6f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
             CfgHandScale = Config.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Multiplicador del tamaño del modelo de la Speed Cola al beberla / Hand model size multiplier");
             CfgSwapWindow = Config.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas");
 
@@ -340,6 +346,7 @@ namespace TarkovaCola.Client
             if (__instance.Player == null || !__instance.Player.IsYourPlayer) return;
 
             Plugin.SpeedColaActive = true;
+            Jingle.Play();
             Perk.Refresh();
             Perk.LastKillOrDrink = Time.time;
             Hud.Notify(L.T("notice.cola.title"), L.F("notice.cola.sub", Perk.ReloadMult.ToString("0.0")));

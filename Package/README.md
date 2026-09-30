@@ -93,4 +93,4 @@ MIT License (código / code)
 
 **Créditos / Credits**
 - Modelo 3D / 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Cambios / Changes: converted to an Unity asset bundle, textures re-prepared (metal/smoothness adjusted), rescaled and rotated for in-game use.
-- Iconos / Icons: Call of Duty, property of their owners (not MIT).
+- Iconos y cancion / Icons and jingle: Call of Duty, property of their owners (not MIT).
