@@ -1,8 +1,8 @@
-Archivos que el cliente espera en esta carpeta (NO estan en el repositorio por ser material de terceros):
+Archivos que el cliente carga desde esta carpeta / Files the client loads from this folder:
 
-  speedcola_icon.png    Icono de la perk (256x256 recomendado): HUD, pantalla Research y panel del ESC.
+  speedcola_icon.png    Icono de la perk (HUD, pantalla Research y panel del ESC).
   research_icon.png     Icono del boton RESEARCH de la barra inferior.
   speedcola_hand.bundle Modelo 3D de la lata en la mano (lo genera build_bundle.ps1 con Unity 2022.3.43f1).
 
-Files the client expects in this folder (NOT in the repository because they are third-party material):
-see the list above. The mod still loads without them; the icons/model just won't show.
+Material de terceros: los iconos (Call of Duty) y el modelo 3D de la botella (Sketchfab) NO estan cubiertos por la licencia MIT
+del codigo y siguen siendo de sus autores. / Third-party material: NOT covered by the MIT license; see ../../LICENSE.

@@ -17,11 +17,11 @@ python package.py                  # genera dist/TarkovaCola-<version>.zip
 
 Cada `dotnet build` copia el resultado a la carpeta del juego. / Every build deploys into the game folder.
 
-### Material que no incluye el repo / Not included in this repo
-El modelo 3D de la botella, sus texturas y los iconos de Call of Duty son de terceros y no se redistribuyen aquí (ver `Client/assets/README.txt`).
+### Material de terceros incluido / Third-party material included
+El repo incluye, por comodidad, el modelo 3D de la botella (Sketchfab), sus texturas y los iconos de Call of Duty. **No** están cubiertos por la licencia MIT y siguen siendo de sus autores; si eres el autor y quieres que se retiren, abre un issue (ver `LICENSE`).
 Para regenerar el modelo: `python prepare_model.py <carpeta_del_modelo>` y `./build_bundle.ps1`.
 
-The bottle 3D model, its textures and the Call of Duty icons are third-party material and are not redistributed here.
+The repo bundles, for convenience, the bottle 3D model (Sketchfab), its textures and the Call of Duty icons. They are **not** covered by the MIT license and remain the property of their owners; if you are an owner and want them removed, open an issue (see `LICENSE`).
 
 ### Estructura / Layout
 - `Client/` plugin de BepInEx (parches Harmony, pantalla nativa uGUI, HUD, efectos de las mejoras)

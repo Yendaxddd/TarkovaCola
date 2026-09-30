@@ -16,20 +16,14 @@ UnityBundle/*.log
 UnityBundle/*.csproj
 UnityBundle/*.sln
 
-# --- Material de terceros que NO se redistribuye en el repo ---
-# Modelo 3D y texturas (Sketchfab) y todo lo generado a partir de ellos: bundles compilados, prefab y material
-UnityBundle/Assets/Models/
-UnityBundle/Assets/Models.meta
-UnityBundle/Assets/Prefabs/
-UnityBundle/Assets/Prefabs.meta
-*.bundle
-*.bundle.manifest
-# Iconos de Call of Duty (mano de Speed Cola y calavera del boton Research)
-Client/assets/*.png
-# Pagina web de la maqueta (contiene el icono incrustado)
-UI/perks.html
+# --- modelo antiguo sin usar (la primera lata) ---
+UnityBundle/Assets/Models/latinha*
 
 # --- datos de usuario / basura ---
 profiles/
 *.log
 *.bak*
+*.bundle.manifest
+
+# material generado de la primera version (sin uso)
+UnityBundle/Assets/Models/speedcola_mat.mat*

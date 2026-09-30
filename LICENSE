@@ -20,7 +20,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This license covers the source code of this repository only. It does NOT cover
-third-party artwork used by the mod (the Speed Cola 3D model, its textures and
-the Call of Duty icons), which are not included here and belong to their
-respective owners.
+This license covers the source code of this repository only.
+
+It does NOT cover the third-party artwork bundled in this repository for
+convenience: the Speed Cola 3D model and its textures (UnityBundle/Assets/Models,
+and the compiled asset bundles) and the Call of Duty icons (Client/assets/*.png).
+Those files remain the property of their respective owners and are NOT relicensed
+under MIT. If you are an owner and want any of them removed, please open an issue
+and they will be taken down.

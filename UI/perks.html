@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarkova-Cola · Augments</title>
+<style>
+  :root{
+    --bg:#060c13; --panel:rgba(12,24,36,.88); --panel2:rgba(18,34,50,.9);
+    --line:rgba(120,190,225,.22); --line2:rgba(120,190,225,.45);
+    --text:#e3edf4; --dim:#7d92a4; --green:#4be27c;
+    /* clases: mejora principal / mejora secundaria / desventaja principal / desventaja secundaria / especial */
+    --c-am:#f0c14b; --c-an:#4fd8ff; --c-dm:#ff4d4d; --c-dn:#ff5fc0; --c-sp:#4be27c;
+  }
+  .c-am{--c:var(--c-am);--rot:-80deg} .c-an{--c:var(--c-an);--rot:40deg}
+  .c-dm{--c:var(--c-dm);--rot:220deg}  .c-dn{--c:var(--c-dn);--rot:190deg} .c-sp{--c:var(--c-sp);--rot:0deg}
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:clamp(12px,.95vw,18px)}
+  body{
+    min-height:100vh; color:var(--text); overflow:hidden;
+    font-family:Bahnschrift,"Segoe UI","Arial Narrow",Arial,sans-serif; letter-spacing:.02em;
+    background:
+      radial-gradient(60% 55% at 85% 62%, rgba(60,220,110,.16), transparent 70%),
+      radial-gradient(70% 60% at 20% 20%, rgba(30,90,130,.35), transparent 70%),
+      linear-gradient(rgba(79,216,255,.05) 1px, transparent 1px) 0 0/48px 48px,
+      linear-gradient(90deg, rgba(79,216,255,.05) 1px, transparent 1px) 0 0/48px 48px,
+      var(--bg);
+  }
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:left}
+  img{display:block}
+  .app{height:100vh;display:grid;grid-template-rows:auto 1fr;padding:1.4rem 2.2rem 1.6rem}
+
+  /* ---------- cabecera ---------- */
+  header{display:flex;align-items:center;gap:2rem;margin-bottom:1.2rem}
+  .title small{display:block;font-size:.7rem;color:var(--dim);letter-spacing:.18em}
+  .title h1{font-size:2.1rem;line-height:1;letter-spacing:.06em}
+  nav{display:flex;gap:2.4rem;margin:0 auto}
+  nav button{padding:.5rem .1rem;font-size:1rem;color:var(--dim);letter-spacing:.1em;border-bottom:2px solid transparent}
+  nav button.on{color:var(--text);border-color:var(--c-an)}
+  .chips{display:flex;align-items:center;gap:1rem}
+  .chip{display:flex;align-items:center;gap:.5rem;padding:.35rem .8rem;border:1px solid var(--line);background:var(--panel);font-size:1rem;letter-spacing:.08em}
+  .chip b{color:var(--green)}
+  .xbtn{width:2.2rem;height:2.2rem;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel)}
+  .xbtn:hover{border-color:var(--c-dm);color:var(--c-dm)}
+  .xbtn svg{width:1.1rem;height:1.1rem}
+
+  /* ---------- cuerpo ---------- */
+  main{display:grid;grid-template-columns:17rem 1fr;gap:1.6rem;min-height:0}
+  .list{display:flex;flex-direction:column;gap:.6rem;overflow:auto}
+  .perk{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;border:1px solid var(--line);background:var(--panel);font-size:.95rem;letter-spacing:.08em}
+  .perk img{width:2.2rem;height:2.2rem;flex:none}
+  .perk span{flex:1}
+  .perk .pct{flex:none;color:var(--dim);font-size:.8rem}
+  .perk.on{background:linear-gradient(90deg,#1f8a4c,#0f4a2a);border-color:#6df0a0}
+  .perk.on .pct{color:#eafff1}
+
+  .stage{display:flex;flex-direction:column;min-height:0;min-width:0}
+  .head{display:flex;gap:1.2rem;align-items:center;margin-bottom:1rem}
+  .head>img{width:5.4rem;height:5.4rem;flex:none;border:2px solid var(--line2);box-shadow:0 0 22px rgba(75,226,124,.25)}
+  .head .txt{flex:1;min-width:0}
+  .head h2{font-size:2.6rem;line-height:1;letter-spacing:.05em}
+  .head p{opacity:.85;max-width:52rem;margin-top:.3rem;font-size:.95rem}
+  .xp{margin-top:.7rem;max-width:34rem}
+  .xp .row{display:flex;justify-content:space-between;font-size:.75rem;letter-spacing:.12em;color:var(--dim);margin-bottom:.25rem}
+  .xp .row b{color:var(--green);font-size:.9rem}
+  .bar{height:.55rem;background:rgba(255,255,255,.08);border:1px solid var(--line);position:relative}
+  .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#1fae5d,#7dffb0);box-shadow:0 0 10px rgba(75,226,124,.6)}
+  .eqbtn{flex:none;align-self:flex-start;padding:.55rem 1rem;border:1px solid var(--line2);background:var(--panel);font-size:.8rem;letter-spacing:.1em;text-align:center}
+  .eqbtn small{display:block;color:var(--dim);font-size:.66rem;margin-top:.15rem}
+  .eqbtn.on{border-color:var(--green);background:rgba(75,226,124,.12)}
+  .eqbtn.on small{color:var(--green)}
+
+  /* ---------- badge (icono con anillo de color por clase) ---------- */
+  .badge{position:relative;display:grid;place-items:center;flex:none;width:4.2rem;height:4.2rem;background:var(--c);transition:.15s}
+  .badge::after{content:"";position:absolute;inset:3px;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c) 40%,#13222f),#09131c)}
+  .badge.major{width:4.8rem;height:4.8rem;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)}
+  .badge.major::after{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);inset:0;transform:scale(.93)}
+  .badge.minor,.badge.minor::after,.badge.special,.badge.special::after{border-radius:50%}
+  .badge img{position:relative;z-index:1;width:58%;height:58%;filter:hue-rotate(var(--rot)) saturate(1.1)}
+  .badge .plus{position:relative;z-index:1;font-size:1.6rem;font-weight:700;color:var(--c);letter-spacing:-.05em}
+  .badge.sm{width:2.9rem;height:2.9rem} .badge.sm.major{width:3.2rem;height:3.2rem}
+  .badge.sm .plus{font-size:1.1rem}
+
+  /* ---------- progreso: camino en serpiente ---------- */
+  .tree{position:relative;border:1px solid var(--line);background:var(--panel);padding:1.4rem 2rem;flex:1;min-height:0;overflow:auto}
+  .grid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem 2rem;max-width:62rem;margin:0 auto}
+  svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+  svg.links line{stroke:var(--line2);stroke-width:3}
+  svg.links line.on{stroke:var(--green)}
+  .node{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.35rem;padding:.4rem .5rem;z-index:1}
+  .node h4,.node p,.node .st,.node .unl{background:#0b1621}   /* fondo sólido: las líneas pasan por detrás del texto */
+  .node h4{font-size:.95rem;letter-spacing:.06em}
+  .node p{font-size:.78rem;color:var(--dim);line-height:1.25}
+  .node .unl{font-size:.7rem;color:var(--c-dm);letter-spacing:.03em}
+  .node .st{font-size:.72rem;letter-spacing:.1em;color:var(--dim)}
+  .node.st-done .st{color:var(--green)}
+  .node.st-active .st{color:var(--c-am)}
+  .st-locked .badge{filter:grayscale(1) brightness(.5)}
+  .st-active .badge{animation:pulse 1.8s infinite}
+  @keyframes pulse{50%{filter:drop-shadow(0 0 9px var(--c))}}
+  .st-done .badge{filter:drop-shadow(0 0 8px var(--c))}
+  .node:hover .badge{transform:scale(1.07)}
+  .node.sel h4{color:var(--c-an)}
+  .node.sel .badge{outline:2px solid #fff;outline-offset:4px}
+  .node .lock{position:absolute;top:.3rem;left:.5rem;width:.9rem;height:.9rem;color:var(--dim)}
+  .mini{width:5.5rem;height:.32rem;background:rgba(255,255,255,.1);position:relative}
+  .mini i{position:absolute;inset:0 auto 0 0;background:var(--c-am)}
+
+  .info{margin-top:.9rem;display:flex;align-items:center;gap:1.2rem;border:1px solid var(--line);background:var(--panel2);padding:.8rem 1.2rem;min-height:6rem}
+  .info .k{font-size:.7rem;color:var(--dim);letter-spacing:.14em}
+  .info h3{font-size:1.25rem;letter-spacing:.05em}
+  .info p{font-size:.88rem;opacity:.9;margin-top:.15rem}
+  .info .chal{color:var(--c-am)}
+  .info .pb{margin-top:.4rem;max-width:26rem}
+  .info .pb .bar i{background:linear-gradient(90deg,#c89a2c,var(--c-am));box-shadow:0 0 8px rgba(240,193,75,.5)}
+  .info .pb span{display:block;font-size:.7rem;letter-spacing:.1em;color:var(--dim);margin-top:.2rem}
+  .info .go{margin-left:auto;padding:.6rem 1.2rem;border:1px dashed var(--line2);color:var(--dim);font-size:.75rem;letter-spacing:.08em;text-align:center}
+  .info .go:hover:not(:disabled){border-color:var(--c-am);color:var(--c-am)}
+  .info .go:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ---------- equipar: cuadricula ---------- */
+  .equip{display:grid;grid-template-columns:minmax(0,1fr) 22rem;gap:1.4rem;flex:1;min-height:0}
+  .col{border:1px solid var(--line);background:var(--panel);padding:1.1rem 1.2rem;overflow:auto;min-height:0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem}
+  @media (max-width:1250px){.two{grid-template-columns:1fr}.equip{grid-template-columns:1fr}}
+  .sec{display:flex;align-items:center;gap:.6rem;font-size:.8rem;letter-spacing:.14em;margin:.2rem 0 .6rem;padding-bottom:.35rem;border-bottom:2px solid var(--c);color:var(--c)}
+  .sec i{width:.7rem;height:.7rem;background:var(--c);display:inline-block}
+  .sec.gap{margin-top:1.2rem}
+  .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+  .tiles.minor{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #toast{position:fixed;left:50%;bottom:2.2rem;transform:translate(-50%,1rem);opacity:0;pointer-events:none;transition:.25s;
+    padding:.7rem 1.2rem;background:#3a1210;border:1px solid var(--c-dm);color:#ffd9d5;font-size:.9rem;letter-spacing:.04em;z-index:9}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  .tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.35rem;padding:1rem .5rem .7rem;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:var(--panel2);min-height:9.6rem}
+  .tile:hover{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--panel2))}
+  .tile h5{font-size:.82rem;letter-spacing:.05em;margin-top:.15rem}
+  .tile p{font-size:.7rem;color:var(--dim);line-height:1.2}
+  .tile .tag{position:absolute;top:0;right:0;font-size:.58rem;padding:.12rem .45rem;letter-spacing:.08em;background:#3a4652;color:#c9d6e0}
+  .tile.equipped{background:color-mix(in srgb,var(--c) 22%,var(--panel2));border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 45%,transparent)}
+  .tile.equipped .tag{background:var(--c);color:#111}
+  .tile.locked .badge{filter:grayscale(1) brightness(.5)}
+  .tile.locked{opacity:.8;border-color:var(--line)}
+  .tile.flash{animation:flash .5s}
+  @keyframes flash{30%{border-color:#fff;background:rgba(255,255,255,.16)}}
+
+  .right h3{font-size:1.7rem;line-height:1;letter-spacing:.04em;color:var(--green)}
+  .right .sub{font-size:.82rem;opacity:.8;margin:.4rem 0 .8rem;line-height:1.35}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.4rem}
+  .slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;height:7.4rem;padding:.4rem;text-align:center;font-size:.68rem;letter-spacing:.06em;
+    border:1px dashed color-mix(in srgb,var(--c) 60%,transparent);color:var(--dim);background:rgba(255,255,255,.02)}
+  .slot .plus{font-size:1.8rem;line-height:1;color:var(--c);opacity:.7}
+  .slot.full{border:1px solid var(--c);color:var(--text);background:color-mix(in srgb,var(--c) 14%,var(--panel2))}
+  .slot.full:hover{background:color-mix(in srgb,var(--c) 26%,var(--panel2))}
+  .slot.off{opacity:.45;border-style:dotted}
+  .slot em{font-style:normal;font-size:.6rem;color:var(--c);letter-spacing:.1em}
+  .summary{margin-top:1rem;padding:.8rem 1rem;border:1px solid var(--line);background:var(--panel2)}
+  .summary .r{display:flex;justify-content:space-between;font-size:.78rem;color:var(--dim);letter-spacing:.06em;padding:.12rem 0}
+  .summary .tot{display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;padding-top:.5rem;border-top:1px solid var(--line)}
+  .summary b{font-size:1.6rem;color:var(--c-am)}
+  .summary small{font-size:.66rem;color:var(--dim);letter-spacing:.12em}
+
+  /* ---------- animaciones ---------- */
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes grow{from{width:0}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .app{animation:fadeIn .55s ease-out}
+  .anim .head,.anim .tree,.anim .info,.anim .col{animation:fadeUp .55s cubic-bezier(.2,.7,.2,1) both}
+  .anim .tree,.anim .col:first-child{animation-delay:.12s}
+  .anim .info,.anim .col:last-child{animation-delay:.22s}
+  .anim .node,.anim .tile,.anim .slot,.anim .sec{animation:fadeUp .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.2s + var(--i,0) * 55ms)}
+  .anim .bar i,.anim .mini i{animation:grow 1s cubic-bezier(.2,.7,.2,1) .3s both}
+  .anim svg.links line{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .7s ease-out both;animation-delay:calc(.35s + var(--i,0) * 90ms)}
+  .perk{animation:fadeIn .5s both}
+  .tile,.node .badge,.slot,.perk,.eqbtn,.info .go{transition:transform .18s, border-color .18s, background .18s, box-shadow .18s, filter .18s}
+  .tile:hover{transform:translateY(-3px)}
+  .slot.full:hover{transform:translateY(-2px)}
+  .eqbtn:hover{border-color:var(--green)}
+  #toast{transition:opacity .3s, transform .3s}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  .dev{position:fixed;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;font-size:.7rem;opacity:.75}
+  .dev button{padding:.25rem .6rem;border:1px solid var(--line);background:var(--panel)}
+  .dev button:hover{border-color:var(--c-am)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M17 9V7a5 5 0 0 0-10 0v2H5v12h14V9zm-8 0V7a3 3 0 0 1 6 0v2z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" d="m5 5 14 14M19 5 5 19"/></symbol>
+</svg>
+
+<div class="app">
+  <header>
+    <div class="title"><small>AUGMENTS</small><h1 id="ttl">PROGRESS</h1></div>
+    <nav>
+      <button id="nav-progress">PROGRESO</button>
+      <button id="nav-equip">EQUIPAR</button>
+    </nav>
+    <div class="chips">
+      <div class="chip">NIVEL <b id="lvChip">1</b></div>
+      <button class="xbtn" id="close" title="Cerrar"><svg><use href="#i-x"/></svg></button>
+    </div>
+  </header>
+  <main>
+    <div class="list" id="perkList"></div>
+    <section class="stage" id="stage"></section>
+  </main>
+</div>
+
+<div id="toast"></div>
+<div class="dev">
+  <button id="dev-xp">+100 XP (demo)</button>
+  <button id="dev-reset">REINICIAR (demo)</button>
+</div>
+
+<script>
+/* ============================================================
+   DATOS  (luego vendrán del servidor; aquí son de ejemplo)
+   - Cada mejora se desbloquea completando su desafío (que aparece al llegar a su nivel).
+   - Cada mejora desbloquea la desventaja del mismo tipo y misma posición en su lista.
+   - "seq" = orden en el camino en serpiente (1..9).
+   ============================================================ */
+const ICON = "data:image/png;base64,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";   // icono de Speed Cola (PNG incrustado)
+const PERK_XP_BONUS = 0.25;  // +25% de XP con la perk equipada
+
+const PERKS = [
+  { id:'speedcola', name:'SPEED COLA', icon:ICON,
+    desc:'Recargas 1.5x más rápidas durante el resto de la raid. Sube de nivel para desbloquear desafíos; cada desafío desbloquea una mejora y su desventaja.',
+    aug:{
+      major:[
+        {id:'a_quick',  seq:1, lvl:1, goal:3,  name:'QUICK HANDS',    desc:'Sacar y cambiar de arma es un 50% más rápido.',
+          chal:'Mata a 3 enemigos poco después de cambiar de arma, con Speed Cola equipada.'},
+        {id:'a_bolt',   seq:3, lvl:2, goal:5,  name:'BOLT RUNNER',    desc:'Si tu arma se encasquilla, se desencasquilla sola al guardarla.',
+          chal:'Desencasquilla tu arma 5 veces con Speed Cola equipada.'},
+        {id:'a_rush',   seq:7, lvl:4, goal:4,  name:'SUGAR RUSH',     desc:'Al matar a un PMC, tu velocidad de recarga sube de x1.5 a x2.0 durante 5 s.',
+          chal:'Mata a 4 PMC.'}],
+      minor:[
+        {id:'a_steady', seq:2, lvl:1, goal:4,  name:'STEADY FINGERS', desc:'Tus brazos reciben un 30% menos de daño.',
+          chal:'Ten los brazos rotos 4 veces con Speed Cola equipada.'},
+        {id:'a_check',  seq:5, lvl:3, goal:20, name:'CHAMBER CHECK',  desc:'+75% de velocidad al revisar cargadores en el inventario.',
+          chal:'Revisa tu cargador 20 veces en raid.'},
+        {id:'a_mags',   seq:4, lvl:2, goal:20, name:'MAG JUGGLER',    desc:'Los cargadores de tu arma principal se cargan un 50% más rápido en el inventario.',
+          chal:'Carga 20 cargadores en partida con Speed Cola equipada.'},
+        {id:'a_count',  seq:6, lvl:3, goal:15, name:'ROUND COUNTER',  desc:'Los cargadores muestran su munición exacta, los hayas revisado o no.',
+          chal:'Revisa cargadores dentro del inventario 15 veces.'}]
+    },
+    special:{id:'s_slot', seq:9, lvl:5, goal:1, name:'EXTRA SLOT', desc:'Podrás llevar 2 mejoras secundarias (por defecto solo 1).',
+          chal:'Mata a 1 boss con Speed Cola equipada.'},
+    drb:{
+      major:[
+        {id:'d_jitter', name:'JITTERY HANDS',  desc:'Si un brazo tiene cualquier efecto no saludable (fractura, destruido, sangrado leve/fuerte), el balanceo del arma sube un 25%.', xp:.25},
+        {id:'d_over',   name:'OVERPRESSURE',   desc:'Cada 4.º cargador pierde todas sus balas al recargar (vuelven a tu inventario).', xp:.30},
+        {id:'d_crash',  name:'SUGAR CRASH',    desc:'Cada 2 min sin matar a un enemigo, tu sed se multiplica (máx. x2). Matar la reinicia.', xp:.25}],
+      minor:[
+        {id:'d_dry',    name:'DRY MOUTH',      desc:'La hidratación baja un 20% más rápido.', xp:.10},
+        {id:'d_slurp',  name:'LOUD SLURP',     desc:'Beberla hace ruido y los bots cercanos te oyen.', xp:.10},
+        {id:'d_jam',    name:'STICKY MAGS',    desc:'+10% de probabilidad de encasquillamiento.', xp:.10},
+        {id:'d_sweet',  name:'SWEET TOOTH',    desc:'Comer o beber otra cosa tarda el doble.', xp:.10}]
+    }},
+];
+
+// Posición (col,row) de cada paso del camino en serpiente 3x3
+const SNAKE = {1:[0,0],2:[1,0],3:[2,0],4:[2,1],5:[1,1],6:[0,1],7:[0,2],8:[1,2],9:[2,2]};
+
+// curva de nivel de ejemplo: el nivel L necesita 300 + 150*L de XP
+const need = L => 300 + 150*L;
+function levelOf(total){ let L=1, x=total; while(x>=need(L)){ x-=need(L); L++; } return {L, cur:x, max:need(L)}; }
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const KEY = 'tarkovacola.ui.v4';
+const fresh = () => ({ perk:'speedcola', view:'progress', sel:null, xp:{}, prog:{}, researched:{}, equipped:{}, on:{} });
+let S = load();
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(raw) return Object.assign(fresh(), JSON.parse(raw)); }catch(e){}
+  return fresh();
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  // Puente con el juego (WebOverlay): avisa del cambio si la página vive dentro del overlay.
+  try{ if(window.chrome && window.chrome.webview) window.chrome.webview.postMessage(JSON.stringify({type:'state', state:S})); }catch(e){}
+}
+try{ if(window.chrome && window.chrome.webview) window.chrome.webview.addEventListener('message', e=>{
+  try{ const m = JSON.parse(e.data); if(m.type==='load'){ S = Object.assign(fresh(), m.state); ANIM = true; render(); } }catch(_){}
+}); }catch(e){}
+const IN_GAME = !!(window.chrome && window.chrome.webview);   // dentro del WebOverlay del juego
+
+const $ = s => document.querySelector(s);
+const perk = () => PERKS.find(p=>p.id===S.perk);
+const done = id => !!(S.researched[S.perk] && S.researched[S.perk][id]);
+const progOf = id => (S.prog[S.perk] && S.prog[S.perk][id]) || 0;
+const level = () => levelOf(S.xp[S.perk]||0).L;
+const perkOn = () => S.on[S.perk] !== false;
+const eq = () => (S.equipped[S.perk] = S.equipped[S.perk] || {aug:{major:null,minor:[]}, drb:{major:null,minor:[]}});
+const cls = (branch,kind) => kind==='special' ? 'c-sp' : 'c-' + (branch==='aug'?'a':'d') + (kind==='major'?'m':'n');
+const minorSlots = () => ({ aug: done('s_slot') ? 2 : 1, drb: 1 });
+
+// nodos del camino (mejoras + Extra Slot)
+function nodes(){
+  const p = perk();
+  return [...p.aug.major.map(it=>({it,kind:'major'})), ...p.aug.minor.map(it=>({it,kind:'minor'})), {it:p.special,kind:'special'}]
+         .map(n=>({...n, pos:SNAKE[n.it.seq]}));
+}
+const nodeById = id => nodes().find(n=>n.it.id===id);
+function find(id){ const p=perk(); for(const b of ['aug','drb']) for(const k of ['major','minor']){ const i=p[b][k].findIndex(x=>x.id===id); if(i>=0) return {it:p[b][k][i],branch:b,kind:k,idx:i}; } }
+const pairOf = f => { const p=perk(), o = f.branch==='aug'?'drb':'aug'; return {it:p[o][f.kind][f.idx], branch:o, kind:f.kind, idx:f.idx}; };
+// una mejora está disponible si su desafío está completo; una desventaja, si lo está su mejora pareja
+const unlocked = id => { const f=find(id); return f.branch==='aug' ? done(id) : done(pairOf(f).it.id); };
+// estado de un nodo: locked (nivel insuficiente) / active (desafío en curso) / done
+const stateOf = n => done(n.it.id) ? 'done' : level() >= n.it.lvl ? 'active' : 'locked';
+const pct = p => { const r=S.researched[p.id]||{}; const all=[...p.aug.major,...p.aug.minor,p.special]; return Math.round(all.filter(x=>r[x.id]).length/all.length*100); };
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const badge = (branch,kind,sm) => `<div class="badge ${cls(branch,kind)} ${kind} ${sm?'sm':''}">${kind==='special'?'<span class="plus">＋2</span>':`<img src="${ICON}" alt="">`}</div>`;
+
+function render(){
+  const p = perk(), lv = levelOf(S.xp[p.id]||0);
+  $('#lvChip').textContent = lv.L;
+  $('#ttl').textContent = S.view==='progress' ? 'PROGRESS' : 'EQUIP';
+  $('#nav-progress').classList.toggle('on', S.view==='progress');
+  $('#nav-equip').classList.toggle('on', S.view==='equip');
+
+  $('#perkList').innerHTML = PERKS.map(x=>`
+    <button class="perk ${x.id===S.perk?'on':''}" data-perk="${x.id}"><img src="${x.icon}" alt=""><span>${x.name}</span><span class="pct">${pct(x)}%</span></button>`).join('');
+
+  const head = `<div class="head"><img src="${p.icon}" alt="">
+     <div class="txt"><h2>${p.name}</h2><p>${p.desc}</p>
+       <div class="xp"><div class="row"><span>NIVEL <b>${lv.L}</b></span><span>${lv.cur} / ${lv.max} XP</span></div>
+       <div class="bar"><i style="width:${Math.round(lv.cur/lv.max*100)}%"></i></div></div></div>
+     <button class="eqbtn ${perkOn()?'on':''}" data-toggleperk="1">${perkOn()?'PERK EQUIPADA':'NO EQUIPADA'}<small>${perkOn()?'+25% XP':'sin bonus de XP'}</small></button></div>`;
+  _i = 0;
+  $('#stage').classList.toggle('anim', ANIM);          // las animaciones de entrada solo al abrir / cambiar de pantalla
+  $('#stage').innerHTML = head + (S.view==='progress' ? progressView() : equipView());
+  if(S.view==='progress') requestAnimationFrame(drawLinks);
+  ANIM = false;
+}
+let ANIM = true, _i = 0;
+const nx = () => _i++;
+
+function progressView(){
+  const list = nodes();
+  const cells = list.map(n=>{
+    const st = stateOf(n), sel = S.sel===n.it.id, prog = Math.min(progOf(n.it.id), n.it.goal);
+    const dr = n.kind==='special' ? null : pairOf(find(n.it.id)).it;
+    const status = st==='done' ? '✔ DESBLOQUEADA' : st==='locked' ? `NIVEL ${n.it.lvl}` : `DESAFÍO ${prog}/${n.it.goal}`;
+    return `<button class="node ${cls('aug',n.kind)} ${n.kind} st-${st} ${sel?'sel':''}" data-node="${n.it.id}" data-seq="${n.it.seq}"
+      style="grid-column:${n.pos[0]+1};grid-row:${n.pos[1]+1};--i:${nx()}">
+      ${st==='locked'?'<svg class="lock"><use href="#i-lock"/></svg>':''}
+      <h4>${n.it.name}</h4>${badge('aug',n.kind)}
+      <p>${n.it.desc}</p>
+      ${dr?`<span class="unl">▸ Desbloquea: ${dr.name}</span>`:''}
+      <span class="st">${status}</span>
+      ${st==='active'?`<span class="mini"><i style="width:${prog/n.it.goal*100}%"></i></span>`:''}</button>`;
+  }).join('');
+
+  const cur = S.sel && nodeById(S.sel);
+  let info;
+  if(cur){
+    const st = stateOf(cur), prog = Math.min(progOf(cur.it.id), cur.it.goal);
+    const dr = cur.kind==='special' ? null : pairOf(find(cur.it.id)).it;
+    const kindTxt = cur.kind==='major' ? 'MEJORA PRINCIPAL' : cur.kind==='minor' ? 'MEJORA SECUNDARIA' : 'DESBLOQUEO ESPECIAL';
+    info = `<div style="flex:1"><div class="k">${kindTxt} · DESAFÍO DE NIVEL ${cur.it.lvl}</div>
+      <h3>${cur.it.name}</h3><p>${cur.it.desc}</p>
+      <p class="chal">${st==='locked' ? `🔒 Alcanza el nivel ${cur.it.lvl} para desbloquear este desafío.` : `Desafío: ${cur.it.chal}`}</p>
+      ${st==='active'?`<div class="pb"><div class="bar"><i style="width:${prog/cur.it.goal*100}%"></i></div><span>${prog} / ${cur.it.goal}</span></div>`:''}
+      ${dr?`<p style="color:var(--c-dm)">Desbloquea la desventaja <b>${dr.name}</b>: ${dr.desc}</p>`:''}</div>
+      <button class="go" data-prog="${cur.it.id}" ${st!=='active'?'disabled':''}>+1 PROGRESO<br>(demo)</button>`;
+  } else info = `<div><div class="k">PROGRESO</div><h3>Selecciona un nodo</h3><p>Sube de nivel para revelar desafíos. Al completar uno se desbloquea su mejora y la desventaja ligada.</p></div>`;
+
+  return `<div class="tree"><div class="grid" id="grid">${cells}<svg class="links" id="links"></svg></div></div><div class="info">${info}</div>`;
+}
+
+// líneas del camino: une cada paso con el siguiente; se ilumina si el primero ya está desbloqueado
+function drawLinks(){
+  const g = $('#grid'), svg = $('#links'); if(!g||!svg) return;
+  const gr = g.getBoundingClientRect();
+  // une cada nodo con el siguiente en orden de "seq" (los huecos del camino quedan como tramos largos)
+  const els = [...g.querySelectorAll('.node')].sort((a,b)=>a.dataset.seq-b.dataset.seq);
+  let out='';
+  for(let i=0;i<els.length-1;i++){
+    const a=els[i], b=els[i+1];
+    const ra=a.querySelector('.badge').getBoundingClientRect(), rb=b.querySelector('.badge').getBoundingClientRect();
+    out += `<line pathLength="1" class="${a.classList.contains('st-done')?'on':''}" style="--i:${i}" x1="${ra.left+ra.width/2-gr.left}" y1="${ra.top+ra.height/2-gr.top}" x2="${rb.left+rb.width/2-gr.left}" y2="${rb.top+rb.height/2-gr.top}"/>`;
+  }
+  svg.innerHTML = out;
+}
+
+function tile(it,branch,kind){
+  const ok = unlocked(it.id), on = isEq(it.id), f = find(it.id);
+  const hint = ok ? '' : branch==='aug' ? 'NO DESBLOQUEADA' : 'BLOQUEADA';
+  const body = ok ? `<p>${it.desc}</p>` : branch==='aug' ? `<p style="color:var(--c-am)">Desafío de nivel ${it.lvl}</p>` : `<p style="color:var(--c-am)">Desbloquea ${pairOf(f).it.name}</p>`;
+  const extra = '';
+  return `<button class="tile ${cls(branch,kind)} ${ok?'':'locked'} ${on?'equipped':''}" data-equip="${it.id}" style="--i:${nx()}">
+    ${on?'<span class="tag">EQUIPADA</span>':hint?`<span class="tag">${hint}</span>`:''}
+    ${badge(branch,kind,true)}<h5>${it.name}</h5>${body}${extra}</button>`;
+}
+
+function equipView(){
+  const p = perk(), e = eq(), N = minorSlots();
+  const sec = (label,branch,kind,extra) => `<div class="sec ${cls(branch,kind)} ${extra||''}"><i></i>${label}</div>`;
+  const colAug = `${sec('MEJORA PRINCIPAL','aug','major')}<div class="tiles">${p.aug.major.map(i=>tile(i,'aug','major')).join('')}</div>
+                  ${sec('MEJORA SECUNDARIA','aug','minor','gap')}<div class="tiles minor">${p.aug.minor.map(i=>tile(i,'aug','minor')).join('')}</div>`;
+  const colDrb = `${sec('DESVENTAJA PRINCIPAL','drb','major')}<div class="tiles">${p.drb.major.map(i=>tile(i,'drb','major')).join('')}</div>
+                  ${sec('DESVENTAJA SECUNDARIA','drb','minor','gap')}<div class="tiles minor">${p.drb.minor.map(i=>tile(i,'drb','minor')).join('')}</div>`;
+
+  const slot = (id,branch,kind,off) => {
+    const f = id && find(id), c = cls(branch,kind), lbl = kind==='major'?'PRINCIPAL':'SECUNDARIA';
+    if(off) return `<div class="slot off ${c}"><span class="plus"><svg width="18" height="18"><use href="#i-lock"/></svg></span><em>NIVEL 5</em></div>`;
+    return f ? `<button class="slot full ${c}" data-unequip="${id}">${badge(branch,kind,true)}<span>${f.it.name}</span><em>${lbl}</em></button>`
+             : `<div class="slot ${c}"><span class="plus">+</span><em>${lbl}</em></div>`;
+  };
+  const augMinor = Array.from({length:2},(_,i)=> i<N.aug ? slot(e.aug.minor[i],'aug','minor') : slot(null,'aug','minor',true)).join('');
+  const drbMinor = Array.from({length:N.drb},(_,i)=> slot(e.drb.minor[i],'drb','minor')).join('');
+
+  const mult = 1 + (perkOn()?PERK_XP_BONUS:0);   // las desventajas no dan XP: se aplican independientemente
+  const right = `<div class="right"><h3>${p.name}</h3><div class="sub">Mejoras: 1 principal + ${N.aug} secundaria${N.aug>1?'s':''}.<br>Desventajas: 1 principal + 1 secundaria.<br>No puedes llevar una mejora principal sin su desventaja principal.</div>
+    <div class="sec c-am"><i></i>MEJORAS</div>
+    <div class="slots">${slot(e.aug.major,'aug','major')}${augMinor}</div>
+    <div class="sec c-dm gap"><i></i>DESVENTAJAS</div>
+    <div class="slots">${slot(e.drb.major,'drb','major')}${drbMinor}</div>
+    <div class="summary">
+      <div class="r"><span>Perk equipada</span><span>${perkOn()?'+25%':'—'}</span></div>
+      <div class="tot"><small>MULTIPLICADOR DE XP</small><b>x${mult.toFixed(2)}</b></div></div></div>`;
+  return `<div class="equip"><div class="col"><div class="two"><div>${colAug}</div><div>${colDrb}</div></div></div><div class="col">${right}</div></div>`;
+}
+
+/* ============================================================
+   ACCIONES
+   ============================================================ */
+function isEq(id){ const e=eq(); return [e.aug.major,...e.aug.minor,e.drb.major,...e.drb.minor].includes(id); }
+// Devuelve un mensaje de error si la acción no está permitida, o null si se hizo.
+function toggleEquip(id){
+  const f = find(id); if(!f) return null;
+  const E = eq(), e = E[f.branch];
+  if(isEq(id)){
+    if(e.major===id){
+      e.major = null;
+      if(f.branch==='drb' && E.aug.major){ E.aug.major = null; toast('Sin desventaja principal, la mejora principal también se desequipa.'); }
+    } else e.minor = e.minor.filter(x=>x!==id);
+    return null;
+  }
+  if(f.kind==='major'){
+    if(f.branch==='aug' && !E.drb.major) return 'Equipa primero una desventaja principal.';
+    e.major = id;
+  } else {
+    const n = minorSlots()[f.branch];
+    e.minor = [...e.minor, id].slice(-n);      // si están llenas, reemplaza la más antigua
+  }
+  return null;
+}
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+
+function addProgress(id){
+  const n = nodeById(id); if(!n || stateOf(n)!=='active') return;
+  const P = (S.prog[S.perk] = S.prog[S.perk] || {});
+  P[id] = Math.min((P[id]||0)+1, n.it.goal);
+  if(P[id] >= n.it.goal){
+    (S.researched[S.perk] = S.researched[S.perk] || {})[id] = true;
+    const dr = n.kind!=='special' ? pairOf(find(id)).it.name : null;
+    toast(`¡Desafío completado! Desbloqueas ${n.it.name}${dr?` y la desventaja ${dr}`:''}.`);
+  }
+}
+
+document.addEventListener('click', ev=>{
+  const t = ev.target.closest('[data-perk],[data-node],[data-prog],[data-toggleperk],[data-equip],[data-unequip],#nav-progress,#nav-equip,#dev-xp,#dev-reset,#close');
+  if(!t) return;
+  if(t.dataset.perk){ S.perk=t.dataset.perk; S.sel=null; ANIM=true; }
+  else if(t.id==='nav-progress'){ if(S.view!=='progress') ANIM=true; S.view='progress'; }
+  else if(t.id==='nav-equip'){ if(S.view!=='equip') ANIM=true; S.view='equip'; }
+  else if(t.dataset.node){ S.sel=t.dataset.node; }
+  else if(t.dataset.prog){ addProgress(t.dataset.prog); }
+  else if(t.dataset.toggleperk){ S.on[S.perk] = !perkOn(); }
+  else if(t.dataset.equip){
+    if(!unlocked(t.dataset.equip)){ t.classList.add('flash'); setTimeout(()=>t.classList.remove('flash'),500); return; }
+    const err = toggleEquip(t.dataset.equip);
+    if(err){ toast(err); t.classList.add('flash'); setTimeout(()=>t.classList.remove('flash'),500); return; }
+  }
+  else if(t.dataset.unequip){ toggleEquip(t.dataset.unequip); }
+  else if(t.id==='dev-xp'){ const before=level(); S.xp[S.perk]=(S.xp[S.perk]||0)+100; if(level()>before) toast(`¡Nivel ${level()}! Nuevos desafíos disponibles.`); }
+  else if(t.id==='dev-reset'){ S=fresh(); }
+  else if(t.id==='close'){ try{ window.chrome&&window.chrome.webview&&window.chrome.webview.postMessage(JSON.stringify({type:'close'})); }catch(e){} }
+  save(); render();
+});
+window.addEventListener('resize', ()=>requestAnimationFrame(drawLinks));
+if(IN_GAME) document.querySelector('.dev').style.display = 'none';   // los botones de demo no van dentro del juego
+render();
+</script>
+</body>
+</html>
