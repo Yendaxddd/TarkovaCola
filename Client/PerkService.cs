@@ -66,9 +66,9 @@ namespace TarkovaCola.Client
         }
 
         // ---------- nivel / XP ----------
-        internal const int MaxLevel = 7;         // nivel maximo de la perk
+        internal const int MaxLevel = 5;         // nivel maximo de la perk
 
-        // El nivel L necesita 2700 + 1350*L de XP (9 veces la primera version; se triplico dos veces). Subir de 1 a 7 = 44 550 XP.
+        // El nivel L necesita 2700 + 1350*L de XP (9 veces la primera version; se triplico dos veces). Subir de 1 a 5 = 24 300 XP.
         internal static int Need(int level) { return 2700 + 1350 * level; }
 
         internal static int Xp { get { return (int?)Sub(State, "xp")[Perk] ?? 0; } }

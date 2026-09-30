@@ -13,7 +13,7 @@ There is one perk for now: **Speed Cola**.
 ### Speed Cola
 - Sold by **Therapist** (loyalty level 1, 8,000 ₽). Takes 1×2 slots.
 - Drink it in raid: **reloads 1.5x faster** for the rest of the raid.
-- Levels 1 → 7 with the XP you earn in raid (+25% while the perk is active). Max level is 7.
+- Levels 1 → 5 with the XP you earn in raid (+25% while the perk is active). Max level is 5.
 - Each level reveals challenges; completing one unlocks an **augment** and its linked **drawback** (see the table above).
 
 You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
