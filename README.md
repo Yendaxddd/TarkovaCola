@@ -1,62 +1,12 @@
 # Tarkova-Cola 1.0.0
+*Call of Duty Zombies Perk-a-Colas for SPT*
 
-**Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
-
-Compatible con / Compatible with: **SPT 4.1.x** (single player, sin Fika / no Fika)
-
----
-
-## Español
-
-### Qué es
-Bebidas que encuentras (o compras) y que te dan una habilidad durante la raid. Cuanto más las usas, más subes la perk, desbloqueas desafíos y, con ellos, **mejoras** (y sus **desventajas**), que eliges en un menú nativo de EFT.
-
-Ahora mismo hay una perk: **Speed Cola**.
-
-### Speed Cola
-- Se vende en **Therapist** (nivel de lealtad 1, 8 000 ₽). Ocupa 1×2 casillas.
-- Al beberla en raid: **recargas ×1.5 más rápidas** el resto de la raid.
-- Sube de nivel (1 → 7) con el XP que ganas en raid (+25 % mientras la perk está activa). El nivel máximo es 7.
-- Cada nivel revela desafíos; al completar uno se desbloquea una **mejora** y una **desventaja** ligada.
-
-| Mejora | Efecto | Desventaja ligada | Efecto |
-|---|---|---|---|
-| Quick Hands | sacar/cambiar de arma +50 % | Jittery Hands | +25 % de balanceo con un brazo no sano |
-| Bolt Runner | el arma encasquillada se desencasquilla al guardarla | Overpressure | cada 4.º cargador pierde sus balas (vuelven al inventario) |
-| Sugar Rush | recarga de Speed Cola ×2.0 en vez de ×1.5 | Sugar Crash | +sed cada 2 min sin matar (máx. ×2) |
-| Steady Fingers | −30 % de daño en brazos | Dry Mouth | −20 % de hidratación más rápido |
-| Chamber Check | revisar cargadores en inventario +75 % | Loud Slurp | beber hace ruido (30 m) |
-| Mag Juggler | cargar cargadores del arma principal +50 % | Sticky Mags | +10 % de encasquillamiento |
-| Round Counter | los cargadores muestran su munición exacta | Sweet Tooth | comer/beber otra cosa tarda el doble |
-| Extra Slot | permite llevar 2 mejoras secundarias | — | — |
-
-Equipas 1 mejora principal + 1 secundaria (2 con Extra Slot) y **1 desventaja principal + 1 secundaria**. No puedes llevar una mejora principal sin su desventaja principal.
-
-### Cómo se usa
-1. Compra una Speed Cola a Therapist.
-2. En el menú principal pulsa **RESEARCH** (barra inferior, junto a Handbook) o **F9** para ver el progreso y equipar mejoras.
-3. Bébela dentro de la raid. Abre el menú (ESC) en raid para ver tu nivel y los desafíos pendientes.
-
-### Instalación
-Extrae el zip **encima de la carpeta de SPT** (donde está `EscapeFromTarkov.exe`). Crea:
-- `BepInEx/plugins/TarkovaCola/` (cliente)
-- `SPT/user/mods/TarkovaCola/` (servidor)
-
-Si tu instalación usa otra carpeta para el servidor (por ejemplo `SPT_Runtime/user/mods`), mueve allí la carpeta `TarkovaCola` del servidor.
-El progreso se guarda por perfil en `user/mods/TarkovaCola/profiles/` (no lo borres al actualizar).
-
-### Configuración (F12, ConfigurationManager)
-Idioma (Auto / Español / English), tecla de Research, posición del icono, tamaño de la lata en la mano, registro de depuración, etc.
-
-### Desinstalación
-Borra las dos carpetas `TarkovaCola`. Si tenías Speed Cola en el alijo, SPT permite eliminar los items rotos del inventario.
+Compatible con / Compatible with: **SPT 4.1.x** (single player, No Fika)
 
 ---
-
-## English
 
 ### What it is
-Drinks you find or buy that grant an in-raid ability. The more you use them, the more the perk levels up, unlocking challenges and, with them, **augments** (and linked **drawbacks**) that you pick in a native EFT-style menu.
+Drinks you find or buy that grant an in-raid ability. All similar to Modern Style Black ops zombies, The more you use them, the more the perk levels up, unlocking challenges and, with them, **augments** (and linked **drawbacks**) that you pick to change your raids!.
 
 There is one perk for now: **Speed Cola**.
 
@@ -72,6 +22,7 @@ You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1
 1. Buy Speed Cola from Therapist.
 2. In the main menu press **RESEARCH** (bottom bar, next to Handbook) or **F9** to see progress and equip augments.
 3. Drink it inside a raid. Open the pause menu (ESC) in raid to see your level and pending challenges.
+4. Sugar rush.
 
 ### Installation
 Extract the zip **over your SPT folder** (the one with `EscapeFromTarkov.exe`). It creates:
@@ -94,11 +45,10 @@ MIT License · Modelo 3D / 3D model: "Speed Cola" bottle (Sketchfab, uploaded by
 
 ---
 
-## Compilar desde el código / Building from source
+## Building from source
 
-**Requisitos / Requirements:** .NET SDK 9 (con el runtime 10 instalado: el servidor de SPT 4.1.x va contra .NET 10), SPT 4.1.x instalado, Unity **2022.3.43f1** (solo para regenerar el modelo), Python 3 + Pillow.
+**Requirements:** .NET SDK 9, SPT 4.1.x, Unity **2022.3.43f1**, Python 3 + Pillow.
 
-Esta carpeta debe vivir **dentro de la carpeta de SPT** (`<SPT>/TarkovaCola-src`): los `.csproj` buscan `EscapeFromTarkov_Data`, `BepInEx` y `SPT_Runtime` un nivel por encima.
 This folder must live **inside your SPT folder** (`<SPT>/TarkovaCola-src`): the `.csproj` files look for `EscapeFromTarkov_Data`, `BepInEx` and `SPT_Runtime` one level up.
 
 ```
@@ -107,16 +57,13 @@ dotnet build Server -c Release     # mod de servidor  -> SPT_Runtime/user/mods/T
 python package.py                  # genera dist/TarkovaCola-<version>.zip
 ```
 
-Cada `dotnet build` copia el resultado a la carpeta del juego. / Every build deploys into the game folder.
+Every build deploys into the game folder.
 
-### Material de terceros incluido / Third-party material included
-El repo incluye, por comodidad, el modelo 3D de la botella (Sketchfab), sus texturas y los iconos de Call of Duty. **No** están cubiertos por la licencia MIT y siguen siendo de sus autores; si eres el autor y quieres que se retiren, abre un issue (ver `LICENSE`).
-Para regenerar el modelo: `python prepare_model.py <carpeta_del_modelo>` y `./build_bundle.ps1`.
+### Third-party material included
 
 The repo bundles, for convenience, the bottle 3D model (Sketchfab), its textures and the Call of Duty icons. They are **not** covered by the MIT license and remain the property of their owners; if you are an owner and want them removed, open an issue (see `LICENSE`).
 
-### Estructura / Layout
-- `Client/` plugin de BepInEx (parches Harmony, pantalla nativa uGUI, HUD, efectos de las mejoras)
-- `Server/` mod de servidor de SPT (item, tienda, guardado de progreso por perfil)
-- `UnityBundle/` proyecto de Unity que construye el asset bundle del item
-- `UI/` maqueta HTML original de la pantalla (referencia de diseño)
+###/ Layout
+- `Client/` BepInEx Plugin (UI, HUD, Harmony patches, Native screen, Perk effects on screen.)
+- `Server/` Spt server-side mod (item, Store, Saved in profile progress)
+
