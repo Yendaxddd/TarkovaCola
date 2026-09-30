@@ -1,0 +1,35 @@
+# --- compilacion ---
+bin/
+obj/
+dist/
+*.user
+.vs/
+
+# --- Unity (cache y salidas) ---
+UnityBundle/Library/
+UnityBundle/Temp/
+UnityBundle/Logs/
+UnityBundle/Build/
+UnityBundle/Preview/
+UnityBundle/UserSettings/
+UnityBundle/*.log
+UnityBundle/*.csproj
+UnityBundle/*.sln
+
+# --- Material de terceros que NO se redistribuye en el repo ---
+# Modelo 3D y texturas (Sketchfab) y todo lo generado a partir de ellos: bundles compilados, prefab y material
+UnityBundle/Assets/Models/
+UnityBundle/Assets/Models.meta
+UnityBundle/Assets/Prefabs/
+UnityBundle/Assets/Prefabs.meta
+*.bundle
+*.bundle.manifest
+# Iconos de Call of Duty (mano de Speed Cola y calavera del boton Research)
+Client/assets/*.png
+# Pagina web de la maqueta (contiene el icono incrustado)
+UI/perks.html
+
+# --- datos de usuario / basura ---
+profiles/
+*.log
+*.bak*

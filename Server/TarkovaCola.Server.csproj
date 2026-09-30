@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <!-- SPT 4.1.6 se compila contra .NET 10 pero el SDK instalado es el 9: se compila contra los dlls del runtime 10 -->
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <NetDir>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.12</NetDir>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>TarkovaCola.Server</AssemblyName>
+    <RootNamespace>TarkovaCola.Server</RootNamespace>
+    <GameRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</GameRoot>
+    <SptRoot>$(GameRoot)SPT_Runtime</SptRoot>
+    <ModDir>$(SptRoot)\user\mods\TarkovaCola</ModDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(NetDir)\System.*.dll" Exclude="$(NetDir)\*.Native.dll;$(NetDir)\System.Private.*.dll"><Private>false</Private></Reference>
+    <Reference Include="$(NetDir)\System.Private.CoreLib.dll;$(NetDir)\netstandard.dll;$(NetDir)\mscorlib.dll"><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="SPTarkov.Server.Core"><HintPath>$(SptRoot)\SPTarkov.Server.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Reflection"><HintPath>$(SptRoot)\SPTarkov.Reflection.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.DI"><HintPath>$(SptRoot)\SPTarkov.DI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Common"><HintPath>$(SptRoot)\SPTarkov.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SemanticVersioning"><HintPath>$(SptRoot)\SemanticVersioning.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <!-- Despliegue automatico: cada build copia el dll a user/mods/TarkovaCola -->
+  <Target Name="Deploy" AfterTargets="Build">
+    <MakeDir Directories="$(ModDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModDir)" ContinueOnError="true" />
+    <ItemGroup><ModFile Include="$(MSBuildThisFileDirectory)ModFiles\**\*" /></ItemGroup>
+    <Copy SourceFiles="@(ModFile)" DestinationFiles="@(ModFile->'$(ModDir)\%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="true" />
+    <Message Importance="high" Text="[TarkovaCola.Server] desplegado en $(ModDir)" />
+  </Target>
+</Project>

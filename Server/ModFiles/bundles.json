@@ -1,0 +1,8 @@
+{
+  "manifest": [
+    {
+      "key": "assets/content/items/consumables/tarkovacola/speedcola.bundle",
+      "dependencyKeys": []
+    }
+  ]
+}
