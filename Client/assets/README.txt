@@ -6,3 +6,5 @@ Archivos que el cliente carga desde esta carpeta / Files the client loads from t
 
 Material de terceros: los iconos (Call of Duty) y el modelo 3D de la botella (Sketchfab) NO estan cubiertos por la licencia MIT
 del codigo y siguen siendo de sus autores. / Third-party material: NOT covered by the MIT license; see ../../LICENSE.
+
+Modelo / Model: "Speedcola CoD Zombies" by albertjuli (Sketchfab, https://skfb.ly/6VRDU), CC BY 4.0, modificado / modified.

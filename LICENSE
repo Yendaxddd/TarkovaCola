@@ -24,7 +24,9 @@ This license covers the source code of this repository only.
 
 It does NOT cover the third-party artwork bundled in this repository for
 convenience: the Speed Cola 3D model and its textures (UnityBundle/Assets/Models,
-and the compiled asset bundles) and the Call of Duty icons (Client/assets/*.png).
+and the compiled asset bundles), "Speedcola CoD Zombies" by albertjuli
+(Sketchfab, https://skfb.ly/6VRDU), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+and modified for this project, and the Call of Duty icons (Client/assets/*.png).
 Those files remain the property of their respective owners and are NOT relicensed
 under MIT. If you are an owner and want any of them removed, please open an issue
 and they will be taken down.
