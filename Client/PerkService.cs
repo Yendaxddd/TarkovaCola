@@ -65,6 +65,8 @@ namespace TarkovaCola.Client
             return o;
         }
 
+        internal static JObject AchState { get { return Sub(State, "ach"); } }
+
         // ---------- nivel / XP ----------
         internal const int MaxLevel = 5;         // nivel maximo de la perk
 
@@ -94,6 +96,7 @@ namespace TarkovaCola.Client
             Plugin.Log.LogInfo("Speed Cola +" + amount + " XP (total " + Xp + ")");
             if (Level > before) Hud.Notify(L.F("notice.level.title", Level), L.T("notice.level.sub"));
             Save();
+            Achievements.CheckState();
         }
 
         // ---------- desafios ----------
@@ -130,6 +133,7 @@ namespace TarkovaCola.Client
                 Hud.Notify(L.T("notice.chal.title"), L.F("notice.chal.sub", Data.Name(id)));
             }
             Save();
+            if (now >= c.Goal) Achievements.CheckState();
         }
 
         // ---------- equipamiento ----------

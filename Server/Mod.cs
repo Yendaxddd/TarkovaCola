@@ -19,9 +19,9 @@ namespace TarkovaCola.Server
     {
         public string ModGuid { get; init; } = "com.tarkovacola.server";
         public string Name { get; init; } = "Tarkova-Cola";
-        public string Author { get; init; } = "diag";
+        public string Author { get; init; } = "Yendaxddd";
         public List<string> Contributors { get; init; } = new List<string>();
-        public SptVersion Version { get; init; } = new SptVersion(1, 0, 0);
+        public SptVersion Version { get; init; } = new SptVersion(1, 1, 0);
         public SptRange SptVersion { get; init; } = new SptRange("~4.1.0");
         public bool HasPrepatcher { get; init; } = false;
         public List<string> Incompatibilities { get; init; } = new List<string>();
@@ -36,7 +36,9 @@ namespace TarkovaCola.Server
         internal const string TarCola = "57514643245977207f2c2d09";     // lata base que se clona
         internal const string SpeedColaId = "6a1c00000000000000000c01"; // id fijo de Speed Cola
         internal const string SpeedColaTraderItemId = "6a1c00000000000000000d01";
-        internal const double SpeedColaPrice = 8000;
+        internal const string GpCoin = "5d235b4d86f7742e017bc88a";   // GP Coin
+        internal const int SpeedColaGpPrice = 7;                       // precio en Therapist: 7 GP Coins
+        internal const double SpeedColaPrice = 52500;                  // equivalente en rublos (7 x 7500), para flea/handbook
 
         internal const string SpeedColaDescEn =
             "Perk-a-cola: A combined taste of some combination of sweet and spicy but doesn't contain any sugar... " +
@@ -99,7 +101,7 @@ namespace TarkovaCola.Server
                 Console.WriteLine($"[Tarkova-Cola] prefab={created?.Prefab?.Path} usePrefab={created?.UsePrefab?.Path} peso={created?.Weight}");
 
                 AddToTherapist();
-                Console.WriteLine("[Tarkova-Cola] Speed Cola creada y en venta en Therapist (LL1)");
+                Console.WriteLine("[Tarkova-Cola] Speed Cola creada y en venta en Therapist (LL1, " + Perks.SpeedColaGpPrice + " GP Coin)");
             }
             catch (Exception e)
             {
@@ -135,7 +137,7 @@ namespace TarkovaCola.Server
             });
             assort.BarterScheme[id] = new List<List<BarterScheme>>
             {
-                new List<BarterScheme> { new BarterScheme { Count = Perks.SpeedColaPrice, Template = Money.ROUBLES } },
+                new List<BarterScheme> { new BarterScheme { Count = Perks.SpeedColaGpPrice, Template = new MongoId(Perks.GpCoin) } },
             };
             assort.LoyalLevelItems[id] = 1;
         }

@@ -1,4 +1,4 @@
-# Tarkova-Cola 1.0.0
+# Tarkova-Cola 1.1.0
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -14,7 +14,8 @@ Bebidas que encuentras (o compras) y que te dan una habilidad durante la raid. C
 Ahora mismo hay una perk: **Speed Cola**.
 
 ### Speed Cola
-- Se vende en **Therapist** (nivel de lealtad 1, 8 000 ₽). Ocupa 1×2 casillas.
+- Se vende en **Therapist** (nivel de lealtad 1, **7 GP Coin**). Ocupa 1×2 casillas.
+- También aparece al azar en raid: **cajas de munición**, **cajas fuertes**, y en **Rogues** y **Killa**.
 - Al beberla en raid: **recargas ×1.5 más rápidas** el resto de la raid.
 - Sube de nivel (1 → 5) con el XP que ganas en raid (+25 % mientras la perk está activa). El nivel máximo es 5.
 - Cada nivel revela desafíos; al completar uno se desbloquea una **mejora** y una **desventaja** ligada.
@@ -31,6 +32,9 @@ Ahora mismo hay una perk: **Speed Cola**.
 | Extra Slot | permite llevar 2 mejoras secundarias | — | — |
 
 Equipas 1 mejora principal + 1 secundaria (2 con Extra Slot) y **1 desventaja principal + 1 secundaria**. No puedes llevar una mejora principal sin su desventaja principal.
+
+### Logros
+Seis logros (uno secreto), en la pestaña **LOGROS** de la pantalla Research. Cada uno envía su recompensa (rublos, GP Coin o Speed Cola) a tu correo, de parte de Therapist, una sola vez.
 
 ### Cómo se usa
 1. Compra una Speed Cola a Therapist.
@@ -60,12 +64,16 @@ Drinks you find or buy that grant an in-raid ability. The more you use them, the
 There is one perk for now: **Speed Cola**.
 
 ### Speed Cola
-- Sold by **Therapist** (loyalty level 1, 8,000 ₽). Takes 1×2 slots.
+- Sold by **Therapist** (loyalty level 1, **7 GP Coin**). Takes 1×2 slots.
+- Also found randomly in raid: **ammo crates**, **safes**, and on **Rogues** and **Killa**.
 - Drink it in raid: **reloads 1.5x faster** for the rest of the raid.
 - Levels 1 → 5 with the XP you earn in raid (+25% while the perk is active). Max level is 5.
 - Each level reveals challenges; completing one unlocks an **augment** and its linked **drawback** (see the table above).
 
 You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
+
+### Achievements
+Six achievements (one is secret), shown in the **ACHIEVEMENTS** tab of the Research screen. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail from Therapist, once.
 
 ### How to use
 1. Buy Speed Cola from Therapist.

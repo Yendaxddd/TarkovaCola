@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.0.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -69,7 +69,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v1.0.0) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v1.1.0) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
@@ -122,11 +122,17 @@ namespace TarkovaCola.Client
         private static bool _leftBroken, _rightBroken;
         private static float _nextSlow, _nextThirst;
         private static int _crashSteps;
+        private static readonly List<float> _colaKills = new List<float>();
+        private static bool _deathDone;
+        private static int _colaCount;
+        private static float _initTime, _nextInv;
 
         internal static void Reset()
         {
             _init = false;
             _swapAt = -999f;
+            _colaKills.Clear();
+            _deathDone = false;
         }
 
         internal static void Tick()
@@ -145,6 +151,8 @@ namespace TarkovaCola.Client
                 _leftBroken = _rightBroken = false;
                 _nextSlow = _nextThirst = Time.time;
                 _crashSteps = 0;
+                _initTime = _nextInv = Time.time;
+                _colaCount = 0;
                 return;
             }
 
@@ -160,6 +168,14 @@ namespace TarkovaCola.Client
             // ---- bajas nuevas ----
             var victims = stats.Victims;
             while (_victims < victims.Count) OnKill(me, victims[_victims++]);
+
+            // ---- logros: morir con la perk activa / encontrar una Speed Cola en la raid ----
+            if (Plugin.SpeedColaActive && !_deathDone && me.HealthController != null && !me.HealthController.IsAlive)
+            {
+                _deathDone = true;
+                Achievements.Unlock("a_die");
+            }
+            if (Time.time >= _nextInv) { _nextInv = Time.time + 1f; InventoryTick(me); }
 
             if (!Plugin.SpeedColaActive) return;
 
@@ -179,6 +195,27 @@ namespace TarkovaCola.Client
                 _nextThirst = now + 1f;
                 ThirstTick(me, dt);
             }
+        }
+
+        private static int CountCola(Player me)
+        {
+            int n = 0;
+            foreach (var it in me.Profile.Inventory.GetPlayerItems(EPlayerItems.Equipment))
+                if (it.TemplateId == Plugin.SpeedColaId) n += it.StackObjectsCount;
+            return n;
+        }
+
+        // Si la cantidad de Speed Cola que llevas SUBE durante la raid, la has encontrado (las que traias de casa no cuentan).
+        // Los primeros segundos solo se fija la cantidad inicial, mientras el equipo termina de cargarse.
+        private static void InventoryTick(Player me)
+        {
+            int now = CountCola(me);
+            if (Time.time - _initTime >= 8f && now > _colaCount && me.HealthController.IsAlive)
+            {
+                Dbg.Log("LOGRO", "Speed Cola encontrada en la raid (" + _colaCount + " -> " + now + ")");
+                Achievements.Unlock("a_found");
+            }
+            _colaCount = now;
         }
 
         private static void OnHandsChanged(Player me, object hc)
@@ -219,6 +256,14 @@ namespace TarkovaCola.Client
             if (Plugin.SpeedColaActive && sinceSwap <= Plugin.CfgSwapWindow.Value) PerkService.AddProgress("a_quick");
             if (pmc) PerkService.AddProgress("a_rush");
             if (Plugin.SpeedColaActive && boss) PerkService.AddProgress("s_slot");
+
+            if (Plugin.SpeedColaActive)
+            {
+                Achievements.Unlock("a_first");
+                _colaKills.Add(Time.time);
+                _colaKills.RemoveAll(t => Time.time - t > 60f);
+                if (_colaKills.Count >= 3) Achievements.Unlock("a_hand");
+            }
         }
 
         private static void SlowTick(Player me)
@@ -295,6 +340,8 @@ namespace TarkovaCola.Client
             Perk.OnRaidStart();
             PerkService.EnsureLoaded(force: true);
             Perk.Refresh();
+            Achievements.CheckState();
+            Achievements.ClaimPending();
             Dbg.Log("RAID", "empieza la raid (nivel de Speed Cola " + PerkService.Level + ", " + PerkService.Xp + " XP)");
         }
     }

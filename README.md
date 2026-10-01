@@ -1,4 +1,4 @@
-# Tarkova-Cola 1.0.0
+# Tarkova-Cola 1.1.0
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
 Compatible con / Compatible with: **SPT 4.1.x** (single player, No Fika)
@@ -11,12 +11,16 @@ Drinks you find or buy that grant an in-raid ability. All similar to Modern Styl
 There is one perk for now: **Speed Cola**.
 
 ### Speed Cola
-- Sold by **Therapist** (loyalty level 1, 8,000 ₽). Takes 1×2 slots.
+- Sold by **Therapist** (loyalty level 1, **7 GP Coin**). Takes 1×2 slots.
+- Also found randomly in raid: **ammo crates**, **safes**, and on **Rogues** and **Killa**.
 - Drink it in raid: **reloads 1.5x faster** for the rest of the raid.
 - Levels 1 → 5 with the XP you earn in raid (+25% while the perk is active). Max level is 5.
 - Each level reveals challenges; completing one unlocks an **augment** and its linked **drawback** (see the table above).
 
 You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
+
+### Achievements
+Six achievements (one is secret), shown in the **ACHIEVEMENTS** tab of the Research screen. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail from Therapist, once.
 
 ### How to use
 1. Buy Speed Cola from Therapist.
