@@ -49,7 +49,7 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- estado
-        private string _view = "progress";      // progress | equip | ach
+        private string _view = "progress";      // progress | equip
         private string _sel;                     // nodo seleccionado en Progreso
         private bool _animate = true;
         private bool _closing;
@@ -117,7 +117,7 @@ namespace TarkovaCola.Client
             BuildHeader();
             BuildLeft();
             BuildHead();
-            if (_view == "progress") BuildProgress(); else if (_view == "ach") BuildAchievements(); else BuildEquip();
+            if (_view == "progress") BuildProgress(); else BuildEquip();
         }
 
         // ---------------------------------------------------------------- utilidades de layout / animacion
@@ -203,11 +203,10 @@ namespace TarkovaCola.Client
         private void BuildHeader()
         {
             T(_header, L.T("augments"), 60, 26, 400, 20, 14, UiKit.Dim);
-            T(_header, L.T(_view == "progress" ? "title.progress" : _view == "ach" ? "title.ach" : "title.equip"), 60, 42, 600, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_header, L.T(_view == "progress" ? "title.progress" : "title.equip"), 60, 42, 600, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
 
             Tab("progress", L.T("nav.progress"), 700);
             Tab("equip", L.T("nav.equip"), 900);
-            Tab("ach", L.T("nav.ach"), 1100);
 
             int lv = PerkService.Level;
             var chip = UiKit.Panel(_header, 1540, 46, 150, 40, UiKit.PanelBg, UiKit.Line);
@@ -257,31 +256,6 @@ namespace TarkovaCola.Client
             T(head, PerkService.IsMax ? L.T("xp.max") : cur + " / " + max + " XP", 124, 104, 560, 20, 14, PerkService.IsMax ? UiKit.Gold : UiKit.Dim, TextAlignmentOptions.TopRight, false, PerkService.IsMax);
             Bar(head, 124, 126, 560, 10, cur / (float)max, PerkService.IsMax ? UiKit.Gold : UiKit.C(31, 174, 93));
             Enter(head);
-        }
-
-        // ---------------------------------------------------------------- pantalla LOGROS
-        private void BuildAchievements()
-        {
-            var panel = UiKit.Panel(_stage, 0, 142, 1440, 788, UiKit.PanelBg, UiKit.Line);
-            Enter(panel.rectTransform);
-            T(panel.transform, L.F("ach.count", Achievements.Count, Achievements.All.Length), 24, 12, 600, 18, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, false, true);
-
-            for (int i = 0; i < Achievements.All.Length; i++)
-            {
-                var a = Achievements.All[i];
-                bool done = Achievements.IsDone(a.Id), hidden = a.Secret && !done;
-                var ring = done ? UiKit.Gold : UiKit.C(80, 92, 104);
-
-                var row = UiKit.Panel(panel.transform, 20, 40 + i * 122, 1400, 112, UiKit.Panel2, done ? UiKit.C(240, 193, 75, 0.55f) : UiKit.Line);
-                UiKit.Badge(row.transform, 66, 56, 76, true, ring, hidden ? null : Hud.IconSprite, done ? Color.white : UiKit.C(90, 90, 90), hidden ? "?" : null);
-
-                string key = hidden ? "ach.secret" : a.Id;
-                T(row.transform, L.T(key + ".n"), 130, 14, 1000, 28, 24, done ? UiKit.White : hidden ? UiKit.Dim : UiKit.C(200, 208, 215), TextAlignmentOptions.TopLeft, false, true);
-                T(row.transform, L.T(key + ".d"), 130, 48, 1000, 24, 16, UiKit.Text, TextAlignmentOptions.TopLeft, true);
-                T(row.transform, L.T("ach.reward") + ": " + L.T(key + ".r"), 130, 80, 1000, 20, 14, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
-                T(row.transform, done ? L.T("status.done") : L.T("ach.locked"), 1100, 40, 270, 28, 18, done ? UiKit.Green : UiKit.Dim, TextAlignmentOptions.TopRight, false, true);
-                Enter(row.rectTransform);
-            }
         }
 
         // ---------------------------------------------------------------- pantalla PROGRESO

@@ -20,7 +20,7 @@ There is one perk for now: **Speed Cola**.
 You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
 
 ### Achievements
-Six achievements (one is secret), shown in the **ACHIEVEMENTS** tab of the Research screen. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail from Therapist, once.
+Six native EFT achievements (one is secret), shown in your profile under **Achievements**. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail, once.
 
 ### How to use
 1. Buy Speed Cola from Therapist.

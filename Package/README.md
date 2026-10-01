@@ -34,7 +34,7 @@ Ahora mismo hay una perk: **Speed Cola**.
 Equipas 1 mejora principal + 1 secundaria (2 con Extra Slot) y **1 desventaja principal + 1 secundaria**. No puedes llevar una mejora principal sin su desventaja principal.
 
 ### Logros
-Seis logros (uno secreto), en la pestaña **LOGROS** de la pantalla Research. Cada uno envía su recompensa (rublos, GP Coin o Speed Cola) a tu correo, de parte de Therapist, una sola vez.
+Seis logros nativos de EFT (uno secreto), en tu perfil, apartado **Logros**. Cada uno envía su recompensa (rublos, GP Coin o Speed Cola) a tu correo, una sola vez.
 
 ### Cómo se usa
 1. Compra una Speed Cola a Therapist.
@@ -73,7 +73,7 @@ There is one perk for now: **Speed Cola**.
 You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
 
 ### Achievements
-Six achievements (one is secret), shown in the **ACHIEVEMENTS** tab of the Research screen. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail from Therapist, once.
+Six native EFT achievements (one is secret), shown in your profile under **Achievements**. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail, once.
 
 ### How to use
 1. Buy Speed Cola from Therapist.
