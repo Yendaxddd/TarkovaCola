@@ -1,4 +1,5 @@
 using System;
+using Comfort.Common;
 using System.Collections;
 using System.IO;
 using UnityEngine;
@@ -11,7 +12,6 @@ namespace TarkovaCola.Client
     {
         private static AudioClip _clip;
         private static bool _loading;
-        private static AudioSource _src;
 
         public static void Play()
         {
@@ -36,19 +36,12 @@ namespace TarkovaCola.Client
             if (_clip != null) Emit();
         }
 
+        // Se reproduce por el sistema de audio del propio juego (BetterAudio), en un grupo no espacial: asi respeta su mezclador
+        // y no interfiere con el resto del sonido de la raid.
         private static void Emit()
         {
-            if (_src == null)
-            {
-                var go = new GameObject("TarkovaColaJingle");
-                UnityEngine.Object.DontDestroyOnLoad(go);
-                _src = go.AddComponent<AudioSource>();
-                _src.spatialBlend = 0f;
-            }
-            _src.volume = Mathf.Clamp01(Plugin.CfgJingleVolume.Value);
-            _src.Stop();
-            _src.clip = _clip;
-            _src.Play();
+            if (!Singleton<BetterAudio>.Instantiated) { Dbg.Log("AUDIO", "BetterAudio no disponible"); return; }
+            Singleton<BetterAudio>.Instance.PlayNonspatial(_clip, BetterAudio.AudioSourceGroupType.NonspatialBypass, 0f, Mathf.Clamp01(Plugin.CfgJingleVolume.Value));
             Dbg.Log("AUDIO", "jingle");
         }
     }
