@@ -1,4 +1,4 @@
-# Tarkova-Cola 1.1.0
+# Tarkova-Cola 1.1.1
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 

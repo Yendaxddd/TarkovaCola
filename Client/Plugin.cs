@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.1.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.1.1")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -69,7 +69,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v1.1.0) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v1.1.1) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
@@ -126,6 +126,9 @@ namespace TarkovaCola.Client
         private static bool _deathDone;
         private static int _colaCount;
         private static float _initTime, _nextInv;
+        private static bool _inRaidSeen;
+        private static Profile _raidProfile;
+        private static int _raidXp;
 
         internal static void Reset()
         {
@@ -133,13 +136,25 @@ namespace TarkovaCola.Client
             _swapAt = -999f;
             _colaKills.Clear();
             _deathDone = false;
+            _inRaidSeen = false;
+            _raidProfile = null;
+            _raidXp = 0;
         }
 
         internal static void Tick()
         {
             var me = Plugin.Me;
-            if (me == null || me.Profile == null) { _init = false; Perk.JitterOn = false; return; }
+            if (me == null || me.Profile == null)
+            {
+                _init = false; Perk.JitterOn = false;
+                // la raid termino sin que se llamara al cierre de estadisticas (p. ej. con Fika): se concede el XP ahora
+                if (_inRaidSeen) { _inRaidSeen = false; XpPatch.Award("la raid termino", _raidProfile, _raidXp); }
+                return;
+            }
             var stats = me.Profile.EftStats;
+            _inRaidSeen = true;
+            _raidProfile = me.Profile;
+            _raidXp = stats.TotalSessionExperience;
             var hc = me.HandsController;
 
             if (!_init)
@@ -366,14 +381,20 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix()
         {
+            var me = Plugin.Me;
+            Award("EndStatisticsSession", me != null ? me.Profile : null, 0);
+        }
+
+        // Concede el XP de la raid a la perk (una sola vez por raid). Si el jugador ya no es accesible usa el perfil / XP recordados.
+        internal static void Award(string source, Profile profile, int knownXp)
+        {
             try
             {
                 if (Awarded) return;
                 Awarded = true;
-                var me = Plugin.Me;
-                if (me == null || me.Profile == null) return;
-                int raidXp = me.Profile.EftStats.TotalSessionExperience;
-                Dbg.Log("XP", "fin de raid: XP de la sesion=" + raidXp + " cola=" + Plugin.SpeedColaActive);
+                int raidXp = knownXp;
+                if (profile != null && profile.EftStats != null) raidXp = Math.Max(raidXp, profile.EftStats.TotalSessionExperience);
+                Plugin.Log.LogInfo("Fin de raid (" + source + "): XP de la sesion=" + raidXp + ", Speed Cola activa=" + Plugin.SpeedColaActive);
                 if (Plugin.SpeedColaActive && raidXp > 0)
                     PerkService.AddXp((int)Math.Round(raidXp * (1.0 + PerkService.XpBonus)));
                 PerkService.Save();

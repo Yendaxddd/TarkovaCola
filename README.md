@@ -1,4 +1,4 @@
-# Tarkova-Cola 1.1.0
+# Tarkova-Cola 1.1.1
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
 Compatible con / Compatible with: **SPT 4.1.x** (single player, No Fika)
