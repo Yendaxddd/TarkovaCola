@@ -370,7 +370,7 @@ namespace TarkovaCola.Client
             Perk.Refresh();
             Achievements.CheckState();
             Achievements.ClaimPending();
-            Dbg.Log("RAID", "empieza la raid (nivel de Speed Cola " + PerkService.Level + ", " + PerkService.Xp + " XP)");
+            Dbg.Log("RAID", "empieza la raid (Speed Cola: nivel " + PerkService.Level("speedcola") + ", " + PerkService.Xp("speedcola") + " XP | Stamin-Up: nivel " + PerkService.Level("staminup") + ", " + PerkService.Xp("staminup") + " XP)");
         }
     }
 
