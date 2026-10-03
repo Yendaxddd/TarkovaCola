@@ -1,4 +1,4 @@
-# Tarkova-Cola 1.1.1
+# Tarkova-Cola 1.2.0
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -11,7 +11,7 @@ Compatible con / Compatible with: **SPT 4.1.x** (single player, sin Fika / no Fi
 ### Qué es
 Bebidas que encuentras (o compras) y que te dan una habilidad durante la raid. Cuanto más las usas, más subes la perk, desbloqueas desafíos y, con ellos, **mejoras** (y sus **desventajas**), que eliges en un menú nativo de EFT.
 
-Ahora mismo hay una perk: **Speed Cola**.
+Perks disponibles: **Speed Cola** y **Stamin-Up**.
 
 ### Speed Cola
 - Se vende en **Therapist** (nivel de lealtad 1, **7 GP Coin**). Ocupa 1×2 casillas.
@@ -33,8 +33,23 @@ Ahora mismo hay una perk: **Speed Cola**.
 
 Equipas 1 mejora principal + 1 secundaria (2 con Extra Slot) y **1 desventaja principal + 1 secundaria**. No puedes llevar una mejora principal sin su desventaja principal.
 
+### Stamin-Up
+- Se vende en **Therapist** (nivel de lealtad 1, **7 GP Coin**) y aparece en los mismos sitios que Speed Cola. Ocupa 1×2 casillas.
+- Al beberla en raid: **estamina de piernas x1.5** el resto de la raid.
+- Misma progresión que Speed Cola (niveles 1 → 5, +25 % de XP mientras está activa), con sus propias mejoras y desventajas:
+
+| Mejora | Efecto | Desafío | Desventaja ligada |
+|---|---|---|---|
+| Rush Hour (mayor) | Tras una baja, la estamina de piernas se llena | 3 bajas en menos de 3 minutos | Loud Boots: correr se oye a 25 m |
+| Sprint Shooter (mayor) | El arma queda lista mucho más rápido al dejar de correr | Encontrar 15 Hot Rod / RatCola / Max Energy | Burnout: con menos del 30 % de estamina te recuperas a la mitad |
+| Second Wind (mayor) | Mientras la salud esté en rojo: estamina infinita e inmunidad al dolor | Quedarte sin estamina 5 veces | Jelly Legs: balanceo del arma +25 % tras correr 5 s |
+| Light Feet (menor) | -10 % de peso | Correr 5 km en total | Hungry Legs: +50 % de gasto de energía al correr |
+| Quick Recovery (menor) | La estamina se recupera +25 % más rápido | Correr 10 km en total | Cramps: la recuperación tarda 2 s más tras correr |
+| Soft Landing (menor) | -30 % de daño por caída | Matar a 3 enemigos al menos 2 m por debajo de ti | Sweaty: +50 % de gasto de hidratación al correr |
+| Extra Slot | 2 mejoras menores | Matar a 1 boss | ninguna |
+
 ### Logros
-Seis logros nativos de EFT (uno secreto), en tu perfil, apartado **Logros**. Cada uno envía su recompensa (rublos, GP Coin o Speed Cola) a tu correo, una sola vez.
+Doce logros nativos de EFT (dos secretos), en tu perfil, apartado **Logros**. Cada uno envía su recompensa (rublos, GP Coin o Speed Cola) a tu correo, una sola vez.
 
 ### Cómo se usa
 1. Compra una Speed Cola a Therapist.
@@ -61,7 +76,7 @@ Borra las dos carpetas `TarkovaCola`. Si tenías Speed Cola en el alijo, SPT per
 ### What it is
 Drinks you find or buy that grant an in-raid ability. The more you use them, the more the perk levels up, unlocking challenges and, with them, **augments** (and linked **drawbacks**) that you pick in a native EFT-style menu.
 
-There is one perk for now: **Speed Cola**.
+Perks available: **Speed Cola** and **Stamin-Up**.
 
 ### Speed Cola
 - Sold by **Therapist** (loyalty level 1, **7 GP Coin**). Takes 1×2 slots.
@@ -72,8 +87,23 @@ There is one perk for now: **Speed Cola**.
 
 You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
 
+### Stamin-Up
+- Sold by **Therapist** (loyalty level 1, **7 GP Coin**) and found in the same places as Speed Cola. Takes 1×2 slots.
+- Drink it in raid: **leg stamina x1.5** for the rest of the raid.
+- Same progression as Speed Cola (levels 1 → 5, +25% XP while active), with its own augments and drawbacks:
+
+| Augment | Effect | Challenge | Linked drawback |
+|---|---|---|---|
+| Rush Hour (major) | After a kill, leg stamina refills completely | 3 kills in under 3 minutes | Loud Boots: sprinting is audible to bots from 25 m |
+| Sprint Shooter (major) | Weapon ready much faster right after sprinting | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
+| Second Wind (major) | While your health is in the red: infinite stamina and pain immunity | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
+| Light Feet (minor) | -10% carried weight | Sprint 5 km in total | Hungry Legs: +50% energy burn while sprinting |
+| Quick Recovery (minor) | Stamina recovers +25% faster | Sprint 10 km in total | Cramps: stamina recovery waits 2 s more after sprinting |
+| Soft Landing (minor) | -30% fall damage | Kill 3 enemies at least 2 m below you | Sweaty: +50% hydration burn while sprinting |
+| Extra Slot | 2 minor augments | Kill 1 boss | none |
+
 ### Achievements
-Six native EFT achievements (one is secret), shown in your profile under **Achievements**. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail, once.
+Twelve native EFT achievements (two are secret), shown in your profile under **Achievements**. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail, once.
 
 ### How to use
 1. Buy Speed Cola from Therapist.
@@ -99,4 +129,5 @@ MIT License (código / code)
 
 **Créditos / Credits**
 - Modelo 3D / 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Cambios / Changes: converted to an Unity asset bundle, textures re-prepared (metal/smoothness adjusted), rescaled and rotated for in-game use.
-- Iconos y cancion / Icons and jingle: Call of Duty, property of their owners (not MIT).
+- Iconos y canciones / Icons and jingles: Call of Duty, property of their owners (not MIT).
+- Botella de Stamin-Up / Stamin-Up bottle: "cod zombies perks" by **Unknown Dev** ([Sketchfab](https://sketchfab.com/3d-models/cod-zombies-perks-77e9cb71adaf44b5a974c584f96cfc6c)), Sketchfab Free Standard license. Only the compiled asset bundle is included, not the original model files.

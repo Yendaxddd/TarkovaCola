@@ -27,3 +27,12 @@ profiles/
 
 # material generado de la primera version (sin uso)
 UnityBundle/Assets/Models/speedcola_mat.mat*
+
+# materiales y prefab generados por BuildStaminUp.cs
+UnityBundle/Assets/Models/perks/*.mat*
+UnityBundle/perks_hierarchy.txt
+
+# pack de botellas "cod zombies perks" (licencia Sketchfab Free Standard: no se redistribuyen los originales)
+UnityBundle/Assets/Models/perks/perks.fbx*
+UnityBundle/Assets/Models/perks/tex/
+UnityBundle/Assets/Models/perks/tex.meta

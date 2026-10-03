@@ -25,6 +25,12 @@ namespace TarkovaCola.Client
             new Def { Key = "a_found", ServerId = "6a1c00000000000000000a04" },
             new Def { Key = "a_die",   ServerId = "6a1c00000000000000000a05" },
             new Def { Key = "a_hand",  ServerId = "6a1c00000000000000000a06", Secret = true },
+            new Def { Key = "st_fresh",    ServerId = "6a1c00000000000000000a07" },
+            new Def { Key = "st_rushb",    ServerId = "6a1c00000000000000000a08" },
+            new Def { Key = "st_marathon", ServerId = "6a1c00000000000000000a09" },
+            new Def { Key = "st_lvl5",     ServerId = "6a1c00000000000000000a0a" },
+            new Def { Key = "st_cardio",   ServerId = "6a1c00000000000000000a0b" },
+            new Def { Key = "st_double",   ServerId = "6a1c00000000000000000a0c", Secret = true },
         };
 
         private static JObject Store { get { return PerkService.AchState; } }
@@ -66,6 +72,8 @@ namespace TarkovaCola.Client
         {
             if (PerkService.IsMax("speedcola")) Unlock("a_lvl5");
             if (Perks.SpeedCola.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("a_all");
+            if (PerkService.IsMax("staminup")) Unlock("st_lvl5");
+            if (Perks.StaminUp.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("st_cardio");
         }
 
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).

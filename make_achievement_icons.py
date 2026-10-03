@@ -5,11 +5,17 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "Server" / "ModFiles" / "achievements"
 OUT.mkdir(parents=True, exist_ok=True)
-icon = Image.open(ROOT / "Client" / "assets" / "speedcola_icon.png").convert("RGBA")
+ICONS = {n: Image.open(ROOT / "Client" / "assets" / (n + "_icon.png")).convert("RGBA") for n in ("speedcola", "staminup")}
 
 W, H = 196, 224
 RARITY = {"common": (190, 196, 202), "rare": (79, 170, 255), "legendary": (240, 193, 75)}
-BADGES = {"first": "common", "lvl5": "rare", "all": "legendary", "found": "rare", "die": "common", "hand": "legendary"}
+# clave -> (rareza, perk del icono)
+BADGES = {
+    "first": ("common", "speedcola"), "lvl5": ("rare", "speedcola"), "all": ("legendary", "speedcola"),
+    "found": ("rare", "speedcola"), "die": ("common", "speedcola"), "hand": ("legendary", "speedcola"),
+    "stfresh": ("common", "staminup"), "strushb": ("rare", "staminup"), "stmarathon": ("rare", "staminup"),
+    "stlvl5": ("rare", "staminup"), "stcardio": ("legendary", "staminup"), "stdouble": ("legendary", "staminup"),
+}
 
 
 def hexagon(cx, cy, r):
@@ -17,8 +23,9 @@ def hexagon(cx, cy, r):
     return [(cx + r * math.sin(math.radians(a)), cy - r * math.cos(math.radians(a))) for a in range(0, 360, 60)]
 
 
-for key, rar in BADGES.items():
+for key, (rar, perk) in BADGES.items():
     col = RARITY[rar]
+    icon = ICONS[perk]
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     cx, cy = W / 2, H / 2

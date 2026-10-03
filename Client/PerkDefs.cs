@@ -66,7 +66,31 @@ namespace TarkovaCola.Client
             OnDrink = SpeedColaDrink.OnDrink,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola };
+        internal static readonly PerkDef StaminUp = new PerkDef
+        {
+            Id = TarkovaCola.Client.StaminUp.Id,
+            ItemTpl = TarkovaCola.Client.StaminUp.ItemTpl,
+            IconFile = "staminup_icon.png",
+            JingleFile = "staminup_jingle.mp3",
+            HandBundle = "staminup_hand.bundle",
+            HandRefHeight = 0.17f,
+            Augs = new[]
+            {
+                new AugDef { Id = "st_rush",    Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 1 },
+                new AugDef { Id = "st_shooter", Kind = NodeKind.Major,   Seq = 6, Lvl = 4, Goal = 15 },
+                new AugDef { Id = "st_wind",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },
+                new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 },
+                new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10000 },
+                new AugDef { Id = "st_land",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 3 },
+                new AugDef { Id = "st_slot",    Kind = NodeKind.Special, Seq = 7, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "dt_boots", "dt_burn", "dt_jelly" },
+            DrbMinor = new[] { "dt_hungry", "dt_cramps", "dt_sweaty" },
+            DrinkNotice = TarkovaCola.Client.StaminUp.Notice,
+            OnDrink = TarkovaCola.Client.StaminUp.OnDrink,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp };
 
         private static readonly Dictionary<string, PerkDef> _byNode = new Dictionary<string, PerkDef>();
 

@@ -21,7 +21,7 @@ namespace TarkovaCola.Server
         public string Name { get; init; } = "Tarkova-Cola";
         public string Author { get; init; } = "Yendaxddd";
         public List<string> Contributors { get; init; } = new List<string>();
-        public SptVersion Version { get; init; } = new SptVersion(1, 1, 1);
+        public SptVersion Version { get; init; } = new SptVersion(1, 2, 0);
         public SptRange SptVersion { get; init; } = new SptRange("~4.1.0");
         public bool HasPrepatcher { get; init; } = false;
         public List<string> Incompatibilities { get; init; } = new List<string>();
@@ -53,6 +53,7 @@ namespace TarkovaCola.Server
 
         // acceso directo a Speed Cola (lo usan los logros)
         internal const string SpeedColaId = "6a1c00000000000000000c01";
+        internal const string StaminUpId = "6a1c00000000000000000c02";
 
         internal static readonly PerkDef SpeedCola = new PerkDef
         {
@@ -76,7 +77,27 @@ namespace TarkovaCola.Server
             AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola };
+        internal static readonly PerkDef StaminUp = new PerkDef
+        {
+            Id = "staminup",
+            ItemId = StaminUpId,
+            TraderItemId = "6a1c00000000000000000d02",
+            ItemName = "tarkovacola_staminup",
+            NameEn = "Stamin-Up", NameEs = "Stamin-Up", ShortName = "Stamin",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/staminup.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like cough syrup and ambition. Your legs feel like they were made for running... " +
+                "and whatever you were running from can wait. Drink it and find out how far you can go!\n\n" +
+                "Leg stamina x1.5 for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a jarabe para la tos y a ambicion. Tus piernas sienten que nacieron para correr... " +
+                "y de lo que huias puede esperar. Bebela y descubre hasta donde llegas!\n\n" +
+                "Estamina de piernas x1.5 el resto de la raid.",
+            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp };
     }
 
     // Fase 1: crea el item Speed Cola (clon de TarCola) y lo vende en Therapist (LL1).

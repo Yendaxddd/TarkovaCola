@@ -27,6 +27,8 @@ convenience: the Speed Cola 3D model and its textures (UnityBundle/Assets/Models
 and the compiled asset bundles), "Speedcola CoD Zombies" by albertjuli
 (Sketchfab, https://skfb.ly/6VRDU), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 and modified for this project, and the Call of Duty icons (Client/assets/*.png).
+The Stamin-Up bottle comes from the "cod zombies perks" pack by Unknown Dev on Sketchfab
+(Sketchfab Free Standard license); only its compiled form (the asset bundles) is included here.
 Those files remain the property of their respective owners and are NOT relicensed
 under MIT. If you are an owner and want any of them removed, please open an issue
 and they will be taken down.

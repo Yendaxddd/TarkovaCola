@@ -65,6 +65,32 @@ namespace TarkovaCola.Server
                 NameEn = "Master of hand-tricks", NameEs = "Maestro de los trucos de mano",
                 DescEn = "Kill 3 enemies in under 1 minute with Speed Cola active.", DescEs = "Mata a 3 enemigos en menos de 1 minuto con Speed Cola activa.",
                 Rewards = new[] { (Perks.GpCoin, 5) } },
+
+            // ---- Stamin-Up ----
+            new Def { Id = "6a1c00000000000000000a07", Key = "stfresh", Rarity = "Common",
+                NameEn = "Fresh legs", NameEs = "Piernas frescas",
+                DescEn = "Drink Stamin-Up for the first time.", DescEs = "Bebe Stamin-Up por primera vez.",
+                Rewards = new[] { (Roubles, 20000) } },
+            new Def { Id = "6a1c00000000000000000a08", Key = "strushb", Rarity = "Rare",
+                NameEn = "Rush B", NameEs = "Rush B",
+                DescEn = "Get 2 kills in the first 3 minutes of a raid with Stamin-Up active.", DescEs = "Consigue 2 bajas en los primeros 3 minutos de una raid con Stamin-Up activa.",
+                Rewards = new[] { (Perks.GpCoin, 3) } },
+            new Def { Id = "6a1c00000000000000000a09", Key = "stmarathon", Rarity = "Rare",
+                NameEn = "Marathon man", NameEs = "Hombre maraton",
+                DescEn = "Run 20 km in total with Stamin-Up active.", DescEs = "Corre 20 km en total con Stamin-Up activa.",
+                Rewards = new[] { (Perks.StaminUpId, 1), (Roubles, 15000) } },
+            new Def { Id = "6a1c00000000000000000a0a", Key = "stlvl5", Rarity = "Rare",
+                NameEn = "Run, Forrest, run", NameEs = "Corre, Forrest, corre",
+                DescEn = "Take Stamin-Up to level 5.", DescEs = "Lleva Stamin-Up al nivel 5.",
+                Rewards = new[] { (Perks.GpCoin, 4) } },
+            new Def { Id = "6a1c00000000000000000a0b", Key = "stcardio", Rarity = "Legendary",
+                NameEn = "Cardio day", NameEs = "Dia de cardio",
+                DescEn = "Unlock every Stamin-Up augment.", DescEs = "Consigue todas las mejoras de Stamin-Up.",
+                Rewards = new[] { (Perks.StaminUpId, 3) } },
+            new Def { Id = "6a1c00000000000000000a0c", Key = "stdouble", Rarity = "Legendary", Hidden = true,
+                NameEn = "Double Trouble", NameEs = "Doble problema",
+                DescEn = "Kill 5 enemies with both Speed Cola and Stamin-Up active in the same raid.", DescEs = "Mata a 5 enemigos con Speed Cola y Stamin-Up activas a la vez en la misma raid.",
+                Rewards = new[] { (Perks.GpCoin, 5) } },
         };
 
         internal static string IdOf(string key) { return All.FirstOrDefault(a => a.Key == key)?.Id; }

@@ -68,6 +68,10 @@ namespace TarkovaCola.Client
 
         internal static JObject AchState { get { return Sub(State, "ach"); } }
 
+        // contadores acumulados para logros (p. ej. metros corridos)
+        internal static int Stat(string key) { return (int?)Sub(State, "stats")[key] ?? 0; }
+        internal static void AddStat(string key, int n) { Sub(State, "stats")[key] = Stat(key) + n; }
+
         // perk de una mejora/desventaja (null si el id no existe)
         private static string PerkOf(string nodeId) { var p = Perks.OfNode(nodeId); return p != null ? p.Id : null; }
 

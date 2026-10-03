@@ -3,6 +3,10 @@
     {
       "key": "assets/content/items/consumables/tarkovacola/speedcola.bundle",
       "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/staminup.bundle",
+      "dependencyKeys": []
     }
   ]
 }

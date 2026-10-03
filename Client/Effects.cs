@@ -205,7 +205,7 @@ namespace TarkovaCola.Client
         private static void Prefix(BreathEffector __instance, out float __state)
         {
             __state = __instance.Intensity;
-            if (Perk.JitterOn && ReferenceEquals(__instance, Perk.MyBreath)) __instance.Intensity = __state * Perk.JitterSway;
+            if ((Perk.JitterOn || StaminUp.JellyOn) && ReferenceEquals(__instance, Perk.MyBreath)) __instance.Intensity = __state * Perk.JitterSway;
         }
 
         [HarmonyPostfix]
@@ -288,7 +288,7 @@ namespace TarkovaCola.Client
             var me = Plugin.Me;
             if (me == null || me.HandsController == null || me.HandsController.FirearmsAnimator != __instance) return;
             var item = (me.HandsController as Player.ItemHandsController)?.Item as FoodDrink;
-            if (item == null || item.TemplateId == Plugin.SpeedColaId) return;
+            if (item == null || Perks.ByItem(item.StringTemplateId) != null) return;     // las perks no sufren Sweet Tooth
             __0 /= Perk.SweetToothTime;
             Dbg.Log("EFECTO", "Sweet Tooth: " + item.ShortName + " tarda x" + Perk.SweetToothTime.ToString("0") + " mas");
         }

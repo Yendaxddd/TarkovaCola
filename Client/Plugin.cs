@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.1.1")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.2.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -54,6 +54,7 @@ namespace TarkovaCola.Client
                 "Con un brazo danado el juego anula el buff de recarga; con esto Speed Cola se mantiene");
             CfgOpenKey = Config.Bind("Menu", "Tecla para abrir Research", KeyCode.F9, "Atajo alternativo al botón Research del menú principal / Alternative shortcut to the Research button");
             Instance = this;
+            Player.OnPlayerDeadStatic += StaminUp.OnPlayerDead;
             CfgJingle = Config.Bind("Audio", "Cancion al beber", true, "Reproduce la cancion de Speed Cola al beberla / Play the jingle when drinking");
             CfgJingleVolume = Config.Bind("Audio", "Volumen de la cancion", 0.6f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
             CfgHandScale = Config.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Multiplicador del tamaño del modelo de la Speed Cola al beberla / Hand model size multiplier");
@@ -69,7 +70,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v1.1.1) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v1.2.0) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
@@ -124,7 +125,7 @@ namespace TarkovaCola.Client
         private static int _crashSteps;
         private static readonly List<float> _colaKills = new List<float>();
         private static bool _deathDone;
-        private static int _colaCount;
+        private static int _colaCount, _drinkCount;
         private static float _initTime, _nextInv;
         private static bool _inRaidSeen;
         private static Profile _raidProfile;
@@ -167,11 +168,13 @@ namespace TarkovaCola.Client
                 _nextSlow = _nextThirst = Time.time;
                 _crashSteps = 0;
                 _initTime = _nextInv = Time.time;
-                _colaCount = 0;
+                _colaCount = 0; _drinkCount = 0;
                 return;
             }
 
-            HandModel.Tick(hc);          // modelo de la Speed Cola en la mano (solo actua mientras se bebe)
+            HandModel.Tick(hc);          // modelo de la perk en la mano (solo actua mientras se bebe)
+            try { StaminUp.Tick(me); }   // efectos de Stamin-Up (sale enseguida si no esta activa)
+            catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
 
             // ---- cambio de arma ----
             if (!ReferenceEquals(hc, _hands))
@@ -231,6 +234,15 @@ namespace TarkovaCola.Client
                 Achievements.Unlock("a_found");
             }
             _colaCount = now;
+
+            // Sprint Shooter (desafio): bebidas energeticas encontradas (la cantidad sube durante la raid)
+            int drinks = StaminUp.CountDrinks(me);
+            if (Time.time - _initTime >= 8f && drinks > _drinkCount && me.HealthController.IsAlive)
+            {
+                Dbg.Log("DESAFIO", "bebidas energeticas encontradas: +" + (drinks - _drinkCount));
+                PerkService.AddProgress("st_shooter", drinks - _drinkCount);
+            }
+            _drinkCount = drinks;
         }
 
         private static void OnHandsChanged(Player me, object hc)
@@ -349,6 +361,7 @@ namespace TarkovaCola.Client
         private static void Prefix()
         {
             Perks.ClearActive();
+            StaminUp.OnRaidStart();
             Tracker.Reset();
             XpPatch.Awarded = false;
             Dbg.RaidStarted();
