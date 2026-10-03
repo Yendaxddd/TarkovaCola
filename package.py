@@ -56,6 +56,7 @@ def main():
             if not f.is_file(): continue
             rel = f.relative_to(ROOT)
             if any(p in skip_dirs for p in rel.parts) or f.suffix in skip_ext: continue
+            if "Models/perks" in str(rel).replace("\\", "/"): continue      # pack de terceros con licencia que no permite redistribuir los originales
             add(z, f, "TarkovaCola-src/" + str(rel))
     print("->", src, round(src.stat().st_size / 1e6, 1), "MB")
 
