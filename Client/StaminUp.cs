@@ -28,7 +28,7 @@ namespace TarkovaCola.Client
         internal const float WeightMult = 0.90f;         // Light Feet: -10% de peso
         internal const float RecoveryBonus = 0.25f;      // Quick Recovery: +25% de recuperacion
         internal const float LandingMult = 0.70f;        // Soft Landing: -30% de dano por caida
-        internal const float AnimSpeed = 1.75f;          // Sprint Shooter: las animaciones del arma van siempre x1.75
+        internal const float AnimSpeed = 1.75f;          // Sprint Shooter: las animaciones del arma van siempre x1.75 (menos las recargas)
         internal const float BootsRadius = 25f;          // Loud Boots: ruido de pasos al correr (m)
         internal const float BootsInterval = 0.5f;
         internal const float BurnoutLow = 0.30f;         // Burnout: por debajo del 30% de estamina se recupera a la mitad
@@ -196,7 +196,9 @@ namespace TarkovaCola.Client
         private static void UpdateAnimSpeed(Player me)
         {
             var animator = me.HandsController != null && me.HandsController.FirearmsAnimator != null ? me.HandsController.FirearmsAnimator.Animator : null;
-            if (animator != null && Perk.Has("st_shooter"))
+            // las recargas NO se aceleran (su velocidad es cosa de Speed Cola): durante una recarga el animador vuelve a x1
+            bool reloading = me.HandsController is Player.FirearmController fc && fc.IsInReloadOperation();
+            if (animator != null && Perk.Has("st_shooter") && !reloading)
             {
                 if (!ReferenceEquals(_spedAnimator, animator) && _spedAnimator != null) _spedAnimator.speed = 1f;
                 animator.speed = AnimSpeed;

@@ -192,7 +192,7 @@ namespace TarkovaCola.Client
             ["st_rush.d"]     = new[] { "Tras una baja, recuperas toda la estamina de las piernas.", "After a kill, your leg stamina refills completely." },
             ["st_rush.c"]     = new[] { "Haz 3 bajas en menos de 3 minutos con Stamin-Up activa.", "Get 3 kills in under 3 minutes with Stamin-Up active." },
             ["st_shooter.n"]  = new[] { "TIRADOR EN CARRERA", "SPRINT SHOOTER" },
-            ["st_shooter.d"]  = new[] { "Las animaciones del arma van siempre x1.75 más rápido.", "Weapon animations always run 1.75x faster." },
+            ["st_shooter.d"]  = new[] { "Las animaciones del arma van siempre x1.75 más rápido (las recargas no cambian).", "Weapon animations always run 1.75x faster (reloads are not affected)." },
             ["st_shooter.c"]  = new[] { "Encuentra 15 Hot Rod, RatCola o Max Energy en raid.", "Find 15 Hot Rod, RatCola or Max Energy in raid." },
             ["st_wind.n"]     = new[] { "SEGUNDO ALIENTO", "SECOND WIND" },
             ["st_wind.d"]     = new[] { "Cada vez que tu salud esté en rojo: 5 s de estamina infinita e inmunidad al dolor, sin cooldown. Aún puedes recibir daño.", "Every time your health is in the red: 5 s of infinite stamina and pain immunity, no cooldown. You can still take damage." },
