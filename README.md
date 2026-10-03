@@ -27,8 +27,8 @@ You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1
 | Augment | Effect | Challenge | Linked drawback |
 |---|---|---|---|
 | Rush Hour (major) | After a kill, leg stamina refills completely | 3 kills in under 3 minutes | Loud Boots: sprinting is audible to bots from 25 m |
-| Sprint Shooter (major) | Weapon ready much faster right after sprinting | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
-| Second Wind (major) | While your health is in the red: infinite stamina and pain immunity | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
+| Sprint Shooter (major) | Weapon animations always 1.75x faster | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
+| Second Wind (major) | Every time your health is in the red: 5 s of infinite stamina and pain immunity (no cooldown) | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
 | Light Feet (minor) | -10% carried weight | Sprint 5 km in total | Hungry Legs: +50% energy burn while sprinting |
 | Quick Recovery (minor) | Stamina recovers +25% faster | Sprint 10 km in total | Cramps: stamina recovery waits 2 s more after sprinting |
 | Soft Landing (minor) | -30% fall damage | Kill 3 enemies at least 2 m below you | Sweaty: +50% hydration burn while sprinting |

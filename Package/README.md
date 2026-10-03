@@ -41,8 +41,8 @@ Equipas 1 mejora principal + 1 secundaria (2 con Extra Slot) y **1 desventaja pr
 | Mejora | Efecto | Desafío | Desventaja ligada |
 |---|---|---|---|
 | Rush Hour (mayor) | Tras una baja, la estamina de piernas se llena | 3 bajas en menos de 3 minutos | Loud Boots: correr se oye a 25 m |
-| Sprint Shooter (mayor) | El arma queda lista mucho más rápido al dejar de correr | Encontrar 15 Hot Rod / RatCola / Max Energy | Burnout: con menos del 30 % de estamina te recuperas a la mitad |
-| Second Wind (mayor) | Mientras la salud esté en rojo: estamina infinita e inmunidad al dolor | Quedarte sin estamina 5 veces | Jelly Legs: balanceo del arma +25 % tras correr 5 s |
+| Sprint Shooter (mayor) | Las animaciones del arma van siempre x1.75 más rápido | Encontrar 15 Hot Rod / RatCola / Max Energy | Burnout: con menos del 30 % de estamina te recuperas a la mitad |
+| Second Wind (mayor) | Cada vez que la salud esté en rojo: 5 s de estamina infinita e inmunidad al dolor (sin cooldown) | Quedarte sin estamina 5 veces | Jelly Legs: balanceo del arma +25 % tras correr 5 s |
 | Light Feet (menor) | -10 % de peso | Correr 5 km en total | Hungry Legs: +50 % de gasto de energía al correr |
 | Quick Recovery (menor) | La estamina se recupera +25 % más rápido | Correr 10 km en total | Cramps: la recuperación tarda 2 s más tras correr |
 | Soft Landing (menor) | -30 % de daño por caída | Matar a 3 enemigos al menos 2 m por debajo de ti | Sweaty: +50 % de gasto de hidratación al correr |
@@ -95,8 +95,8 @@ You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1
 | Augment | Effect | Challenge | Linked drawback |
 |---|---|---|---|
 | Rush Hour (major) | After a kill, leg stamina refills completely | 3 kills in under 3 minutes | Loud Boots: sprinting is audible to bots from 25 m |
-| Sprint Shooter (major) | Weapon ready much faster right after sprinting | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
-| Second Wind (major) | While your health is in the red: infinite stamina and pain immunity | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
+| Sprint Shooter (major) | Weapon animations always 1.75x faster | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
+| Second Wind (major) | Every time your health is in the red: 5 s of infinite stamina and pain immunity (no cooldown) | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
 | Light Feet (minor) | -10% carried weight | Sprint 5 km in total | Hungry Legs: +50% energy burn while sprinting |
 | Quick Recovery (minor) | Stamina recovers +25% faster | Sprint 10 km in total | Cramps: stamina recovery waits 2 s more after sprinting |
 | Soft Landing (minor) | -30% fall damage | Kill 3 enemies at least 2 m below you | Sweaty: +50% hydration burn while sprinting |

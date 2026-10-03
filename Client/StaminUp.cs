@@ -24,12 +24,11 @@ namespace TarkovaCola.Client
         internal const float CapacityMult = 1.5f;       // base: estamina de piernas x1.5
         internal const float KillWindow = 180f;          // Rush Hour (desafio): 3 bajas en menos de 3 min
         internal const float LowHealth = 0.30f;          // Second Wind: salud "en rojo" (parte vital o total por debajo del 30%)
-        internal const float WindPainSeconds = 2f;       //   la inmunidad al dolor se renueva cada segundo mientras dure el estado
+        internal const float WindSeconds = 5f;           //   duracion de la estamina infinita y la inmunidad al dolor (sin cooldown: se reactiva cada vez que la salud vuelve a estar en rojo)
         internal const float WeightMult = 0.90f;         // Light Feet: -10% de peso
         internal const float RecoveryBonus = 0.25f;      // Quick Recovery: +25% de recuperacion
         internal const float LandingMult = 0.70f;        // Soft Landing: -30% de dano por caida
-        internal const float ExitAnimSpeed = 1.75f;      // Sprint Shooter: animaciones de arma x1.75 justo al dejar de correr
-        internal const float ExitAnimSeconds = 1.2f;
+        internal const float AnimSpeed = 1.75f;          // Sprint Shooter: las animaciones del arma van siempre x1.75
         internal const float BootsRadius = 25f;          // Loud Boots: ruido de pasos al correr (m)
         internal const float BootsInterval = 0.5f;
         internal const float BurnoutLow = 0.30f;         // Burnout: por debajo del 30% de estamina se recupera a la mitad
@@ -46,11 +45,9 @@ namespace TarkovaCola.Client
 
         // --- estado dinamico (por raid) ---
         internal static bool JellyOn;                    // balanceo extra activo (lo lee JitterPatch)
-        internal static float SprintExitUntil;           // Sprint Shooter: hasta cuando van aceleradas las animaciones
-        private static float _raidStart, _windPainUntil, _sprintStart, _jellyUntil, _nextBoots, _nextDrain;
-        private static bool _windOn;
-        private static bool _wasSprinting, _exhaustArmed = true, _animSped;
-        private static float _animBase = 1f;
+        private static float _raidStart, _windUntil, _sprintStart, _jellyUntil, _nextBoots, _nextDrain;
+        private static bool _wasSprinting, _exhaustArmed = true;
+        private static IAnimator _spedAnimator;                // animador al que se le acelero la velocidad (para devolverla a 1)
         private static int _kills, _doubleKills;
         private static float _distance;
         private static Vector3 _lastPos;
@@ -61,9 +58,9 @@ namespace TarkovaCola.Client
         internal static void OnRaidStart()
         {
             _raidStart = Time.time;
-            JellyOn = false; SprintExitUntil = 0f;
-            _windPainUntil = 0f; _windOn = false; _sprintStart = 0f; _jellyUntil = 0f; _nextBoots = 0f; _nextDrain = 0f;
-            _wasSprinting = false; _exhaustArmed = true; _animSped = false; _animBase = 1f;
+            JellyOn = false;
+            _windUntil = 0f; _sprintStart = 0f; _jellyUntil = 0f; _nextBoots = 0f; _nextDrain = 0f;
+            _wasSprinting = false; _exhaustArmed = true; _spedAnimator = null;
             _kills = 0; _doubleKills = 0; _distance = 0f; _hasPos = false;
             _killTimes.Clear(); _earlyKills.Clear();
         }
@@ -133,8 +130,6 @@ namespace TarkovaCola.Client
                 if (Perk.Has("dt_jelly") && now - _sprintStart >= JellyAfter) _jellyUntil = now + JellySeconds;
                 // Cramps: unos segundos mas sin recuperar estamina
                 if (Perk.Has("dt_cramps")) stamina.DisableRestoration = Mathf.Max(stamina.DisableRestoration, now + CrampsSeconds);
-                // Sprint Shooter: animaciones del arma aceleradas un momento
-                if (Perk.Has("st_shooter")) SprintExitUntil = now + ExitAnimSeconds;
             }
             _wasSprinting = sprinting;
             JellyOn = now < _jellyUntil;
@@ -151,26 +146,20 @@ namespace TarkovaCola.Client
             if (stamina.Current <= 0.5f && _exhaustArmed) { _exhaustArmed = false; Dbg.Log("DESAFIO", "estamina agotada"); PerkService.AddProgress("st_wind"); }
             else if (stamina.Current > cap * 0.3f) _exhaustArmed = true;
 
-            // ---- Second Wind: mientras la salud este en rojo, estamina infinita e inmunidad al dolor (sin limite de tiempo ni cooldown) ----
-            bool wind = Perk.Has("st_wind") && me.HealthController.IsAlive && IsNearDeath(me.HealthController);
-            if (wind)
+            // ---- Second Wind: cada vez que la salud esta en rojo, 5 s de estamina infinita e inmunidad al dolor (sin cooldown) ----
+            if (now >= _windUntil && Perk.Has("st_wind") && me.HealthController.IsAlive && IsNearDeath(me.HealthController))
+            {
+                _windUntil = now + WindSeconds;
+                me.ActiveHealthController.AddEffect<ActiveHealthController.PainKiller>(EBodyPart.Head, 0f, WindSeconds, 0f);
+                Hud.Notify(Data.Name("st_wind"), L.T("notice.wind.sub"), Id);
+                Dbg.Log("EFECTO", "Second Wind: salud en rojo, " + WindSeconds + " s de estamina infinita e inmunidad al dolor");
+            }
+            if (now < _windUntil)
             {
                 stamina.Current = cap;
                 if (phys.HandsStamina != null) phys.HandsStamina.Current = phys.HandsStamina.TotalCapacity;
                 if (phys.Oxygen != null) phys.Oxygen.Current = phys.Oxygen.TotalCapacity;
-                if (now >= _windPainUntil - 0.5f)       // el efecto de dolor dura poco: se renueva antes de que acabe
-                {
-                    _windPainUntil = now + WindPainSeconds;
-                    me.ActiveHealthController.AddEffect<ActiveHealthController.PainKiller>(EBodyPart.Head, 0f, WindPainSeconds, 0f);
-                }
-                if (!_windOn)
-                {
-                    Hud.Notify(Data.Name("st_wind"), L.T("notice.wind.sub"), Id);
-                    Dbg.Log("EFECTO", "Second Wind: salud en rojo, estamina infinita e inmunidad al dolor");
-                }
             }
-            else if (_windOn) Dbg.Log("EFECTO", "Second Wind: la salud ya no esta en rojo");
-            _windOn = wind;
 
             // ---- Loud Boots / Hungry Legs / Sweaty: solo mientras se corre ----
             if (sprinting)
@@ -192,7 +181,7 @@ namespace TarkovaCola.Client
             else _nextDrain = now + 1f;
 
             // ---- Sprint Shooter: animaciones aceleradas un instante tras dejar de correr ----
-            UpdateAnimSpeed(me, now);
+            UpdateAnimSpeed(me);
         }
 
         private static bool IsNearDeath(IHealthController hc)
@@ -202,19 +191,21 @@ namespace TarkovaCola.Client
                 || hc.GetBodyPartHealth(EBodyPart.Chest).Normalized <= LowHealth;
         }
 
-        private static void UpdateAnimSpeed(Player me, float now)
+        // Sprint Shooter: mientras este equipada, las animaciones del arma van siempre aceleradas. Al cambiar de arma el animador
+        // es otro (velocidad 1), asi que se reaplica cada frame; al desequiparla o acabar la raid se devuelve a 1.
+        private static void UpdateAnimSpeed(Player me)
         {
             var animator = me.HandsController != null && me.HandsController.FirearmsAnimator != null ? me.HandsController.FirearmsAnimator.Animator : null;
-            if (animator == null) { _animSped = false; return; }
-            if (now < SprintExitUntil)
+            if (animator != null && Perk.Has("st_shooter"))
             {
-                if (!_animSped) { _animBase = animator.speed; _animSped = true; }
-                animator.speed = _animBase * ExitAnimSpeed;
+                if (!ReferenceEquals(_spedAnimator, animator) && _spedAnimator != null) _spedAnimator.speed = 1f;
+                animator.speed = AnimSpeed;
+                _spedAnimator = animator;
             }
-            else if (_animSped)
+            else if (_spedAnimator != null)
             {
-                animator.speed = _animBase;
-                _animSped = false;
+                _spedAnimator.speed = 1f;
+                _spedAnimator = null;
             }
         }
 
@@ -222,12 +213,7 @@ namespace TarkovaCola.Client
         private static void ResetFlags(Player me)
         {
             JellyOn = false;
-            if (_animSped)
-            {
-                var a = me.HandsController != null && me.HandsController.FirearmsAnimator != null ? me.HandsController.FirearmsAnimator.Animator : null;
-                if (a != null) a.speed = _animBase;
-                _animSped = false;
-            }
+            if (_spedAnimator != null) { _spedAnimator.speed = 1f; _spedAnimator = null; }
         }
 
         // ---------------------------------------------------------------- bajas del jugador (evento estatico del juego)
