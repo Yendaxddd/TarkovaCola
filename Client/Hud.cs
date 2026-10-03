@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EFT.Counters;
@@ -12,26 +13,37 @@ namespace TarkovaCola.Client
         private static readonly Color Green = new Color(0.35f, 0.9f, 0.4f, 1f);
         private static readonly Color Gold = new Color(0.94f, 0.76f, 0.29f, 1f);
 
-        private static Texture2D _icon, _researchIcon;
+        private static readonly Dictionary<string, Texture2D> _icons = new Dictionary<string, Texture2D>();
+        private static readonly Dictionary<string, Sprite> _iconSprites = new Dictionary<string, Sprite>();
+        private static Texture2D _researchIcon;
         private static Texture2D _white;
         private static GUIStyle _title, _sub, _small, _label;
-        private static Sprite _iconSprite, _researchSprite;
+        private static Sprite _researchSprite;
 
         private static float _noticeStart = -100f;
-        private static string _noticeTitle = "", _noticeSub = "";
+        private static string _noticeTitle = "", _noticeSub = "", _noticePerk;
 
         private static bool _escOpen;
         private static float _escOpenedAt;
         private static object _lastScreen;
 
-        internal static Sprite IconSprite
+        // icono de una perk (null si no cargo)
+        internal static Sprite IconSprite(string perkId)
         {
-            get
-            {
-                if (_iconSprite == null && _icon != null)
-                    _iconSprite = Sprite.Create(_icon, new Rect(0, 0, _icon.width, _icon.height), new Vector2(0.5f, 0.5f));
-                return _iconSprite;
-            }
+            Sprite sp;
+            if (_iconSprites.TryGetValue(perkId, out sp) && sp != null) return sp;
+            Texture2D tex;
+            if (!_icons.TryGetValue(perkId, out tex) || tex == null) return null;
+            sp = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            _iconSprites[perkId] = sp;
+            return sp;
+        }
+
+        private static Texture2D IconTex(string perkId)
+        {
+            Texture2D tex;
+            if (perkId != null && _icons.TryGetValue(perkId, out tex)) return tex;
+            return Perks.All.Length > 0 && _icons.TryGetValue(Perks.All[0].Id, out tex) ? tex : null;
         }
 
         // icono del boton Research del menu principal (imagen completa, sin margen)
@@ -68,7 +80,7 @@ namespace TarkovaCola.Client
             _white.SetPixel(0, 0, Color.white);
             _white.Apply();
 
-            _icon = LoadTexture(pluginDir, "speedcola_icon.png");
+            foreach (var perk in Perks.All) _icons[perk.Id] = LoadTexture(pluginDir, perk.IconFile);
             _researchIcon = LoadTexture(pluginDir, "research_icon.png");
         }
 
@@ -86,10 +98,11 @@ namespace TarkovaCola.Client
             return dst;
         }
 
-        internal static void Notify(string title, string sub)
+        internal static void Notify(string title, string sub, string perkId = null)
         {
             _noticeTitle = title;
             _noticeSub = sub;
+            _noticePerk = perkId;
             _noticeStart = Time.realtimeSinceStartup;
         }
 
@@ -123,19 +136,25 @@ namespace TarkovaCola.Client
             float scale = Screen.height / 1080f;
             EnsureStyles(scale);
 
-            if (Plugin.SpeedColaActive && !_escOpen) DrawPermanentIcon(scale);
+            if (!_escOpen) DrawPermanentIcons(scale);
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
         }
 
-        private static void DrawPermanentIcon(float scale)
+        // un icono por cada perk activa, apilados hacia arriba desde la posicion configurada
+        private static void DrawPermanentIcons(float scale)
         {
-            if (_icon == null) return;
-            float size = Plugin.CfgIconSize.Value * scale;
-            float x = Plugin.CfgIconX.Value * scale;
-            float y = Screen.height - size - Plugin.CfgIconY.Value * scale;
-            var r = new Rect(x, y, size, size);
-            GUI.color = Color.white;
-            GUI.DrawTexture(r, _icon, ScaleMode.ScaleToFit, true);       // sin marco: pegado al borde de la pantalla
+            int i = 0;
+            foreach (var perk in Perks.ActivePerks)
+            {
+                Texture2D tex;
+                if (!_icons.TryGetValue(perk.Id, out tex) || tex == null) continue;
+                float size = Plugin.CfgIconSize.Value * scale;
+                float x = Plugin.CfgIconX.Value * scale;
+                float y = Screen.height - size - Plugin.CfgIconY.Value * scale - i * (size + 4f * scale);
+                GUI.color = Color.white;
+                GUI.DrawTexture(new Rect(x, y, size, size), tex, ScaleMode.ScaleToFit, true);     // sin marco: pegado al borde de la pantalla
+                i++;
+            }
         }
 
         private static void DrawNotice(float scale)
@@ -158,10 +177,11 @@ namespace TarkovaCola.Client
 
             float pad = 10f * scale;
             float iconSize = h - pad * 2f;
-            if (_icon != null)
+            var noticeIcon = IconTex(_noticePerk);
+            if (noticeIcon != null)
             {
                 GUI.color = new Color(1f, 1f, 1f, alpha);
-                GUI.DrawTexture(new Rect(x + pad + 6f * scale, y + pad, iconSize, iconSize), _icon, ScaleMode.ScaleToFit, true);
+                GUI.DrawTexture(new Rect(x + pad + 6f * scale, y + pad, iconSize, iconSize), noticeIcon, ScaleMode.ScaleToFit, true);
             }
 
             float tx = x + pad * 2f + iconSize + 6f * scale;

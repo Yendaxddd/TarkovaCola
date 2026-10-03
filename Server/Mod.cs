@@ -30,27 +30,53 @@ namespace TarkovaCola.Server
         public string License { get; init; } = "MIT";
     }
 
-    // Definicion de perks. El cliente tiene la misma lista de ids (Client/Plugin.cs).
+    // Definicion de perks (datos). El cliente tiene su propia lista con los mismos ids (Client/PerkDefs.cs).
+    internal class PerkDef
+    {
+        public string Id;                 // clave de estado (la misma que usa el cliente)
+        public string ItemId;             // id fijo del item
+        public string TraderItemId;       // id de la oferta en Therapist
+        public string ItemName;           // nombre interno del item
+        public string NameEn, NameEs, ShortName;
+        public string DescEn, DescEs;
+        public int GpPrice;               // precio en GP Coin
+        public string Bundle;             // ruta del bundle del item (suelo/inventario/icono)
+        // probabilidad aproximada de que UN objeto sacado de cada sitio sea esta perk (0 = no aparece ahi)
+        public double AmmoCrate, Safe, Rogue, Killa;
+    }
+
     internal static class Perks
     {
         internal const string TarCola = "57514643245977207f2c2d09";     // lata base que se clona
-        internal const string SpeedColaId = "6a1c00000000000000000c01"; // id fijo de Speed Cola
-        internal const string SpeedColaTraderItemId = "6a1c00000000000000000d01";
-        internal const string GpCoin = "5d235b4d86f7742e017bc88a";   // GP Coin
-        internal const int SpeedColaGpPrice = 7;                       // precio en Therapist: 7 GP Coins
-        internal const double SpeedColaPrice = 52500;                  // equivalente en rublos (7 x 7500), para flea/handbook
+        internal const string GpCoin = "5d235b4d86f7742e017bc88a";      // GP Coin
+        internal const double GpCoinRoubles = 7500;                     // valor de 1 GP Coin en el handbook
 
-        internal const string SpeedColaDescEn =
-            "Perk-a-cola: A combined taste of some combination of sweet and spicy but doesn't contain any sugar... " +
-            "Somehow, drinking this seems to make your body all energetic, and gives you the edge of an ADHD kid with " +
-            "unsupervised screen time. Drink it! See what is the worst that could happen!\n\n" +
-            "Reload speed x1.5 for the rest of the raid.";
+        // acceso directo a Speed Cola (lo usan los logros)
+        internal const string SpeedColaId = "6a1c00000000000000000c01";
 
-        internal const string SpeedColaDescEs =
-            "Perk-a-cola: Una mezcla de sabor dulce y picante que no contiene nada de azucar... " +
-            "De alguna forma, beberla hace que tu cuerpo se llene de energia y te da la ventaja de un nino con TDAH " +
-            "y pantallas sin supervision. Bebela! A ver que es lo peor que puede pasar!\n\n" +
-            "Velocidad de recarga x1.5 el resto de la raid.";
+        internal static readonly PerkDef SpeedCola = new PerkDef
+        {
+            Id = "speedcola",
+            ItemId = SpeedColaId,
+            TraderItemId = "6a1c00000000000000000d01",
+            ItemName = "tarkovacola_speedcola",
+            NameEn = "Speed Cola", NameEs = "Speed Cola", ShortName = "Speed",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/speedcola.bundle",
+            DescEn =
+                "Perk-a-cola: A combined taste of some combination of sweet and spicy but doesn't contain any sugar... " +
+                "Somehow, drinking this seems to make your body all energetic, and gives you the edge of an ADHD kid with " +
+                "unsupervised screen time. Drink it! See what is the worst that could happen!\n\n" +
+                "Reload speed x1.5 for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Una mezcla de sabor dulce y picante que no contiene nada de azucar... " +
+                "De alguna forma, beberla hace que tu cuerpo se llene de energia y te da la ventaja de un nino con TDAH " +
+                "y pantallas sin supervision. Bebela! A ver que es lo peor que puede pasar!\n\n" +
+                "Velocidad de recarga x1.5 el resto de la raid.",
+            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola };
     }
 
     // Fase 1: crea el item Speed Cola (clon de TarCola) y lo vende en Therapist (LL1).
@@ -70,44 +96,47 @@ namespace TarkovaCola.Server
 
         public Task OnLoadAsync(CancellationToken cancellationToken)
         {
-            try
+            foreach (var perk in Perks.All)
             {
-                var baseItem = _templates.Items[new MongoId(Perks.TarCola)];
-                var result = _items.CreateItemFromClone(new NewItemFromCloneDetails
-                {
-                    ItemTplToClone = new MongoId(Perks.TarCola),
-                    ParentId = baseItem.Parent,
-                    NewId = new MongoId(Perks.SpeedColaId),
-                    NewItemName = "tarkovacola_speedcola",
-                    OverrideProperties = new TemplateItemProperties
-                    {
-                        Width = 1,
-                        Height = 2,      // ocupa 1x2 casillas en el inventario (la TarCola original es 1x1)
-                        EffectsHealth = BuildEffects(baseItem.Properties.EffectsHealth, hydration: 50, energy: -15),
-                        // Modelo 3D propio (ground/inventario/icono). UsePrefab (en mano) sigue siendo el de la TarCola.
-                        Prefab = new Prefab { Path = "assets/content/items/consumables/tarkovacola/speedcola.bundle", Rcid = "" },
-                    },
-                    FleaPriceRoubles = Perks.SpeedColaPrice,
-                    HandbookPriceRoubles = Perks.SpeedColaPrice,
-                    HandbookParentId = "5b47574386f77428ca22b335", // handbook: Drinks
-                    Locales = new Dictionary<string, LocaleDetails>
-                    {
-                        ["en"] = new LocaleDetails { Name = "Speed Cola", ShortName = "Speed", Description = Perks.SpeedColaDescEn },
-                        ["es"] = new LocaleDetails { Name = "Speed Cola", ShortName = "Speed", Description = Perks.SpeedColaDescEs },
-                    },
-                });
-
-                var created = _templates.Items[new MongoId(Perks.SpeedColaId)].Properties;
-                Console.WriteLine($"[Tarkova-Cola] prefab={created?.Prefab?.Path} usePrefab={created?.UsePrefab?.Path} peso={created?.Weight}");
-
-                AddToTherapist();
-                Console.WriteLine("[Tarkova-Cola] Speed Cola creada y en venta en Therapist (LL1, " + Perks.SpeedColaGpPrice + " GP Coin)");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("[Tarkova-Cola] ERROR creando items: " + e);
+                try { CreatePerk(perk); }
+                catch (Exception e) { Console.WriteLine("[Tarkova-Cola] ERROR creando " + perk.Id + ": " + e); }
             }
             return Task.CompletedTask;
+        }
+
+        // Crea el item de una perk (clon de TarCola) y lo pone en venta en Therapist (LL1).
+        private void CreatePerk(PerkDef perk)
+        {
+            var baseItem = _templates.Items[new MongoId(Perks.TarCola)];
+            double roubles = perk.GpPrice * Perks.GpCoinRoubles;
+            _items.CreateItemFromClone(new NewItemFromCloneDetails
+            {
+                ItemTplToClone = new MongoId(Perks.TarCola),
+                ParentId = baseItem.Parent,
+                NewId = new MongoId(perk.ItemId),
+                NewItemName = perk.ItemName,
+                OverrideProperties = new TemplateItemProperties
+                {
+                    Width = 1,
+                    Height = 2,      // ocupa 1x2 casillas en el inventario (la TarCola original es 1x1)
+                    EffectsHealth = BuildEffects(baseItem.Properties.EffectsHealth, hydration: 50, energy: -15),
+                    // Modelo 3D propio (ground/inventario/icono). UsePrefab (en mano) sigue siendo el de la TarCola.
+                    Prefab = new Prefab { Path = perk.Bundle, Rcid = "" },
+                },
+                FleaPriceRoubles = roubles,
+                HandbookPriceRoubles = roubles,
+                HandbookParentId = "5b47574386f77428ca22b335", // handbook: Drinks
+                Locales = new Dictionary<string, LocaleDetails>
+                {
+                    ["en"] = new LocaleDetails { Name = perk.NameEn, ShortName = perk.ShortName, Description = perk.DescEn },
+                    ["es"] = new LocaleDetails { Name = perk.NameEs, ShortName = perk.ShortName, Description = perk.DescEs },
+                },
+            });
+
+            var created = _templates.Items[new MongoId(perk.ItemId)].Properties;
+            Console.WriteLine($"[Tarkova-Cola] {perk.Id}: prefab={created?.Prefab?.Path} peso={created?.Weight}");
+            AddToTherapist(perk);
+            Console.WriteLine($"[Tarkova-Cola] {perk.NameEn} creada y en venta en Therapist (LL1, {perk.GpPrice} GP Coin)");
         }
 
         // Copia los efectos de la lata base y sustituye solo el valor de hidratacion y energia.
@@ -123,21 +152,21 @@ namespace TarkovaCola.Server
             return result;
         }
 
-        private void AddToTherapist()
+        private void AddToTherapist(PerkDef perk)
         {
             var assort = _traders[Traders.THERAPIST].Assort;
-            var id = new MongoId(Perks.SpeedColaTraderItemId);
+            var id = new MongoId(perk.TraderItemId);
             assort.Items.Add(new Item
             {
                 Id = id,
-                Template = new MongoId(Perks.SpeedColaId),
+                Template = new MongoId(perk.ItemId),
                 ParentId = "hideout",
                 SlotId = "hideout",
                 Upd = new Upd { StackObjectsCount = 999999, UnlimitedCount = true },
             });
             assort.BarterScheme[id] = new List<List<BarterScheme>>
             {
-                new List<BarterScheme> { new BarterScheme { Count = Perks.SpeedColaGpPrice, Template = new MongoId(Perks.GpCoin) } },
+                new List<BarterScheme> { new BarterScheme { Count = perk.GpPrice, Template = new MongoId(Perks.GpCoin) } },
             };
             assort.LoyalLevelItems[id] = 1;
         }

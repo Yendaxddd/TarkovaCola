@@ -64,8 +64,8 @@ namespace TarkovaCola.Client
         // Logros que dependen del estado (nivel, mejoras): se comprueban al ganar XP, completar desafios y empezar raid.
         internal static void CheckState()
         {
-            if (PerkService.Level >= PerkService.MaxLevel) Unlock("a_lvl5");
-            if (Data.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("a_all");
+            if (PerkService.IsMax("speedcola")) Unlock("a_lvl5");
+            if (Perks.SpeedCola.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("a_all");
         }
 
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).

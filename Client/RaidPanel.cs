@@ -96,57 +96,85 @@ namespace TarkovaCola.Client
 
         private RectTransform Build()
         {
-            int lvl, cur, max;
-            PerkService.LevelInfo(PerkService.Xp, out lvl, out cur, out max);
+            const float W = 420f, Pad = 22f, Inner = W - Pad * 2f;
 
             // XP ganada en esta raid (aun sin confirmar: se suma al terminar)
-            int live = 0;
+            float rawXp = 0f;
             var me = Plugin.Me;
-            if (me != null && me.Profile != null && Plugin.SpeedColaActive)
-                live = Mathf.RoundToInt(me.Profile.EftStats.SessionCounters.GetAllInt(CounterTag.Exp) * (1f + (float)PerkService.XpBonus));
-
-            var active = PerkService.ActiveChallenges.OrderBy(a => a.Seq).ToList();
-            const float W = 420f, Pad = 22f, Inner = W - Pad * 2f;
+            if (me != null && me.Profile != null) rawXp = me.Profile.EftStats.SessionCounters.GetAllInt(CounterTag.Exp);
 
             var panel = UiKit.Panel(_content, 0, 0, W, 300f, UiKit.PanelBg, UiKit.Line);
             var root = panel.transform;
             UiKit.Place(UiKit.Img(root, "Accent", UiKit.Green).rectTransform, 0, 0, 4, 300f);
             float y = 18f;
 
-            // cabecera
-            if (Hud.IconSprite != null)
+            bool first = true;
+            foreach (var def in Perks.All)
             {
-                var ic = UiKit.Img(root, "Icon", Color.white, Hud.IconSprite); UiKit.Place(ic.rectTransform, Pad, y, 52, 52);
+                if (!first)
+                {
+                    y += 6f;
+                    UiKit.Place(UiKit.Img(root, "Sep", UiKit.Line).rectTransform, Pad, y, Inner, 1);
+                    y += 16f;
+                }
+                first = false;
+                y = Section(root, def, y, W, Pad, Inner, rawXp);
             }
-            T(root, L.T("raid.title"), Pad + 66, y - 2, Inner - 66, 32, 30, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+
+            float h = y + 6f;
+            panel.rectTransform.sizeDelta = new Vector2(W, h);
+            root.Find("Accent").GetComponent<RectTransform>().sizeDelta = new Vector2(4, h);
+            foreach (Transform t in root) if (t.name == "bl" || t.name == "br") t.GetComponent<RectTransform>().sizeDelta = new Vector2(1, h);
+            foreach (Transform t in root) if (t.name == "bb") t.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -(h - 1));
+            // el contenedor (anclado al centro vertical) toma la altura del panel: queda centrado
+            _content.sizeDelta = new Vector2(W, h);
+            return panel.rectTransform;
+        }
+
+        // Nivel, XP y desafios pendientes de una perk. Devuelve la 'y' donde termina.
+        private float Section(Transform root, PerkDef def, float y, float W, float Pad, float Inner, float rawXp)
+        {
+            string id = def.Id;
+            int lvl, cur, max;
+            PerkService.LevelInfo(PerkService.Xp(id), out lvl, out cur, out max);
+            bool isMax = PerkService.IsMax(id), active = Perks.IsActive(id);
+            int live = active ? Mathf.RoundToInt(rawXp * (1f + (float)PerkService.XpBonus)) : 0;
+            var challenges = PerkService.ActiveChallenges(id).OrderBy(a => a.Seq).ToList();
+
+            // cabecera
+            var icon = Hud.IconSprite(id);
+            if (icon != null)
+            {
+                var ic = UiKit.Img(root, "Icon", Color.white, icon); UiKit.Place(ic.rectTransform, Pad, y, 52, 52);
+            }
+            T(root, def.Name.ToUpperInvariant(), Pad + 66, y - 2, Inner - 66, 32, 30, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             T(root, L.F("raid.level", lvl), Pad + 66, y + 32, Inner - 66, 20, 16, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
             y += 70f;
 
             // barra de XP (verde = XP guardada, dorado = XP de esta raid)
             var back = UiKit.Img(root, "XpBack", UiKit.C(255, 255, 255, 0.10f)); UiKit.Place(back.rectTransform, Pad, y, Inner, 10);
             float f0 = Mathf.Clamp01(cur / (float)max), f1 = Mathf.Clamp01((cur + live) / (float)max);
-            if (PerkService.IsMax) { live = 0; f0 = 1f; f1 = 1f; }
+            if (isMax) { live = 0; f0 = 1f; f1 = 1f; }
             if (live > 0) UiKit.Place(UiKit.Img(back.transform, "XpLive", UiKit.Gold).rectTransform, 0, 0, Inner * f1, 10);
             UiKit.Place(UiKit.Img(back.transform, "XpFill", UiKit.C(31, 174, 93)).rectTransform, 0, 0, Inner * f0, 10);
             y += 18f;
-            bool isMax = PerkService.IsMax;
             T(root, isMax ? L.T("xp.max") : cur + " / " + max + " XP", Pad, y, Inner, 22, 16, isMax ? UiKit.Gold : UiKit.Text, TextAlignmentOptions.TopLeft, false, isMax);
             y += 24f;
             if (isMax) y += 10f;                                    // en el nivel maximo ya no se gana XP de perk
-            else if (Plugin.SpeedColaActive) { T(root, L.F("raid.xpraid", live), Pad, y, Inner, 22, 15, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true); y += 34f; }
-            else { T(root, L.T("raid.drink"), Pad, y, Inner, 22, 14, UiKit.Dim, TextAlignmentOptions.TopLeft, true); y += 48f; }
+            else if (active) { T(root, L.F("raid.xpraid", live), Pad, y, Inner, 22, 15, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true); y += 34f; }
+            else { T(root, L.F("raid.drink", def.Name), Pad, y, Inner, 22, 14, UiKit.Dim, TextAlignmentOptions.TopLeft, true); y += 48f; }
 
             // desafios
             T(root, L.T("raid.pending"), Pad, y, Inner, 22, 16, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
             UiKit.Place(UiKit.Img(root, "Underline", UiKit.Gold).rectTransform, Pad, y + 26f, Inner, 2);
             y += 40f;
 
-            if (active.Count == 0)
+            if (challenges.Count == 0)
             {
                 var none = T(root, L.T("raid.none"), Pad, y, Inner, 40, 14, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
                 y += none.GetPreferredValues(none.text, Inner, 0f).y + 8f;
             }
-            foreach (var c in active)
+            foreach (var c in challenges)
             {
                 int prog = Mathf.Min(PerkService.Progress(c.Id), c.Goal);
                 T(root, Data.Name(c.Id), Pad, y, Inner - 70, 22, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
@@ -159,15 +187,7 @@ namespace TarkovaCola.Client
                 UiKit.Place(UiKit.Img(bb.transform, "PFill", UiKit.Gold).rectTransform, 0, 0, Inner * Mathf.Clamp01(prog / (float)c.Goal), 6);
                 y += 22f;
             }
-
-            float h = y + 6f;
-            panel.rectTransform.sizeDelta = new Vector2(W, h);
-            root.Find("Accent").GetComponent<RectTransform>().sizeDelta = new Vector2(4, h);
-            foreach (Transform t in root) if (t.name == "bl" || t.name == "br") t.GetComponent<RectTransform>().sizeDelta = new Vector2(1, h);
-            foreach (Transform t in root) if (t.name == "bb") t.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -(h - 1));
-            // el contenedor (anclado al centro vertical) toma la altura del panel: queda centrado
-            _content.sizeDelta = new Vector2(W, h);
-            return panel.rectTransform;
+            return y;
         }
     }
 }

@@ -6,35 +6,40 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    // Modelo de la Speed Cola en la MANO. El juego usa un prefab distinto para el objeto en mano (el de la TarCola) y
+    // Modelo de la perk en la MANO. El juego usa un prefab distinto para el objeto en mano (el de la TarCola) y
     // ese asset no se puede sustituir desde el servidor, asi que al beber colocamos nuestra lata en lugar de la malla original
     // y lo deshacemos al terminar (los modelos en mano se reutilizan, no debe quedar oculta la TarCola normal).
     internal static class HandModel
     {
-        private static AssetBundle _bundle;
-        private static GameObject _prefab;
-        private static bool _loadFailed;
+        private static readonly Dictionary<string, AssetBundle> _bundles = new Dictionary<string, AssetBundle>();
+        private static readonly Dictionary<string, GameObject> _prefabs = new Dictionary<string, GameObject>();
+        private static readonly HashSet<string> _failed = new HashSet<string>();
 
+        private static object _lastItem;
+        private static PerkDef _lastPerk;
         private static int _doneId;                       // controlador de manos ya procesado
         private static int _tries;
         private static GameObject _instance;
         private static readonly List<Renderer> _hidden = new List<Renderer>();
 
-        private static bool Load()
+        private static GameObject Load(PerkDef perk)
         {
-            if (_prefab != null) return true;
-            if (_loadFailed) return false;
+            GameObject prefab;
+            if (_prefabs.TryGetValue(perk.Id, out prefab)) return prefab;
+            if (_failed.Contains(perk.Id)) return null;
             try
             {
-                string path = Path.Combine(Path.GetDirectoryName(typeof(Plugin).Assembly.Location), Path.Combine("assets", "speedcola_hand.bundle"));
-                _bundle = AssetBundle.LoadFromFile(path);
-                if (_bundle == null) { Plugin.Log.LogWarning("No se pudo cargar el bundle de la mano: " + path); _loadFailed = true; return false; }
-                _prefab = _bundle.LoadAllAssets<GameObject>().FirstOrDefault();
-                if (_prefab == null) { Plugin.Log.LogWarning("El bundle de la mano no contiene ningun prefab"); _loadFailed = true; return false; }
-                Dbg.Log("MANO", "bundle de la mano cargado: " + _prefab.name);
-                return true;
+                string path = Path.Combine(Path.GetDirectoryName(typeof(Plugin).Assembly.Location), Path.Combine("assets", perk.HandBundle));
+                var bundle = AssetBundle.LoadFromFile(path);
+                if (bundle == null) { Plugin.Log.LogWarning("No se pudo cargar el bundle de la mano: " + path); _failed.Add(perk.Id); return null; }
+                prefab = bundle.LoadAllAssets<GameObject>().FirstOrDefault();
+                if (prefab == null) { Plugin.Log.LogWarning("El bundle de la mano no contiene ningun prefab"); _failed.Add(perk.Id); return null; }
+                _bundles[perk.Id] = bundle;
+                _prefabs[perk.Id] = prefab;
+                Dbg.Log("MANO", "bundle de la mano cargado: " + prefab.name);
+                return prefab;
             }
-            catch (System.Exception e) { Plugin.Log.LogError("Error cargando el modelo de la mano: " + e); _loadFailed = true; return false; }
+            catch (System.Exception e) { Plugin.Log.LogError("Error cargando el modelo de la mano: " + e); _failed.Add(perk.Id); return null; }
         }
 
         // Se llama cada frame con el controlador de manos actual (barato: sale enseguida si no es la Speed Cola).
@@ -42,9 +47,11 @@ namespace TarkovaCola.Client
         {
             var ihc = hands as Player.ItemHandsController;
             var item = ihc != null ? ihc.Item : null;
-            bool isCola = item != null && item.TemplateId == Plugin.SpeedColaId;
+            if (!ReferenceEquals(item, _lastItem)) { _lastItem = item; _lastPerk = item != null ? Perks.ByItem(item.StringTemplateId) : null; }   // se resuelve una vez por objeto, no cada frame
+            var perk = _lastPerk;
+            bool isPerk = perk != null && !string.IsNullOrEmpty(perk.HandBundle);
 
-            if (!isCola)
+            if (!isPerk)
             {
                 if (_instance != null || _hidden.Count > 0) Restore();
                 _doneId = 0; _tries = 0;
@@ -56,14 +63,15 @@ namespace TarkovaCola.Client
             if (root == null) return;
             int id = root.GetInstanceID();
             if (id == _doneId) return;
-            if (!Load()) { _doneId = id; return; }
+            var prefab = Load(perk);
+            if (prefab == null) { _doneId = id; return; }
 
             // el modelo puede tardar unos frames en aparecer: reintenta hasta ~2 s
-            if (!Apply(root) && ++_tries < 120) return;
+            if (!Apply(root, perk, prefab) && ++_tries < 120) return;
             _doneId = id;
         }
 
-        private static bool Apply(GameObject root)
+        private static bool Apply(GameObject root, PerkDef perk, GameObject prefab)
         {
             var filters = root.GetComponentsInChildren<MeshFilter>(false)
                 .Where(f => f.sharedMesh != null && f.GetComponent<MeshRenderer>() != null && f.GetComponent<MeshRenderer>().enabled
@@ -84,13 +92,13 @@ namespace TarkovaCola.Client
             Vector3 up = axis == 0 ? Vector3.right : axis == 1 ? Vector3.up : Vector3.forward;
             float height = size[axis];
 
-            _instance = Object.Instantiate(_prefab, reference.transform, false);
+            _instance = Object.Instantiate(prefab, reference.transform, false);
             _instance.name = "TarkovaColaHand";
             _instance.AddComponent<HandModelMarker>();
             foreach (var c in _instance.GetComponentsInChildren<Collider>(true)) Object.Destroy(c);
             SetLayer(_instance, reference.gameObject.layer);
             _instance.transform.localRotation = Quaternion.FromToRotation(Vector3.up, up);
-            _instance.transform.localScale = Vector3.one * (height / 0.122f) * Plugin.CfgHandScale.Value;     // nuestra lata mide 0.122 m
+            _instance.transform.localScale = Vector3.one * (height / perk.HandRefHeight) * Plugin.CfgHandScale.Value;     // altura real del modelo propio (Speed Cola: 0.122 m)
             _instance.transform.localPosition = bounds.center;
 
             foreach (var f in filters)

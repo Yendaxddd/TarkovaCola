@@ -11,17 +11,12 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace TarkovaCola.Server
 {
-    // Speed Cola aparece sola en el mundo: cajas de municion y cajas fuertes (contenedores estaticos) y en el botin de Rogues y Killa.
-    // Cada valor es la probabilidad aproximada de que UN objeto sacado de ese contenedor / bolsa sea una Speed Cola.
-    internal static class LootChances
+    // Las perks aparecen solas en el mundo: cajas de municion y cajas fuertes (contenedores estaticos) y en el botin de Rogues y Killa.
+    // Las probabilidades de cada perk estan en Perks.All (PerkDef).
+    internal static class LootContainers
     {
         internal const string AmmoCrate = "5909e4b686f7747f5b744fa4";      // Ammo crate
         internal const string Safe = "578f8778245977358849a9b5";           // Safe
-
-        internal const double AmmoCrateChance = 0.012;
-        internal const double SafeChance = 0.06;
-        internal const double RogueChance = 0.04;   // por objeto de mochila de un Rogue (exUsec)
-        internal const double KillaChance = 0.15;   // por objeto de mochila de Killa (lleva muy pocos)
     }
 
     [Injectable(TypePriority = OnLoadOrder.Preload + 1)]
@@ -48,7 +43,6 @@ namespace TarkovaCola.Server
 
         private void HookStaticLoot()
         {
-            var cola = new MongoId(Perks.SpeedColaId);
             int maps = 0;
             foreach (var prop in typeof(LocationTable).GetProperties())
             {
@@ -59,47 +53,45 @@ namespace TarkovaCola.Server
                 // StaticLoot se carga bajo demanda y puede recargarse: el transformador se aplica cada vez.
                 loc.StaticLoot.AddTransformer(table =>
                 {
-                    Add(table, LootChances.AmmoCrate, LootChances.AmmoCrateChance, cola);
-                    Add(table, LootChances.Safe, LootChances.SafeChance, cola);
+                    foreach (var perk in Perks.All)
+                    {
+                        var tpl = new MongoId(perk.ItemId);
+                        Add(table, LootContainers.AmmoCrate, perk.AmmoCrate, tpl);
+                        Add(table, LootContainers.Safe, perk.Safe, tpl);
+                    }
                     return table;
                 });
             }
-            if (Environment.GetEnvironmentVariable("TARKOVACOLA_CHECK") == "1")
-            {
-                var t = _locations.Bigmap.StaticLoot.Value;
-                foreach (var c in new[] { LootChances.AmmoCrate, LootChances.Safe })
-                {
-                    var d = t[new MongoId(c)].ItemDistribution.ToList();
-                    double sum = d.Sum(i => i.RelativeProbability ?? 0), me = d.Where(i => i.Tpl == cola).Sum(i => i.RelativeProbability ?? 0);
-                    Console.WriteLine("[Tarkova-Cola][check] " + c + ": cola " + me + " de " + sum + " = " + (100 * me / sum).ToString("0.00") + "%");
-                }
-            }
-            Console.WriteLine("[Tarkova-Cola] Speed Cola anadida al loot estatico de " + maps + " mapas (cajas de municion y cajas fuertes)");
+            Console.WriteLine("[Tarkova-Cola] Perks anadidas al loot estatico de " + maps + " mapas (cajas de municion y cajas fuertes)");
         }
 
-        private static void Add(Dictionary<MongoId, StaticLootDetails> table, string container, double chance, MongoId cola)
+        private static void Add(Dictionary<MongoId, StaticLootDetails> table, string container, double chance, MongoId perk)
         {
+            if (chance <= 0) return;
             if (!table.TryGetValue(new MongoId(container), out var details) || details?.ItemDistribution == null) return;
             var list = details.ItemDistribution.ToList();
-            if (list.Any(i => i.Tpl == cola)) return;
+            if (list.Any(i => i.Tpl == perk)) return;
             double sum = list.Sum(i => i.RelativeProbability ?? 0);
-            list.Add(new ItemDistribution { Tpl = cola, RelativeProbability = (float)Weight(sum, chance) });
+            list.Add(new ItemDistribution { Tpl = perk, RelativeProbability = (float)Weight(sum, chance) });
             details.ItemDistribution = list;
         }
 
         private void HookBots()
         {
-            var cola = new MongoId(Perks.SpeedColaId);
             var done = new List<string>();
-            foreach (var (name, chance) in new[] { ("exusec", LootChances.RogueChance), ("bosskilla", LootChances.KillaChance) })
+            foreach (var (bot, pick) in new (string, Func<PerkDef, double>)[] { ("exusec", p => p.Rogue), ("bosskilla", p => p.Killa) })
             {
-                if (!_bots.Types.TryGetValue(name, out var bot) || bot?.BotInventory?.Items?.Backpack == null) continue;
-                var pool = bot.BotInventory.Items.Backpack;
-                double sum = pool.Values.Sum();
-                pool[cola] = Weight(sum, chance);
-                done.Add(name);
+                if (!_bots.Types.TryGetValue(bot, out var type) || type?.BotInventory?.Items?.Backpack == null) continue;
+                var pool = type.BotInventory.Items.Backpack;
+                foreach (var perk in Perks.All)
+                {
+                    double chance = pick(perk);
+                    if (chance <= 0) continue;
+                    pool[new MongoId(perk.ItemId)] = Weight(pool.Values.Sum(), chance);
+                }
+                done.Add(bot);
             }
-            Console.WriteLine("[Tarkova-Cola] Speed Cola anadida al botin de: " + string.Join(", ", done));
+            Console.WriteLine("[Tarkova-Cola] Perks anadidas al botin de: " + string.Join(", ", done));
         }
     }
 }

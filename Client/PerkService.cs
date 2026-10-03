@@ -8,10 +8,11 @@ using SPT.Common.Http;
 namespace TarkovaCola.Client
 {
     // Estado de progreso de las perks, guardado en el servidor por perfil (ver Server/Progress.cs):
-    //   { xp:{perk:n}, prog:{perk:{id:n}}, researched:{perk:{id:true}}, equipped:{perk:{aug:{major,minor[]},drb:{...}}} }
+    //   { xp:{perk:n}, prog:{perk:{id:n}}, researched:{perk:{id:true}}, equipped:{perk:{aug:{major,minor[]},drb:{...}}}, ach:{...} }
+    // Todas las operaciones por perk reciben su id ("speedcola"...). Las que reciben el id de una mejora/desventaja deducen la perk
+    // a la que pertenece (los ids de mejoras son unicos entre perks).
     internal static class PerkService
     {
-        internal const string Perk = "speedcola";
         internal const double XpBonus = 0.25;   // +25% de XP con la perk activa
 
         private static JObject _state;
@@ -67,13 +68,16 @@ namespace TarkovaCola.Client
 
         internal static JObject AchState { get { return Sub(State, "ach"); } }
 
+        // perk de una mejora/desventaja (null si el id no existe)
+        private static string PerkOf(string nodeId) { var p = Perks.OfNode(nodeId); return p != null ? p.Id : null; }
+
         // ---------- nivel / XP ----------
-        internal const int MaxLevel = 5;         // nivel maximo de la perk
+        internal const int MaxLevel = 5;         // nivel maximo de las perks
 
         // El nivel L necesita 2700 + 1350*L de XP (9 veces la primera version; se triplico dos veces). Subir de 1 a 5 = 24 300 XP.
         internal static int Need(int level) { return 2700 + 1350 * level; }
 
-        internal static int Xp { get { return (int?)Sub(State, "xp")[Perk] ?? 0; } }
+        internal static int Xp(string perk) { return (int?)Sub(State, "xp")[perk] ?? 0; }
 
         // En el nivel maximo la barra queda llena (cur == max) y el XP extra ya no cuenta.
         internal static void LevelInfo(int totalXp, out int level, out int cur, out int max)
@@ -84,17 +88,17 @@ namespace TarkovaCola.Client
             if (level >= MaxLevel) cur = max;
         }
 
-        internal static int Level { get { int l, c, m; LevelInfo(Xp, out l, out c, out m); return l; } }
-        internal static bool IsMax { get { return Level >= MaxLevel; } }
+        internal static int Level(string perk) { int l, c, m; LevelInfo(Xp(perk), out l, out c, out m); return l; }
+        internal static bool IsMax(string perk) { return Level(perk) >= MaxLevel; }
 
-        internal static void AddXp(int amount)
+        internal static void AddXp(string perk, int amount)
         {
             if (amount <= 0) return;
-            if (IsMax) { Dbg.Log("XP", "nivel maximo: no se suma XP"); return; }
-            int before = Level;
-            Sub(State, "xp")[Perk] = Xp + amount;
-            Plugin.Log.LogInfo("Speed Cola +" + amount + " XP (total " + Xp + ")");
-            if (Level > before) Hud.Notify(L.F("notice.level.title", Level), L.T("notice.level.sub"));
+            if (IsMax(perk)) { Dbg.Log("XP", perk + ": nivel maximo, no se suma XP"); return; }
+            int before = Level(perk);
+            Sub(State, "xp")[perk] = Xp(perk) + amount;
+            Plugin.Log.LogInfo(perk + " +" + amount + " XP (total " + Xp(perk) + ")");
+            if (Level(perk) > before) Hud.Notify(L.F("notice.level.title", Perks.Get(perk).Name.ToUpperInvariant(), Level(perk)), L.T("notice.level.sub"), perk);
             Save();
             Achievements.CheckState();
         }
@@ -102,19 +106,23 @@ namespace TarkovaCola.Client
         // ---------- desafios ----------
         internal static bool IsDone(string id)
         {
-            var r = Sub(State, "researched")[Perk] as JObject;
+            var perk = PerkOf(id);
+            if (perk == null) return false;
+            var r = Sub(State, "researched")[perk] as JObject;
             return r != null && (bool?)r[id] == true;
         }
 
         internal static int Progress(string id)
         {
-            var p = Sub(State, "prog")[Perk] as JObject;
+            var perk = PerkOf(id);
+            if (perk == null) return 0;
+            var p = Sub(State, "prog")[perk] as JObject;
             return p == null ? 0 : (int?)p[id] ?? 0;
         }
 
-        internal static bool IsActive(AugDef c) { return !IsDone(c.Id) && Level >= c.Lvl; }
+        internal static bool IsActive(AugDef c) { return !IsDone(c.Id) && Level(c.Perk) >= c.Lvl; }
 
-        internal static IEnumerable<AugDef> ActiveChallenges { get { return Data.Augs.Where(IsActive); } }
+        internal static IEnumerable<AugDef> ActiveChallenges(string perk) { return Perks.Get(perk).Augs.Where(IsActive); }
 
         // Suma progreso a un desafio (solo si su nivel ya esta desbloqueado y no esta completo).
         internal static void AddProgress(string id, int n = 1)
@@ -122,15 +130,15 @@ namespace TarkovaCola.Client
             var c = Data.Aug(id);
             if (c == null || !IsActive(c)) return;
 
-            var prog = Sub(Sub(State, "prog"), Perk);
+            var prog = Sub(Sub(State, "prog"), c.Perk);
             int now = Math.Min(c.Goal, ((int?)prog[id] ?? 0) + n);
             prog[id] = now;
             Dbg.Log("DESAFIO", Data.Name(id) + " " + now + "/" + c.Goal);
             if (now >= c.Goal)
             {
-                Sub(Sub(State, "researched"), Perk)[id] = true;
+                Sub(Sub(State, "researched"), c.Perk)[id] = true;
                 Plugin.Log.LogInfo("Desafio completado: " + id);
-                Hud.Notify(L.T("notice.chal.title"), L.F("notice.chal.sub", Data.Name(id)));
+                Hud.Notify(L.T("notice.chal.title"), L.F("notice.chal.sub", Data.Name(id)), c.Perk);
             }
             Save();
             if (now >= c.Goal) Achievements.CheckState();
@@ -144,50 +152,56 @@ namespace TarkovaCola.Client
             return IsDone(id);
         }
 
-        internal static int MinorSlots(bool augment) { return augment ? (IsDone("s_slot") ? 2 : 1) : 1; }
-
-        // { aug:{major,minor[]}, drb:{major,minor[]} } de la perk
-        internal static JObject Equipped
+        // ranuras de mejoras menores (con el desbloqueo especial de la perk: 2); las desventajas siempre 1
+        internal static int MinorSlots(string perk, bool augment)
         {
-            get
-            {
-                var all = Sub(State, "equipped");
-                var e = all[Perk] as JObject;
-                if (e == null)
-                {
-                    all[Perk] = e = new JObject
-                    {
-                        ["aug"] = new JObject { ["major"] = null, ["minor"] = new JArray() },
-                        ["drb"] = new JObject { ["major"] = null, ["minor"] = new JArray() },
-                    };
-                }
-                return e;
-            }
+            if (!augment) return 1;
+            return Perks.Get(perk).Augs.Any(a => a.Kind == NodeKind.Special && IsDone(a.Id)) ? 2 : 1;
         }
 
-        private static JObject Side(bool drawback) { return (JObject)Equipped[drawback ? "drb" : "aug"]; }
-
-        internal static string EquippedMajor(bool drawback)
+        // { aug:{major,minor[]}, drb:{major,minor[]} } de la perk
+        internal static JObject Equipped(string perk)
         {
-            var t = Side(drawback)["major"];
+            var all = Sub(State, "equipped");
+            var e = all[perk] as JObject;
+            if (e == null)
+            {
+                all[perk] = e = new JObject
+                {
+                    ["aug"] = new JObject { ["major"] = null, ["minor"] = new JArray() },
+                    ["drb"] = new JObject { ["major"] = null, ["minor"] = new JArray() },
+                };
+            }
+            return e;
+        }
+
+        private static JObject Side(string perk, bool drawback) { return (JObject)Equipped(perk)[drawback ? "drb" : "aug"]; }
+
+        internal static string EquippedMajor(string perk, bool drawback)
+        {
+            var t = Side(perk, drawback)["major"];
             return t != null && t.Type == JTokenType.String ? (string)t : null;
         }
 
-        internal static List<string> EquippedMinors(bool drawback)
+        internal static List<string> EquippedMinors(string perk, bool drawback)
         {
-            var arr = Side(drawback)["minor"] as JArray;
+            var arr = Side(perk, drawback)["minor"] as JArray;
             return arr == null ? new List<string>() : arr.Where(x => x.Type == JTokenType.String).Select(x => (string)x).ToList();
         }
 
         internal static bool IsEquipped(string id)
         {
+            var perk = PerkOf(id);
+            if (perk == null) return false;
             bool drb = Data.IsDrawback(id);
-            return EquippedMajor(drb) == id || EquippedMinors(drb).Contains(id);
+            return EquippedMajor(perk, drb) == id || EquippedMinors(perk, drb).Contains(id);
         }
 
         internal static bool IsMajor(string id)
         {
-            if (Data.IsDrawback(id)) return Data.DrbMajor.Contains(id);
+            var perk = Perks.OfNode(id);
+            if (perk == null) return false;
+            if (Data.IsDrawback(id)) return perk.DrbMajor.Contains(id);
             var a = Data.Aug(id);
             return a != null && a.Kind == NodeKind.Major;
         }
@@ -197,23 +211,25 @@ namespace TarkovaCola.Client
         internal static string ToggleEquip(string id, out string info)
         {
             info = null;
+            var perk = PerkOf(id);
+            if (perk == null) return null;
             bool drb = Data.IsDrawback(id);
-            var side = Side(drb);
+            var side = Side(perk, drb);
 
             if (IsEquipped(id))
             {
-                if (EquippedMajor(drb) == id)
+                if (EquippedMajor(perk, drb) == id)
                 {
                     side["major"] = null;
-                    if (drb && EquippedMajor(false) != null)
+                    if (drb && EquippedMajor(perk, false) != null)
                     {
-                        Side(false)["major"] = null;
+                        Side(perk, false)["major"] = null;
                         info = L.T("toast.drbremoved");
                     }
                 }
                 else
                 {
-                    side["minor"] = new JArray(EquippedMinors(drb).Where(x => x != id));
+                    side["minor"] = new JArray(EquippedMinors(perk, drb).Where(x => x != id));
                 }
                 Save();
                 return null;
@@ -221,21 +237,25 @@ namespace TarkovaCola.Client
 
             if (IsMajor(id))
             {
-                if (!drb && EquippedMajor(true) == null) return L.T("err.needdrb");
+                if (!drb && EquippedMajor(perk, true) == null) return L.T("err.needdrb");
                 side["major"] = id;
             }
             else
             {
-                var list = EquippedMinors(drb);
+                var list = EquippedMinors(perk, drb);
                 list.Add(id);
-                int n = MinorSlots(!drb);
+                int n = MinorSlots(perk, !drb);
                 side["minor"] = new JArray(list.Skip(Math.Max(0, list.Count - n)));   // si estan llenas, reemplaza la mas antigua
             }
             Save();
             return null;
         }
 
-        // % de nodos desbloqueados
-        internal static int Percent { get { return (int)Math.Round(100.0 * Data.Augs.Count(a => IsDone(a.Id)) / Data.Augs.Length); } }
+        // % de nodos desbloqueados de la perk
+        internal static int Percent(string perk)
+        {
+            var augs = Perks.Get(perk).Augs;
+            return (int)Math.Round(100.0 * augs.Count(a => IsDone(a.Id)) / augs.Length);
+        }
     }
 }

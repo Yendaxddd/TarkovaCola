@@ -20,7 +20,7 @@ namespace TarkovaCola.Client
         internal const string SpeedColaId = "6a1c00000000000000000c01";
 
         internal static BepInEx.Logging.ManualLogSource Log;
-        internal static bool SpeedColaActive;      // se bebio Speed Cola en esta raid
+        internal static bool SpeedColaActive { get { return Perks.IsActive("speedcola"); } }      // se bebio Speed Cola en esta raid
 
         internal static ConfigEntry<bool> CfgDebug;
         internal static ConfigEntry<bool> CfgShowNotice;
@@ -348,7 +348,7 @@ namespace TarkovaCola.Client
         [HarmonyPrefix]
         private static void Prefix()
         {
-            Plugin.SpeedColaActive = false;
+            Perks.ClearActive();
             Tracker.Reset();
             XpPatch.Awarded = false;
             Dbg.RaidStarted();
@@ -394,42 +394,57 @@ namespace TarkovaCola.Client
                 Awarded = true;
                 int raidXp = knownXp;
                 if (profile != null && profile.EftStats != null) raidXp = Math.Max(raidXp, profile.EftStats.TotalSessionExperience);
-                Plugin.Log.LogInfo("Fin de raid (" + source + "): XP de la sesion=" + raidXp + ", Speed Cola activa=" + Plugin.SpeedColaActive);
-                if (Plugin.SpeedColaActive && raidXp > 0)
-                    PerkService.AddXp((int)Math.Round(raidXp * (1.0 + PerkService.XpBonus)));
+                var active = Perks.ActivePerks.ToList();
+                Plugin.Log.LogInfo("Fin de raid (" + source + "): XP de la sesion=" + raidXp + ", perks activas=" + (active.Count == 0 ? "(ninguna)" : string.Join(", ", active.Select(p => p.Id).ToArray())));
+                if (raidXp > 0)
+                    foreach (var perk in active)
+                        PerkService.AddXp(perk.Id, (int)Math.Round(raidXp * (1.0 + PerkService.XpBonus)));
                 PerkService.Save();
             }
             catch (Exception e) { Plugin.Log.LogError("Error otorgando XP de perk: " + e); }
         }
     }
 
-    // Detecta que el jugador bebe una Speed Cola.
+    // Detecta que el jugador bebe una perk (cualquiera de Perks.All).
     [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.DoMedEffect))]
     internal static class DrinkPatch
     {
         [HarmonyPostfix]
         private static void Postfix(ActiveHealthController __instance, Item item)
         {
-            if (item == null || item.TemplateId != Plugin.SpeedColaId) return;
+            var def = item != null ? Perks.ByItem(item.StringTemplateId) : null;
+            if (def == null) return;
             if (__instance.Player == null || !__instance.Player.IsYourPlayer) return;
 
-            Plugin.SpeedColaActive = true;
-            Jingle.Play();
+            Perks.Activate(def.Id);
+            Jingle.Play(def);
             Perk.Refresh();
             Perk.LastKillOrDrink = Time.time;
-            Hud.Notify(L.T("notice.cola.title"), L.F("notice.cola.sub", Perk.ReloadMult.ToString("0.0")));
-            Dbg.Log("BEBIDA", "Speed Cola activada: recarga x" + Perk.ReloadMult.ToString("0.0") + (Perk.Has("a_rush") ? " (Sugar Rush equipada)" : ""));
+            Hud.Notify(def.Name.ToUpperInvariant(), def.DrinkNotice != null ? def.DrinkNotice() : "", def.Id);
+            Dbg.Log("BEBIDA", def.Id + " activada");
+            if (def.OnDrink != null) def.OnDrink(__instance);
+        }
+    }
+
+    // Efectos propios de Speed Cola al beberla.
+    internal static class SpeedColaDrink
+    {
+        internal static string Notice() { return L.F("notice.cola.sub", Perk.ReloadMult.ToString("0.0")); }
+
+        internal static void OnDrink(ActiveHealthController health)
+        {
+            Dbg.Log("BEBIDA", "Speed Cola: recarga x" + Perk.ReloadMult.ToString("0.0") + (Perk.Has("a_rush") ? " (Sugar Rush equipada)" : ""));
 
             // Loud Slurp: beberla hace ruido que oyen los bots cercanos
             if (Perk.Has("d_slurp"))
             {
-                var p = __instance.Player;
+                var p = health.Player;
                 Singleton<GlobalEventDispatcher>.Instance.PlaySound(p, p.Position, Perk.SlurpMeters, AISoundType.step);
                 Dbg.Log("EFECTO", "Loud Slurp: ruido de " + Perk.SlurpMeters.ToString("0") + " m");
             }
 
             // recalcula la recarga del arma en mano ya con el multiplicador
-            var fc = __instance.Player.HandsController as Player.FirearmController;
+            var fc = health.Player.HandsController as Player.FirearmController;
             if (fc != null) fc.SyncWithCharacterSkills();
         }
     }

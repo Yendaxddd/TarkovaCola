@@ -50,6 +50,7 @@ namespace TarkovaCola.Client
 
         // ---------------------------------------------------------------- estado
         private string _view = "progress";      // progress | equip
+        private PerkDef _perk = Perks.All[0];   // perk que se esta viendo
         private string _sel;                     // nodo seleccionado en Progreso
         private bool _animate = true;
         private bool _closing;
@@ -208,7 +209,7 @@ namespace TarkovaCola.Client
             Tab("progress", L.T("nav.progress"), 700);
             Tab("equip", L.T("nav.equip"), 900);
 
-            int lv = PerkService.Level;
+            int lv = PerkService.Level(_perk.Id);
             var chip = UiKit.Panel(_header, 1540, 46, 150, 40, UiKit.PanelBg, UiKit.Line);
             var ct = UiKit.Txt(chip.transform, L.T("level") + "  " + lv, 20, UiKit.C(75, 226, 124), TextAlignmentOptions.Center, false, true);
             UiKit.Stretch(ct.rectTransform);
@@ -230,31 +231,46 @@ namespace TarkovaCola.Client
 
         private void BuildLeft()
         {
-            var btn = UiKit.Panel(_left, 60, 150, 320, 64, UiKit.C(31, 138, 76, 0.85f), UiKit.C(109, 240, 160, 0.9f));
-            if (Hud.IconSprite != null)
+            _idx = 0;
+            for (int i = 0; i < Perks.All.Length; i++)
             {
-                var ic = UiKit.Img(btn.transform, "Icon", Color.white, Hud.IconSprite); UiKit.Place(ic.rectTransform, 12, 12, 40, 40);
+                var def = Perks.All[i];
+                bool sel = def == _perk;
+                float y = 150 + i * 76;
+                var btn = UiKit.Panel(_left, 60, y, 320, 64, sel ? UiKit.C(31, 138, 76, 0.85f) : UiKit.C(18, 34, 50, 0.9f), sel ? UiKit.C(109, 240, 160, 0.9f) : UiKit.Line);
+                var icon = Hud.IconSprite(def.Id);
+                if (icon != null)
+                {
+                    var ic = UiKit.Img(btn.transform, "Icon", Color.white, icon); UiKit.Place(ic.rectTransform, 12, 12, 40, 40);
+                }
+                T(btn.transform, def.Name, 66, 20, 180, 26, 20, sel ? UiKit.White : UiKit.Dim, TextAlignmentOptions.TopLeft, false, true);
+                T(btn.transform, PerkService.Percent(def.Id) + "%", 240, 22, 70, 22, 16, sel ? UiKit.C(234, 255, 241) : UiKit.Dim, TextAlignmentOptions.TopRight);
+                if (!sel)
+                {
+                    var p = def;
+                    // zona de clic: seleccionar otra perk
+                    UiButton.Make(_left, 60, y, 320, 64, () => { _perk = p; _sel = null; Rebuild(true); },
+                                  UiKit.C(255, 255, 255, 0f), UiKit.C(255, 255, 255, 0.06f));
+                }
+                if (_animate) Enter(btn.rectTransform);
             }
-            T(btn.transform, L.T("perk.speedcola"), 66, 20, 180, 26, 20, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            T(btn.transform, PerkService.Percent + "%", 240, 22, 70, 22, 16, UiKit.C(234, 255, 241), TextAlignmentOptions.TopRight);
-            if (_animate) { _idx = 0; Enter(btn.rectTransform); }
         }
 
         // cabecera de la perk: icono, nombre, descripcion y barra de XP (comun a las dos pantallas)
         private void BuildHead()
         {
-            int lv, cur, max; PerkService.LevelInfo(PerkService.Xp, out lv, out cur, out max);
+            int lv, cur, max; PerkService.LevelInfo(PerkService.Xp(_perk.Id), out lv, out cur, out max);
             var head = UiKit.Rect(_stage, "Head"); UiKit.Place(head, 0, 0, 1440, 140);
-            if (Hud.IconSprite != null)
+            if (Hud.IconSprite(_perk.Id) != null)
             {
                 UiKit.Panel(head, 0, 0, 100, 100, UiKit.C(0, 0, 0, 0), UiKit.C(120, 190, 225, 0.5f), 2f);
-                var ic = UiKit.Img(head, "PerkIcon", Color.white, Hud.IconSprite); UiKit.Place(ic.rectTransform, 5, 5, 90, 90);
+                var ic = UiKit.Img(head, "PerkIcon", Color.white, Hud.IconSprite(_perk.Id)); UiKit.Place(ic.rectTransform, 5, 5, 90, 90);
             }
-            T(head, L.T("perk.speedcola"), 124, -2, 800, 54, 46, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            T(head, L.T("perk.speedcola.desc"), 124, 54, 1000, 44, 16, UiKit.Text, TextAlignmentOptions.TopLeft, true);
+            T(head, _perk.Name, 124, -2, 800, 54, 46, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(head, _perk.Desc, 124, 54, 1000, 44, 16, UiKit.Text, TextAlignmentOptions.TopLeft, true);
             T(head, L.T("level") + " " + lv, 124, 104, 300, 20, 14, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
-            T(head, PerkService.IsMax ? L.T("xp.max") : cur + " / " + max + " XP", 124, 104, 560, 20, 14, PerkService.IsMax ? UiKit.Gold : UiKit.Dim, TextAlignmentOptions.TopRight, false, PerkService.IsMax);
-            Bar(head, 124, 126, 560, 10, cur / (float)max, PerkService.IsMax ? UiKit.Gold : UiKit.C(31, 174, 93));
+            T(head, PerkService.IsMax(_perk.Id) ? L.T("xp.max") : cur + " / " + max + " XP", 124, 104, 560, 20, 14, PerkService.IsMax(_perk.Id) ? UiKit.Gold : UiKit.Dim, TextAlignmentOptions.TopRight, false, PerkService.IsMax(_perk.Id));
+            Bar(head, 124, 126, 560, 10, cur / (float)max, PerkService.IsMax(_perk.Id) ? UiKit.Gold : UiKit.C(31, 174, 93));
             Enter(head);
         }
 
@@ -266,7 +282,7 @@ namespace TarkovaCola.Client
 
         private static string State(AugDef a)
         {
-            return PerkService.IsDone(a.Id) ? "done" : PerkService.Level >= a.Lvl ? "active" : "locked";
+            return PerkService.IsDone(a.Id) ? "done" : PerkService.Level(a.Perk) >= a.Lvl ? "active" : "locked";
         }
 
         private void BuildProgress()
@@ -274,7 +290,7 @@ namespace TarkovaCola.Client
             var tree = UiKit.Panel(_stage, 0, 142, 1440, 650, UiKit.PanelBg, UiKit.Line);
             Enter(tree.rectTransform);
 
-            var augs = Data.Augs.OrderBy(a => a.Seq).ToList();
+            var augs = _perk.Augs.OrderBy(a => a.Seq).ToList();
             var centers = new Dictionary<string, Vector2>();
             foreach (var a in augs)
             {
@@ -321,7 +337,7 @@ namespace TarkovaCola.Client
             float size = hex ? 100f : 88f;
             if (st == "done") UiKit.Badge(node, 200, 76, size + 18, hex, UiKit.C((int)(ring.r * 255), (int)(ring.g * 255), (int)(ring.b * 255), 0.22f), null, Color.white);
             if (sel) UiKit.Badge(node, 200, 76, size + 12, hex, Color.white, null, Color.white);
-            UiKit.Badge(node, 200, 76, size, hex, ring, a.Kind == NodeKind.Special ? null : Hud.IconSprite, tint, a.Kind == NodeKind.Special ? "+2" : null);
+            UiKit.Badge(node, 200, 76, size, hex, ring, a.Kind == NodeKind.Special ? null : Hud.IconSprite(_perk.Id), tint, a.Kind == NodeKind.Special ? "+2" : null);
 
             var dsc = T(node, Data.Desc(a.Id), 30, 140, 340, 40, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
             dsc.lineSpacing = 4f;
@@ -371,14 +387,14 @@ namespace TarkovaCola.Client
 
             // columna de mejoras y de desventajas
             Section(left.transform, 20, 16, 500, "sec.am", "am");
-            Tiles(left.transform, 20, 54, Data.AugsOf(NodeKind.Major).Select(a => a.Id).ToList(), "am", 160, 190, 3);
+            Tiles(left.transform, 20, 54, _perk.AugsOf(NodeKind.Major).Select(a => a.Id).ToList(), "am", 160, 190, 3);
             Section(left.transform, 20, 268, 500, "sec.an", "an");
-            Tiles(left.transform, 20, 306, Data.AugsOf(NodeKind.Minor).Select(a => a.Id).ToList(), "an", 245, 172, 2);
+            Tiles(left.transform, 20, 306, _perk.AugsOf(NodeKind.Minor).Select(a => a.Id).ToList(), "an", 245, 172, 2);
 
             Section(left.transform, 550, 16, 500, "sec.dm", "dm");
-            Tiles(left.transform, 550, 54, Data.DrbMajor.ToList(), "dm", 160, 190, 3);
+            Tiles(left.transform, 550, 54, _perk.DrbMajor.ToList(), "dm", 160, 190, 3);
             Section(left.transform, 550, 268, 500, "sec.dn", "dn");
-            Tiles(left.transform, 550, 306, Data.DrbMinor.ToList(), "dn", 245, 172, 2);
+            Tiles(left.transform, 550, 306, _perk.DrbMinor.ToList(), "dn", 245, 172, 2);
 
             BuildSlots(right.transform);
         }
@@ -417,7 +433,7 @@ namespace TarkovaCola.Client
 
             bool hex = cls == "am" || cls == "dm";
             Color ring = ok ? c : UiKit.C(80, 92, 104), tint = ok ? Color.white : UiKit.C(90, 90, 90);
-            UiKit.Badge(tile.transform, w / 2f, 58, hex ? 62 : 54, hex, ring, Hud.IconSprite, tint);
+            UiKit.Badge(tile.transform, w / 2f, 58, hex ? 62 : 54, hex, ring, Hud.IconSprite(_perk.Id), tint);
             T(tile.transform, Data.Name(id), 6, 98, w - 12, 20, 14, ok ? UiKit.White : UiKit.Dim, TextAlignmentOptions.Top, false, true);
 
             string body; Color bc = UiKit.Dim;
@@ -451,19 +467,19 @@ namespace TarkovaCola.Client
         private void BuildSlots(Transform p)
         {
             T(p, L.T("perk.speedcola"), 20, 16, 300, 30, 26, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
-            var rules = T(p, L.F("equip.rules", PerkService.MinorSlots(true)), 20, 56, 300, 110, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
+            var rules = T(p, L.F("equip.rules", PerkService.MinorSlots(_perk.Id, true)), 20, 56, 300, 110, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
             rules.lineSpacing = 10f;
             rules.paragraphSpacing = 8f;
 
             Section(p, 20, 190, 300, "equip.augments", "am");
-            var augMinor = PerkService.EquippedMinors(false);
-            Slot(p, 20, 230, PerkService.EquippedMajor(false), "am");
+            var augMinor = PerkService.EquippedMinors(_perk.Id, false);
+            Slot(p, 20, 230, PerkService.EquippedMajor(_perk.Id, false), "am");
             for (int i = 0; i < 2; i++)
-                Slot(p, 20 + (i + 1) * 106, 230, i < augMinor.Count ? augMinor[i] : null, "an", off: i >= PerkService.MinorSlots(true));
+                Slot(p, 20 + (i + 1) * 106, 230, i < augMinor.Count ? augMinor[i] : null, "an", off: i >= PerkService.MinorSlots(_perk.Id, true));
 
             Section(p, 20, 384, 300, "equip.drawbacks", "dm");
-            var drbMinor = PerkService.EquippedMinors(true);
-            Slot(p, 20, 424, PerkService.EquippedMajor(true), "dm");
+            var drbMinor = PerkService.EquippedMinors(_perk.Id, true);
+            Slot(p, 20, 424, PerkService.EquippedMajor(_perk.Id, true), "dm");
             Slot(p, 126, 424, drbMinor.Count > 0 ? drbMinor[0] : null, "dn");
 
             // multiplicador de XP
@@ -493,7 +509,7 @@ namespace TarkovaCola.Client
                 b.Target = slot; b.Normal = slot.color; b.Hover = UiKit.C((int)(c.r * 60 + 26), (int)(c.g * 60 + 44), (int)(c.b * 60 + 60), 0.98f);
                 b.OnClick = () => OnTile(id);
                 bool hex = cls == "am" || cls == "dm";
-                UiKit.Badge(slot.transform, 49, 38, hex ? 52 : 46, hex, c, Hud.IconSprite, Color.white);
+                UiKit.Badge(slot.transform, 49, 38, hex ? 52 : 46, hex, c, Hud.IconSprite(_perk.Id), Color.white);
                 T(slot.transform, Data.Name(id), 4, 68, 90, 34, 11, UiKit.White, TextAlignmentOptions.Top, true, true);
             }
             else T(slot.transform, "+", 0, 34, 98, 40, 34, new Color(c.r, c.g, c.b, 0.7f), TextAlignmentOptions.Top);

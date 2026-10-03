@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    // Estado en raid de Speed Cola: que mejoras/desventajas lleva equipadas el jugador y valores de los efectos.
+    // Estado en raid de las perks: que mejoras/desventajas lleva equipadas el jugador y valores de los efectos (los de Speed Cola aqui).
     // Todo lo que se consulta muchas veces por segundo son campos simples (sin calculos) para no costar FPS.
     internal static class Perk
     {
@@ -41,29 +41,38 @@ namespace TarkovaCola.Client
             LastKillOrDrink = Time.time; ReloadCount = 0; CrashMult = 1f;
         }
 
-        // Lee del estado guardado que lleva equipado el jugador (se llama al empezar la raid y al beber).
+        // Lee del estado guardado que lleva equipado el jugador, de todas las perks (se llama al empezar la raid y al beber).
+        // Los ids de mejoras son unicos entre perks, asi que basta un unico conjunto.
         internal static void Refresh()
         {
             _eq.Clear();
             try
             {
-                var e = PerkService.State["equipped"]?[PerkService.Perk] as JObject;
-                if (e == null) return;
-                foreach (var side in new[] { "aug", "drb" })
+                foreach (var perk in Perks.All)
                 {
-                    var s = e[side] as JObject;
-                    if (s == null) continue;
-                    if (s["major"] != null && s["major"].Type == JTokenType.String) _eq.Add((string)s["major"]);
-                    var minors = s["minor"] as JArray;
-                    if (minors != null) foreach (var m in minors) if (m.Type == JTokenType.String) _eq.Add((string)m);
+                    var e = PerkService.State["equipped"]?[perk.Id] as JObject;
+                    if (e == null) continue;
+                    foreach (var side in new[] { "aug", "drb" })
+                    {
+                        var s = e[side] as JObject;
+                        if (s == null) continue;
+                        if (s["major"] != null && s["major"].Type == JTokenType.String) _eq.Add((string)s["major"]);
+                        var minors = s["minor"] as JArray;
+                        if (minors != null) foreach (var m in minors) if (m.Type == JTokenType.String) _eq.Add((string)m);
+                    }
                 }
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("No se pudo leer el equipamiento: " + ex.Message); }
             Dbg.Log("EQUIP", "equipado: " + (_eq.Count == 0 ? "(nada)" : string.Join(", ", _eq.ToArray())));
         }
 
-        // La mejora/desventaja esta equipada Y la Speed Cola esta activa (se bebio en esta raid).
-        internal static bool Has(string id) { return Plugin.SpeedColaActive && _eq.Contains(id); }
+        // La mejora/desventaja esta equipada Y su perk esta activa (se bebio en esta raid).
+        internal static bool Has(string id)
+        {
+            if (!_eq.Contains(id)) return false;
+            var perk = Perks.OfNode(id);
+            return perk != null && Perks.IsActive(perk.Id);
+        }
 
         internal static float ReloadMult
         {

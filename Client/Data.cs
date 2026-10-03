@@ -115,7 +115,7 @@ namespace TarkovaCola.Client
             // ---- avisos en pantalla (HUD) ----
             ["notice.cola.title"]  = new[] { "SPEED COLA", "SPEED COLA" },
             ["notice.cola.sub"]    = new[] { "Velocidad de recarga x{0}", "Reload speed x{0}" },
-            ["notice.level.title"] = new[] { "SPEED COLA · NIVEL {0}", "SPEED COLA · LEVEL {0}" },
+            ["notice.level.title"] = new[] { "{0} · NIVEL {1}", "{0} · LEVEL {1}" },
             ["notice.level.sub"]   = new[] { "Nuevos desafíos disponibles", "New challenges available" },
             ["notice.chal.title"]  = new[] { "DESAFÍO COMPLETADO", "CHALLENGE COMPLETE" },
             ["notice.chal.sub"]    = new[] { "{0} desbloqueada", "{0} unlocked" },
@@ -127,7 +127,7 @@ namespace TarkovaCola.Client
             ["raid.title"]      = new[] { "SPEED COLA", "SPEED COLA" },
             ["raid.level"]      = new[] { "NIVEL {0}", "LEVEL {0}" },
             ["raid.xpraid"]     = new[] { "+{0} XP esta raid (x1.25)", "+{0} XP this raid (x1.25)" },
-            ["raid.drink"]      = new[] { "Bebe Speed Cola en la raid para ganar XP de la perk.", "Drink Speed Cola in raid to earn perk XP." },
+            ["raid.drink"]      = new[] { "Bebe {0} en la raid para ganar XP de la perk.", "Drink {0} in raid to earn perk XP." },
             ["raid.pending"]    = new[] { "DESAFÍOS PENDIENTES", "PENDING CHALLENGES" },
             ["raid.none"]       = new[] { "Sin desafíos activos. Sube de nivel para revelar más.", "No active challenges. Level up to reveal more." },
 
@@ -183,64 +183,42 @@ namespace TarkovaCola.Client
     }
 
     // ============================================================================================
-    //  Definiciones de Speed Cola (mejoras, desventajas y desafios)
+    //  Consultas sobre las definiciones de mejoras/desventajas (los datos estan en PerkDefs.cs)
     // ============================================================================================
-    internal enum NodeKind { Major, Minor, Special }
-
-    internal class AugDef
-    {
-        public string Id;
-        public NodeKind Kind;
-        public int Seq;        // orden en el camino en serpiente (1..9)
-        public int Lvl;        // nivel de la perk que revela el desafio
-        public int Goal;       // objetivo del desafio
-    }
-
     internal static class Data
     {
-        // Cada mejora desbloquea la desventaja del mismo tipo y misma posicion en su lista.
-        internal static readonly AugDef[] Augs =
-        {
-            new AugDef{Id="a_quick",  Kind=NodeKind.Major,   Seq=1, Lvl=1, Goal=3},
-            new AugDef{Id="a_bolt",   Kind=NodeKind.Major,   Seq=3, Lvl=2, Goal=5},
-            new AugDef{Id="a_rush",   Kind=NodeKind.Major,   Seq=7, Lvl=4, Goal=4},
-            new AugDef{Id="a_steady", Kind=NodeKind.Minor,   Seq=2, Lvl=1, Goal=4},
-            new AugDef{Id="a_check",  Kind=NodeKind.Minor,   Seq=5, Lvl=3, Goal=20},
-            new AugDef{Id="a_mags",   Kind=NodeKind.Minor,   Seq=4, Lvl=2, Goal=20},
-            new AugDef{Id="a_count",  Kind=NodeKind.Minor,   Seq=6, Lvl=3, Goal=15},
-            new AugDef{Id="s_slot",   Kind=NodeKind.Special, Seq=9, Lvl=5, Goal=1},
-        };
-
-        internal static readonly string[] DrbMajor = { "d_jitter", "d_over", "d_crash" };
-        internal static readonly string[] DrbMinor = { "d_dry", "d_slurp", "d_jam", "d_sweet" };
-
-        // posicion (col,fila) de cada paso del camino en serpiente 3x3
+        // posicion (col,fila) de cada paso del camino en serpiente 3x3 (comun a todas las perks)
         internal static readonly int[][] Snake =
         {
             null, new[] {0,0}, new[] {1,0}, new[] {2,0}, new[] {2,1}, new[] {1,1}, new[] {0,1}, new[] {0,2}, new[] {1,2}, new[] {2,2},
         };
 
-        internal static AugDef Aug(string id) { return Augs.FirstOrDefault(a => a.Id == id); }
-        internal static IEnumerable<AugDef> AugsOf(NodeKind k) { return Augs.Where(a => a.Kind == k); }
+        internal static AugDef Aug(string id) { return Perks.All.SelectMany(p => p.Augs).FirstOrDefault(a => a.Id == id); }
 
-        internal static bool IsDrawback(string id) { return id.StartsWith("d_"); }
+        internal static bool IsDrawback(string id)
+        {
+            return Perks.All.Any(p => p.DrbMajor.Contains(id) || p.DrbMinor.Contains(id));
+        }
 
         // desventaja ligada a una mejora (null para el desbloqueo especial)
         internal static string PairOf(string augId)
         {
             var a = Aug(augId);
             if (a == null || a.Kind == NodeKind.Special) return null;
-            int i = AugsOf(a.Kind).ToList().FindIndex(x => x.Id == augId);
-            return a.Kind == NodeKind.Major ? DrbMajor[i] : DrbMinor[i];
+            var perk = Perks.Get(a.Perk);
+            int i = perk.AugsOf(a.Kind).ToList().FindIndex(x => x.Id == augId);
+            return a.Kind == NodeKind.Major ? perk.DrbMajor[i] : perk.DrbMinor[i];
         }
 
         // mejora que desbloquea una desventaja
         internal static string AugOf(string drbId)
         {
-            int i = Array.IndexOf(DrbMajor, drbId);
-            if (i >= 0) return AugsOf(NodeKind.Major).ElementAt(i).Id;
-            i = Array.IndexOf(DrbMinor, drbId);
-            return i >= 0 ? AugsOf(NodeKind.Minor).ElementAt(i).Id : null;
+            var perk = Perks.OfNode(drbId);
+            if (perk == null) return null;
+            int i = Array.IndexOf(perk.DrbMajor, drbId);
+            if (i >= 0) return perk.AugsOf(NodeKind.Major).ElementAt(i).Id;
+            i = Array.IndexOf(perk.DrbMinor, drbId);
+            return i >= 0 ? perk.AugsOf(NodeKind.Minor).ElementAt(i).Id : null;
         }
 
         internal static string Name(string id) { return L.T(id + ".n"); }
