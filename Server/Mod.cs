@@ -87,12 +87,16 @@ namespace TarkovaCola.Server
             GpPrice = 7,
             Bundle = "assets/content/items/consumables/tarkovacola/staminup.bundle",
             DescEn =
-                "Perk-a-cola: Tastes like cough syrup and ambition. Your legs feel like they were made for running... " +
-                "and whatever you were running from can wait. Drink it and find out how far you can go!\n\n" +
+                "Perk-a-cola: Tastes like cough syrup and ambition, with a hint of lemon that has clearly never met a real lemon. " +
+                "Your legs suddenly feel like they were built for running, and whatever you were running from can wait... or maybe it can't. " +
+                "Side effects may include: sprinting right past your own squad, forgetting where the extract is, and a firm belief that stairs are optional. " +
+                "Drink it! See how far those legs will take you!\n\n" +
                 "Leg stamina x1.5 for the rest of the raid.",
             DescEs =
-                "Perk-a-cola: Sabe a jarabe para la tos y a ambicion. Tus piernas sienten que nacieron para correr... " +
-                "y de lo que huias puede esperar. Bebela y descubre hasta donde llegas!\n\n" +
+                "Perk-a-cola: Sabe a jarabe para la tos y a ambicion, con un toque de limon que claramente nunca ha conocido un limon de verdad. " +
+                "De pronto tus piernas sienten que nacieron para correr, y de lo que huias puede esperar... o quiza no. " +
+                "Efectos secundarios: adelantar a tu propio escuadron, olvidar donde esta la extraccion y creer sin motivo que las escaleras son opcionales. " +
+                "Bebela! A ver hasta donde te llevan esas piernas!\n\n" +
                 "Estamina de piernas x1.5 el resto de la raid.",
             AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };

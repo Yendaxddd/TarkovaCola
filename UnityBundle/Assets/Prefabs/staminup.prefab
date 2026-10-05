@@ -74,7 +74,7 @@ MonoBehaviour:
   Icon:
     position: {x: 0, y: 0, z: 0}
     hasOffset: 0
-    rotation: {x: 0.049325272, y: 0.7053843, z: 0.049325272, w: 0.7053843}
+    rotation: {x: 0, y: 0.34202012, z: 0, w: 0.9396926}
     boundsScale: 1
     perspective: 15
     orthographic: 0

@@ -68,7 +68,7 @@ namespace TarkovaCola
             pivot.pivotPosition = Vector3.zero;
             pivot.pivotRotation = Quaternion.identity;
             pivot.scale = Vector3.one;
-            pivot.Icon.rotation = Quaternion.Euler(0f, IconYaw(), 8f);
+            pivot.Icon.rotation = Quaternion.Euler(0f, IconYaw(), 0f);
             pivot.Icon.boundsScale = 1f;
 
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
@@ -83,7 +83,7 @@ namespace TarkovaCola
         }
 
         // Giro (en Y) con el que el icono del inventario ensena la etiqueta de frente; se ajusta mirando los previews.
-        private static float IconYaw() { return float.Parse(System.Environment.GetEnvironmentVariable("STAMIN_ICON_YAW") ?? "90"); }
+        private static float IconYaw() { return float.Parse(System.Environment.GetEnvironmentVariable("STAMIN_ICON_YAW") ?? "40"); }
 
         private static Mesh MeshOf(Transform t)
         {
@@ -141,10 +141,10 @@ namespace TarkovaCola
         {
             var m = Std("staminup_liquid");
             m.mainTexture = Load("i_wardog_t7_perk_bottle_water_stamin_c.png");
-            m.color = new Color(0.82f, 0.74f, 0.45f);   // el liquido real es amarillo oliva; la iluminacion plana lo deja pastel
+            m.color = new Color(0.72f, 0.52f, 0.16f);   // el liquido real es amarillo oliva; la iluminacion plana lo deja pastel
             m.SetFloat("_Metallic", 0f); m.SetFloat("_Glossiness", 0.35f);
             // un poco de brillo propio para que se lea el color del liquido a traves del cristal
-            m.SetTexture("_EmissionMap", m.mainTexture); m.SetColor("_EmissionColor", new Color(0.12f, 0.12f, 0.12f)); m.EnableKeyword("_EMISSION");
+            m.SetTexture("_EmissionMap", m.mainTexture); m.SetColor("_EmissionColor", new Color(0.05f, 0.04f, 0.02f)); m.EnableKeyword("_EMISSION");
             return m;
         }
 
@@ -207,11 +207,11 @@ namespace TarkovaCola
             RenderSettings.ambientLight = new Color(0.55f, 0.55f, 0.55f);
             var rt = new RenderTexture(256, 512, 24, RenderTextureFormat.ARGB32);
             cam.targetTexture = rt;
-            foreach (int yaw in new[] { 0, 90, 180, 270 })
+            foreach (int yaw in new[] { 30, 50, 70, 90, 110, 130 })
             {
                 var inst = (GameObject)Object.Instantiate(prefab);
                 foreach (var c in inst.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(c);
-                inst.transform.rotation = Quaternion.Euler(0f, yaw, 8f);
+                inst.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
                 cam.Render();
                 var prev = RenderTexture.active;
                 RenderTexture.active = rt;
