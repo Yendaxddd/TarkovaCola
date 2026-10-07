@@ -188,6 +188,24 @@ namespace TarkovaCola.Client
             ["notice.stamin.sub"]  = new[] { "Estamina de piernas x{0}", "Leg stamina x{0}" },
             ["notice.wind.sub"]    = new[] { "Estamina infinita e inmunidad al dolor", "Infinite stamina and pain immunity" },
 
+            // ---- Juggernog / PHD Flopper / Widow's Wine ----
+            ["perk.juggernog"]      = new[] { "Juggernog", "Juggernog" },
+            ["perk.juggernog.desc"] = new[] {
+                "Daño recibido -33% el resto de la raid. Sube de nivel para desbloquear desafíos; cada desafío desbloquea una mejora y su desventaja.",
+                "Damage taken -33% for the rest of the raid. Level up to unlock challenges; each challenge unlocks an augment and its drawback." },
+            ["notice.juggernog.sub"] = new[] { "Daño recibido -{0}%", "Damage taken -{0}%" },
+            ["perk.phdflopper"]      = new[] { "PHD Flopper", "PHD Flopper" },
+            ["perk.phdflopper.desc"] = new[] {
+                "Inmune al daño por caídas y explosiones el resto de la raid. Sube de nivel para desbloquear desafíos; cada desafío desbloquea una mejora y su desventaja.",
+                "Immune to fall and explosion damage for the rest of the raid. Level up to unlock challenges; each challenge unlocks an augment and its drawback." },
+            ["notice.phdflopper.sub"] = new[] { "Inmune a caídas y explosiones", "Immune to falls and explosions" },
+            ["perk.widowswine"]      = new[] { "Widow's Wine", "Widow's Wine" },
+            ["perk.widowswine.desc"] = new[] {
+                "Tus granadas atrapan en telarañas a los enemigos cercanos el resto de la raid. Sube de nivel para desbloquear desafíos; cada desafío desbloquea una mejora y su desventaja.",
+                "Your grenades web nearby enemies for the rest of the raid. Level up to unlock challenges; each challenge unlocks an augment and its drawback." },
+            ["notice.widowswine.sub"] = new[] { "Tus granadas atrapan en telarañas", "Your grenades web enemies" },
+            ["notice.web.sub"]        = new[] { "{0} enemigo(s) atrapado(s)", "{0} enemy(ies) webbed" },
+
             ["st_rush.n"]     = new[] { "HORA PUNTA", "RUSH HOUR" },
             ["st_rush.d"]     = new[] { "Tras una baja, recuperas toda la estamina de las piernas.", "After a kill, your leg stamina refills completely." },
             ["st_rush.c"]     = new[] { "Haz 3 bajas en menos de 3 minutos con Stamin-Up activa.", "Get 3 kills in under 3 minutes with Stamin-Up active." },

@@ -102,7 +102,7 @@ namespace TarkovaCola.Client
             int before = Level(perk);
             Sub(State, "xp")[perk] = Xp(perk) + amount;
             Plugin.Log.LogInfo(perk + " +" + amount + " XP (total " + Xp(perk) + ")");
-            if (Level(perk) > before) Hud.Notify(L.F("notice.level.title", Perks.Get(perk).Name.ToUpperInvariant(), Level(perk)), L.T("notice.level.sub"), perk);
+            if (Level(perk) > before && Perks.Get(perk).HasTree) Hud.Notify(L.F("notice.level.title", Perks.Get(perk).Name.ToUpperInvariant(), Level(perk)), L.T("notice.level.sub"), perk);
             Save();
             Achievements.CheckState();
         }
@@ -259,7 +259,7 @@ namespace TarkovaCola.Client
         internal static int Percent(string perk)
         {
             var augs = Perks.Get(perk).Augs;
-            return (int)Math.Round(100.0 * augs.Count(a => IsDone(a.Id)) / augs.Length);
+            return augs.Length == 0 ? 0 : (int)Math.Round(100.0 * augs.Count(a => IsDone(a.Id)) / augs.Length);
         }
     }
 }

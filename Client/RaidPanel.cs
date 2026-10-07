@@ -110,7 +110,7 @@ namespace TarkovaCola.Client
             float y = 14f;
 
             bool first = true;
-            foreach (var def in Perks.All)
+            foreach (var def in Perks.UiPerks)
             {
                 if (!first)
                 {

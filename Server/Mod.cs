@@ -54,6 +54,9 @@ namespace TarkovaCola.Server
         // acceso directo a Speed Cola (lo usan los logros)
         internal const string SpeedColaId = "6a1c00000000000000000c01";
         internal const string StaminUpId = "6a1c00000000000000000c02";
+        internal const string JuggernogId = "6a1c00000000000000000c03";
+        internal const string PhdFlopperId = "6a1c00000000000000000c04";
+        internal const string WidowsWineId = "6a1c00000000000000000c05";
 
         internal static readonly PerkDef SpeedCola = new PerkDef
         {
@@ -101,7 +104,73 @@ namespace TarkovaCola.Server
             AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp };
+        internal static readonly PerkDef Juggernog = new PerkDef
+        {
+            Id = "juggernog",
+            ItemId = JuggernogId,
+            TraderItemId = "6a1c00000000000000000d03",
+            ItemName = "tarkovacola_juggernog",
+            NameEn = "Juggernog", NameEs = "Juggernog", ShortName = "Jugg",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/juggernog.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like a cherry-flavored brick wall. Bullets suddenly feel more like rude suggestions, and your skin has started negotiating with them. " +
+                "Side effects may include: opening doors with your forehead, ignoring the word \"cover\", and a deep, irrational trust in your own ribcage. " +
+                "Drink it! See how many bullets it takes to change your mind!\n\n" +
+                "Damage taken -33% for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a una pared de ladrillos de cereza. De pronto las balas parecen más bien sugerencias groseras, y tu piel ha empezado a negociar con ellas. " +
+                "Efectos secundarios: abrir puertas con la frente, ignorar la palabra \"cobertura\" y una confianza profunda e irracional en tu caja torácica. " +
+                "¡Bébela! ¡A ver cuántas balas hacen falta para que cambies de opinión!\n\n" +
+                "Daño recibido -33% el resto de la raid.",
+            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
+        };
+
+        internal static readonly PerkDef PhdFlopper = new PerkDef
+        {
+            Id = "phdflopper",
+            ItemId = PhdFlopperId,
+            TraderItemId = "6a1c00000000000000000d04",
+            ItemName = "tarkovacola_phdflopper",
+            NameEn = "PHD Flopper", NameEs = "PHD Flopper", ShortName = "PHD",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/phdflopper.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like grape soda and questionable decisions. Gravity is now more of a suggestion, and explosions are just very loud hugs. " +
+                "Side effects may include: jumping off things to see what happens, hugging live grenades, and calling bruises \"overrated\". " +
+                "Drink it! Flop with confidence!\n\n" +
+                "Immune to fall and explosion damage for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a refresco de uva y a malas decisiones. La gravedad ahora es más bien una sugerencia, y las explosiones son abrazos muy ruidosos. " +
+                "Efectos secundarios: saltar desde cualquier sitio para ver qué pasa, abrazar granadas activas y llamar \"exagerados\" a los moretones. " +
+                "¡Bébela! ¡A caer con confianza!\n\n" +
+                "Inmune al daño por caídas y explosiones el resto de la raid.",
+            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
+        };
+
+        internal static readonly PerkDef WidowsWine = new PerkDef
+        {
+            Id = "widowswine",
+            ItemId = WidowsWineId,
+            TraderItemId = "6a1c00000000000000000d05",
+            ItemName = "tarkovacola_widowswine",
+            NameEn = "Widow's Wine", NameEs = "Widow's Wine", ShortName = "Widow",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/widowswine.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like dark wine, cobwebs and a grudge. The grenades you throw now leave a sticky surprise, and everyone nearby moves like they are wading through honey. " +
+                "Side effects may include: spinning webs in your sleep, an unhealthy love of corners, and the sudden urge to say \"come into my parlor\". " +
+                "Drink it! Let them come to you!\n\n" +
+                "Grenades you throw web the enemies within 10 m: -60% movement speed for 6 seconds.",
+            DescEs =
+                "Perk-a-cola: Sabe a vino oscuro, telarañas y rencor. Las granadas que lanzas ahora dejan una sorpresa pegajosa, y todos los de alrededor se mueven como si caminaran en miel. " +
+                "Efectos secundarios: tejer redes mientras duermes, un amor poco sano por las esquinas y unas ganas repentinas de decir \"pasa a mi salón\". " +
+                "¡Bébela! ¡Que vengan a ti!\n\n" +
+                "Tus granadas atrapan en telarañas a los enemigos a menos de 10 m: -60% de velocidad de movimiento durante 6 segundos.",
+            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine };
     }
 
     // Fase 1: crea el item Speed Cola (clon de TarCola) y lo vende en Therapist (LL1).

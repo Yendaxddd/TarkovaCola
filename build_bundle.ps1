@@ -23,11 +23,17 @@ $handSrc = Join-Path $proj 'Build\hand\speedcola_hand.bundle'
 if (-not (Test-Path $handSrc)) { throw "Unity no genero el bundle de mano; revisa $log" }
 Copy-Item $handSrc (Join-Path $root 'Client\assets\speedcola_hand.bundle') -Force
 
-# ---- Stamin-Up (botella de perks.fbx) ----
-$p2 = Start-Process $unity -ArgumentList '-batchmode','-nographics','-quit','-projectPath',"`"$proj`"",'-executeMethod','TarkovaCola.BuildStaminUp.Run','-logFile',"`"$log`"" -PassThru -Wait
-if ($p2.ExitCode -ne 0) { throw "Unity fallo con Stamin-Up (codigo $($p2.ExitCode)); revisa $log" }
-foreach ($f in @('Build\staminup\staminup.bundle', 'Build\staminup_hand\staminup_hand.bundle')) { if (-not (Test-Path (Join-Path $proj $f))) { throw "Unity no genero $f; revisa $log" } }
-Copy-Item (Join-Path $proj 'Build\staminup\staminup.bundle') $dest -Force
-Copy-Item (Join-Path $proj 'Build\staminup_hand\staminup_hand.bundle') (Join-Path $root 'Client\assets\staminup_hand.bundle') -Force
+# ---- Perks de botella (Stamin-Up, Juggernog, PHD Flopper, Widow's Wine) a partir de perks.fbx ----
+# perks.fbx y sus texturas NO estan en el repo (licencia Sketchfab Free Standard): descargalos de Sketchfab y copialos en
+# UnityBundle/Assets/Models/perks/ (perks.fbx) y UnityBundle/Assets/Models/perks/tex/ (texturas). Ver README.
+$p2 = Start-Process $unity -ArgumentList '-batchmode','-nographics','-quit','-projectPath',"`"$proj`"",'-executeMethod','TarkovaCola.BuildPerkBottles.Run','-logFile',"`"$log`"" -PassThru -Wait
+if ($p2.ExitCode -ne 0) { throw "Unity fallo con las botellas (codigo $($p2.ExitCode)); revisa $log" }
+foreach ($id in @('staminup', 'juggernog', 'phdflopper', 'widowswine')) {
+    $world = Join-Path $proj "Build\$id\$id.bundle"
+    $hand  = Join-Path $proj "Build\${id}_hand\${id}_hand.bundle"
+    if (-not (Test-Path $world) -or -not (Test-Path $hand)) { throw "Unity no genero los bundles de $id; revisa $log" }
+    Copy-Item $world $dest -Force
+    Copy-Item $hand (Join-Path $root 'Client\assets') -Force
+}
 
 Write-Host "Bundle listo en $dest" -ForegroundColor Green

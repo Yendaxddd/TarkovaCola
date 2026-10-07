@@ -7,6 +7,18 @@
     {
       "key": "assets/content/items/consumables/tarkovacola/staminup.bundle",
       "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/juggernog.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/phdflopper.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/widowswine.bundle",
+      "dependencyKeys": []
     }
   ]
 }

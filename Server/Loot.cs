@@ -15,6 +15,11 @@ namespace TarkovaCola.Server
     // Las probabilidades de cada perk estan en Perks.All (PerkDef).
     internal static class LootContainers
     {
+        // Las probabilidades de PerkDef son las de "un juego de 2 perks" (la v1.2.0). Con mas perks cada una se reduce en proporcion,
+        // asi la probabilidad TOTAL de que un contenedor o un bot lleve alguna perk se mantiene (cada perk concreta es mas rara).
+        internal const double BaselinePerks = 2.0;
+        internal static double Scale { get { return Math.Min(1.0, BaselinePerks / Perks.All.Length); } }
+
         internal const string AmmoCrate = "5909e4b686f7747f5b744fa4";      // Ammo crate
         internal const string Safe = "578f8778245977358849a9b5";           // Safe
     }
@@ -56,8 +61,8 @@ namespace TarkovaCola.Server
                     foreach (var perk in Perks.All)
                     {
                         var tpl = new MongoId(perk.ItemId);
-                        Add(table, LootContainers.AmmoCrate, perk.AmmoCrate, tpl);
-                        Add(table, LootContainers.Safe, perk.Safe, tpl);
+                        Add(table, LootContainers.AmmoCrate, perk.AmmoCrate * LootContainers.Scale, tpl);
+                        Add(table, LootContainers.Safe, perk.Safe * LootContainers.Scale, tpl);
                     }
                     return table;
                 });
@@ -85,7 +90,7 @@ namespace TarkovaCola.Server
                 var pool = type.BotInventory.Items.Backpack;
                 foreach (var perk in Perks.All)
                 {
-                    double chance = pick(perk);
+                    double chance = pick(perk) * LootContainers.Scale;
                     if (chance <= 0) continue;
                     pool[new MongoId(perk.ItemId)] = Weight(pool.Values.Sum(), chance);
                 }

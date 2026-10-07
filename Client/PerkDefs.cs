@@ -32,6 +32,10 @@ namespace TarkovaCola.Client
         public Func<string> DrinkNotice;        // subtitulo del aviso al beberla
         public Action<ActiveHealthController> OnDrink;   // efectos propios de la perk al beberla
 
+        // Una perk solo sale en Research y en el panel del ESC cuando ya tiene su arbol de mejoras. Mientras no lo tenga se puede beber
+        // (efecto base, cancion, modelo en mano) y acumula XP, pero no hay nada que equipar ni desafios que mostrar.
+        public bool HasTree { get { return Augs.Length > 0; } }
+
         public string Name { get { return L.T("perk." + Id); } }
         public string Desc { get { return L.T("perk." + Id + ".desc"); } }
         public IEnumerable<AugDef> AugsOf(NodeKind k) { return Augs.Where(a => a.Kind == k); }
@@ -90,7 +94,47 @@ namespace TarkovaCola.Client
             OnDrink = TarkovaCola.Client.StaminUp.OnDrink,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp };
+        // ---- perks nuevas: de momento solo la base (item, modelo, icono, cancion y efecto base); el arbol de mejoras llega despues ----
+        internal static readonly PerkDef Juggernog = new PerkDef
+        {
+            Id = TarkovaCola.Client.Juggernog.Id,
+            ItemTpl = TarkovaCola.Client.Juggernog.ItemTpl,
+            IconFile = "juggernog_icon.png",
+            JingleFile = "juggernog_jingle.mp3",
+            HandBundle = "juggernog_hand.bundle",
+            HandRefHeight = 0.17f,
+            Augs = new AugDef[0], DrbMajor = new string[0], DrbMinor = new string[0],
+            DrinkNotice = TarkovaCola.Client.Juggernog.Notice,
+        };
+
+        internal static readonly PerkDef PhdFlopper = new PerkDef
+        {
+            Id = TarkovaCola.Client.PhdFlopper.Id,
+            ItemTpl = TarkovaCola.Client.PhdFlopper.ItemTpl,
+            IconFile = "phdflopper_icon.png",
+            JingleFile = "phdflopper_jingle.mp3",
+            HandBundle = "phdflopper_hand.bundle",
+            HandRefHeight = 0.17f,
+            Augs = new AugDef[0], DrbMajor = new string[0], DrbMinor = new string[0],
+            DrinkNotice = TarkovaCola.Client.PhdFlopper.Notice,
+        };
+
+        internal static readonly PerkDef WidowsWine = new PerkDef
+        {
+            Id = TarkovaCola.Client.WidowsWine.Id,
+            ItemTpl = TarkovaCola.Client.WidowsWine.ItemTpl,
+            IconFile = "widowswine_icon.png",
+            JingleFile = "widowswine_jingle.mp3",
+            HandBundle = "widowswine_hand.bundle",
+            HandRefHeight = 0.17f,
+            Augs = new AugDef[0], DrbMajor = new string[0], DrbMinor = new string[0],
+            DrinkNotice = TarkovaCola.Client.WidowsWine.Notice,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine };
+
+        // perks con arbol de mejoras (las que se muestran en Research y en el panel del ESC)
+        internal static IEnumerable<PerkDef> UiPerks { get { return All.Where(p => p.HasTree); } }
 
         private static readonly Dictionary<string, PerkDef> _byNode = new Dictionary<string, PerkDef>();
 

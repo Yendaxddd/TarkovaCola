@@ -50,7 +50,7 @@ namespace TarkovaCola.Client
 
         // ---------------------------------------------------------------- estado
         private string _view = "progress";      // progress | equip
-        private PerkDef _perk = Perks.All[0];   // perk que se esta viendo
+        private PerkDef _perk = Perks.UiPerks.First();   // perk que se esta viendo
         private string _sel;                     // nodo seleccionado en Progreso
         private bool _animate = true;
         private bool _closing;
@@ -232,9 +232,10 @@ namespace TarkovaCola.Client
         private void BuildLeft()
         {
             _idx = 0;
-            for (int i = 0; i < Perks.All.Length; i++)
+            var uiPerks = Perks.UiPerks.ToList();
+            for (int i = 0; i < uiPerks.Count; i++)
             {
-                var def = Perks.All[i];
+                var def = uiPerks[i];
                 bool sel = def == _perk;
                 float y = 150 + i * 76;
                 var btn = UiKit.Panel(_left, 60, y, 320, 64, sel ? UiKit.C(31, 138, 76, 0.85f) : UiKit.C(18, 34, 50, 0.9f), sel ? UiKit.C(109, 240, 160, 0.9f) : UiKit.Line);
