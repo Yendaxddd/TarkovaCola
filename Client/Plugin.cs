@@ -175,6 +175,8 @@ namespace TarkovaCola.Client
             HandModel.Tick(hc);          // modelo de la perk en la mano (solo actua mientras se bebe)
             try { StaminUp.Tick(me); }   // efectos de Stamin-Up (sale enseguida si no esta activa)
             catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
+            try { WidowsWine.Tick(); }   // telaranas por proximidad de las granadas (sale enseguida si no hay ninguna)
+            catch (Exception e) { Dbg.Throttled("widowfail", 10f, "ERROR", "Widow's Wine: " + e); }
 
             // ---- cambio de arma ----
             if (!ReferenceEquals(hc, _hands))
@@ -362,6 +364,7 @@ namespace TarkovaCola.Client
         {
             Perks.ClearActive();
             StaminUp.OnRaidStart();
+            WidowsWine.OnRaidStart();
             Tracker.Reset();
             XpPatch.Awarded = false;
             Dbg.RaidStarted();

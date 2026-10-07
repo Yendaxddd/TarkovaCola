@@ -286,31 +286,60 @@ namespace TarkovaCola.Client
             return PerkService.IsDone(a.Id) ? "done" : PerkService.Level(a.Perk) >= a.Lvl ? "active" : "locked";
         }
 
+        // Disposicion del camino (3 columnas x 3 filas). Cada nodo ocupa 400x204 y deja un hueco de 12 px antes de la fila siguiente,
+        // para que el estado de un nodo nunca se monte con el titulo del de debajo.
+        private const float ColW = 480f, NodeW = 400f, NodeH = 204f, Pitch = 216f, Top = 8f, BadgeY = 66f;
+
+        private static Vector2 Center(AugDef a)
+        {
+            var p = Data.Snake[a.Seq];
+            return new Vector2(p[0] * ColW + ColW / 2f, Top + p[1] * Pitch + BadgeY);      // centro del icono, en coordenadas del panel
+        }
+
+        // segmento recto entre dos puntos del panel (y hacia abajo)
+        private static void Seg(Transform parent, Vector2 a, Vector2 b, Color c)
+        {
+            var line = UiKit.Img(parent, "Line", c);
+            var rt = line.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f); rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(Vector2.Distance(a, b) + 3f, 3f);
+            rt.anchoredPosition = new Vector2((a.x + b.x) / 2f, -(a.y + b.y) / 2f);
+            rt.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(-(b.y - a.y), b.x - a.x) * Mathf.Rad2Deg);
+        }
+
+        // Une dos nodos consecutivos. En la misma fila (o en diagonal) va recto; si cambian de fila en la misma columna, el camino
+        // sale por el lado exterior del nodo y vuelve a entrar, en vez de cruzar el texto de los nodos.
+        private static void Link(Transform parent, AugDef from, AugDef to, Color c)
+        {
+            Vector2 a = Center(from), b = Center(to);
+            var pa = Data.Snake[from.Seq]; var pb = Data.Snake[to.Seq];
+            if (pa[1] == pb[1] || pa[0] != pb[0]) { Seg(parent, a, b, c); return; }
+            float cellX = pa[0] * ColW + (ColW - NodeW) / 2f;
+            float x = pa[0] == 0 ? cellX - 22f : cellX + NodeW + 22f;
+            Seg(parent, a, new Vector2(x, a.y), c);
+            Seg(parent, new Vector2(x, a.y), new Vector2(x, b.y), c);
+            Seg(parent, new Vector2(x, b.y), b, c);
+        }
+
+        // texto que se reduce solo para caber en su caja (sin desbordar)
+        private static TextMeshProUGUI Fit(TextMeshProUGUI t, float min, float max)
+        {
+            t.enableAutoSizing = true;
+            t.fontSizeMin = min; t.fontSizeMax = max;
+            t.overflowMode = TextOverflowModes.Ellipsis;
+            return t;
+        }
+
         private void BuildProgress()
         {
-            var tree = UiKit.Panel(_stage, 0, 142, 1440, 650, UiKit.PanelBg, UiKit.Line);
+            var tree = UiKit.Panel(_stage, 0, 142, 1440, 656, UiKit.PanelBg, UiKit.Line);
             Enter(tree.rectTransform);
 
             var augs = _perk.Augs.OrderBy(a => a.Seq).ToList();
-            var centers = new Dictionary<string, Vector2>();
-            foreach (var a in augs)
-            {
-                var p = Data.Snake[a.Seq];
-                centers[a.Id] = new Vector2(p[0] * 480 + 240, 12 + p[1] * 212 + 78);   // centro del icono, en coordenadas del panel
-            }
 
             // lineas del camino (detras de los nodos)
             for (int i = 0; i < augs.Count - 1; i++)
-            {
-                Vector2 a = centers[augs[i].Id], b = centers[augs[i + 1].Id];
-                bool lit = PerkService.IsDone(augs[i].Id);
-                var line = UiKit.Img(tree.transform, "Line", lit ? UiKit.Green : UiKit.C(120, 190, 225, 0.35f));
-                var rt = line.rectTransform;
-                rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f); rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(Vector2.Distance(a, b), 3f);
-                rt.anchoredPosition = new Vector2((a.x + b.x) / 2f, -(a.y + b.y) / 2f);
-                rt.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(-(b.y - a.y), b.x - a.x) * Mathf.Rad2Deg);
-            }
+                Link(tree.transform, augs[i], augs[i + 1], PerkService.IsDone(augs[i].Id) ? UiKit.Green : UiKit.C(120, 190, 225, 0.35f));
 
             foreach (var a in augs) BuildNode(tree.transform, a);
             BuildInfo();
@@ -319,37 +348,38 @@ namespace TarkovaCola.Client
         private void BuildNode(Transform parent, AugDef a)
         {
             var p = Data.Snake[a.Seq];
-            float x0 = p[0] * 480 + 40, y0 = 12 + p[1] * 212;
+            float x0 = p[0] * ColW + (ColW - NodeW) / 2f, y0 = Top + p[1] * Pitch;
             string st = State(a), cls = ClassOf(a);
             bool sel = _sel == a.Id;
             Color ring = st == "locked" ? UiKit.C(80, 92, 104) : UiKit.ClassColor(cls);
             Color tint = st == "locked" ? UiKit.C(90, 90, 90) : st == "active" ? UiKit.C(215, 215, 215) : Color.white;
 
             var node = UiKit.Rect(parent, "Node_" + a.Id);
-            UiKit.Place(node, x0, y0, 400, 208);
+            UiKit.Place(node, x0, y0, NodeW, NodeH);
 
             // tapa transparente = zona de clic de todo el nodo
-            var hit = UiButton.Make(node, 0, 0, 400, 208, () => { _sel = a.Id; Rebuild(false); },
+            var hit = UiButton.Make(node, 0, 0, NodeW, NodeH, () => { _sel = a.Id; Rebuild(false); },
                                     UiKit.C(255, 255, 255, 0f), UiKit.C(255, 255, 255, 0.05f));
 
-            T(node, Data.Name(a.Id), 0, 0, 400, 26, 19, sel ? UiKit.Cyan : st == "locked" ? UiKit.Dim : UiKit.White, TextAlignmentOptions.Top, false, true);
+            Fit(T(node, Data.Name(a.Id), 0, 0, NodeW, 24, 18, sel ? UiKit.Cyan : st == "locked" ? UiKit.Dim : UiKit.White, TextAlignmentOptions.Top, false, true), 12, 18);
 
             bool hex = a.Kind == NodeKind.Major;
-            float size = hex ? 100f : 88f;
-            if (st == "done") UiKit.Badge(node, 200, 76, size + 18, hex, UiKit.C((int)(ring.r * 255), (int)(ring.g * 255), (int)(ring.b * 255), 0.22f), null, Color.white);
-            if (sel) UiKit.Badge(node, 200, 76, size + 12, hex, Color.white, null, Color.white);
-            UiKit.Badge(node, 200, 76, size, hex, ring, a.Kind == NodeKind.Special ? null : Hud.IconSprite(_perk.Id), tint, a.Kind == NodeKind.Special ? "+2" : null);
+            float size = hex ? 92f : 80f;
+            if (st == "done") UiKit.Badge(node, NodeW / 2f, BadgeY, size + 16, hex, UiKit.C((int)(ring.r * 255), (int)(ring.g * 255), (int)(ring.b * 255), 0.22f), null, Color.white);
+            if (sel) UiKit.Badge(node, NodeW / 2f, BadgeY, size + 10, hex, Color.white, null, Color.white);
+            UiKit.Badge(node, NodeW / 2f, BadgeY, size, hex, ring, a.Kind == NodeKind.Special ? null : Hud.IconSprite(_perk.Id), tint, a.Kind == NodeKind.Special ? "+2" : null);
 
-            var dsc = T(node, Data.Desc(a.Id), 30, 140, 340, 40, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
-            dsc.lineSpacing = 4f;
+            // descripcion (2 lineas como maximo, se reduce si no cabe), desventaja ligada y estado, uno debajo de otro
+            var dsc = T(node, Data.Desc(a.Id), 24, 118, NodeW - 48, 36, 13, UiKit.Dim, TextAlignmentOptions.Top, true);
+            dsc.lineSpacing = 2f;
+            Fit(dsc, 10, 13);
             string pair = Data.PairOf(a.Id);
-            float yy = 182;
-            if (pair != null) { T(node, L.F("unlocks", Data.Name(pair)), 20, yy, 360, 16, 12, UiKit.Red, TextAlignmentOptions.Top); yy += 18; }
+            if (pair != null) Fit(T(node, L.F("unlocks", Data.Name(pair)), 20, 156, NodeW - 40, 16, 12, UiKit.Red, TextAlignmentOptions.Top), 9, 12);
 
             string status = st == "done" ? L.T("status.done") : st == "locked" ? L.F("status.level", a.Lvl)
                           : L.F("status.challenge", Mathf.Min(PerkService.Progress(a.Id), a.Goal), a.Goal);
             Color sc = st == "done" ? UiKit.Green : st == "active" ? UiKit.Gold : UiKit.Dim;
-            T(node, status, 0, yy, 400, 16, 12, sc, TextAlignmentOptions.Top, false, true);
+            T(node, status, 0, 178, NodeW, 16, 12, sc, TextAlignmentOptions.Top, false, true);
 
             Enter(node);
         }
@@ -387,15 +417,16 @@ namespace TarkovaCola.Client
             Enter(left.rectTransform); Enter(right.rectTransform);
 
             // columna de mejoras y de desventajas
+            // fichas altas: las descripciones largas (p. ej. Jittery Hands) deben caber dentro
             Section(left.transform, 20, 16, 500, "sec.am", "am");
-            Tiles(left.transform, 20, 54, _perk.AugsOf(NodeKind.Major).Select(a => a.Id).ToList(), "am", 160, 190, 3);
-            Section(left.transform, 20, 268, 500, "sec.an", "an");
-            Tiles(left.transform, 20, 306, _perk.AugsOf(NodeKind.Minor).Select(a => a.Id).ToList(), "an", 245, 172, 2);
+            Tiles(left.transform, 20, 54, _perk.AugsOf(NodeKind.Major).Select(a => a.Id).ToList(), "am", 160, 226, 3);
+            Section(left.transform, 20, 298, 500, "sec.an", "an");
+            Tiles(left.transform, 20, 336, _perk.AugsOf(NodeKind.Minor).Select(a => a.Id).ToList(), "an", 245, 186, 2);
 
             Section(left.transform, 550, 16, 500, "sec.dm", "dm");
-            Tiles(left.transform, 550, 54, _perk.DrbMajor.ToList(), "dm", 160, 190, 3);
-            Section(left.transform, 550, 268, 500, "sec.dn", "dn");
-            Tiles(left.transform, 550, 306, _perk.DrbMinor.ToList(), "dn", 245, 172, 2);
+            Tiles(left.transform, 550, 54, _perk.DrbMajor.ToList(), "dm", 160, 226, 3);
+            Section(left.transform, 550, 298, 500, "sec.dn", "dn");
+            Tiles(left.transform, 550, 336, _perk.DrbMinor.ToList(), "dn", 245, 186, 2);
 
             BuildSlots(right.transform);
         }
@@ -441,8 +472,9 @@ namespace TarkovaCola.Client
             if (ok) body = Data.Desc(id);
             else if (drb) { body = L.F("tile.unlocks", Data.Name(Data.AugOf(id))); bc = UiKit.Gold; }
             else { body = L.F("tile.challenge", Data.Aug(id).Lvl); bc = UiKit.Gold; }
-            var bt = T(tile.transform, body, 10, 124, w - 20, h - 130, 12, bc, TextAlignmentOptions.Top, true);
-            bt.lineSpacing = 6f;
+            var bt = T(tile.transform, body, 10, 122, w - 20, h - 130, 12, bc, TextAlignmentOptions.Top, true);
+            bt.lineSpacing = 3f;
+            Fit(bt, 9.5f, 12);
 
             string tag = on ? L.T("tag.equipped") : ok ? null : L.T(drb ? "tag.locked" : "tag.notunlocked");
             if (tag != null)
@@ -467,7 +499,7 @@ namespace TarkovaCola.Client
 
         private void BuildSlots(Transform p)
         {
-            T(p, L.T("perk.speedcola"), 20, 16, 300, 30, 26, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(p, _perk.Name, 20, 16, 300, 30, 26, UiKit.Green, TextAlignmentOptions.TopLeft, false, true), 16, 26);       // (antes decia siempre "Speed Cola")
             var rules = T(p, L.F("equip.rules", PerkService.MinorSlots(_perk.Id, true)), 20, 56, 300, 110, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
             rules.lineSpacing = 10f;
             rules.paragraphSpacing = 8f;

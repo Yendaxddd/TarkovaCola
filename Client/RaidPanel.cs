@@ -153,7 +153,8 @@ namespace TarkovaCola.Client
                 var ic = UiKit.Img(root, "Icon", Color.white, icon); UiKit.Place(ic.rectTransform, Pad, y, 34, 34);
             }
             T(root, def.Name.ToUpperInvariant(), Pad + 42, y + 2, Inner - 42 - 90, 28, 22, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            T(root, L.F("raid.level", lvl), Pad + Inner - 90, y + 8, 90, 20, 14, UiKit.Green, TextAlignmentOptions.TopRight, false, true);
+            T(root, L.F("raid.level", lvl), Pad + Inner - 90, y + 2, 90, 20, 14, UiKit.Green, TextAlignmentOptions.TopRight, false, true);
+            if (active) T(root, L.T("raid.active"), Pad + Inner - 90, y + 20, 90, 16, 11, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
             y += 42f;
 
             // barra de XP fina (verde = XP guardada, dorado = XP de esta raid)

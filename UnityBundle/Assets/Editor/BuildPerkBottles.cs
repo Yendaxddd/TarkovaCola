@@ -118,7 +118,7 @@ namespace TarkovaCola
             Debug.Log("[TarkovaCola] bundles de " + b.Id + " generados");
         }
 
-        private static float IconYaw() { return float.Parse(System.Environment.GetEnvironmentVariable("BOTTLE_ICON_YAW") ?? "40"); }
+        private static float IconYaw() { return float.Parse(System.Environment.GetEnvironmentVariable("BOTTLE_ICON_YAW") ?? "175"); }
 
         private static Mesh MeshOf(Transform t)
         {

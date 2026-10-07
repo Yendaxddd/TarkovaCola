@@ -126,6 +126,7 @@ namespace TarkovaCola.Client
             // ---- panel en raid (menu ESC) ----
             ["raid.title"]      = new[] { "SPEED COLA", "SPEED COLA" },
             ["raid.level"]      = new[] { "NIVEL {0}", "LEVEL {0}" },
+            ["raid.active"]     = new[] { "ACTIVA", "ACTIVE" },
             ["raid.xpraid"]     = new[] { "+{0} XP esta raid (x1.25)", "+{0} XP this raid (x1.25)" },
             ["raid.drink"]      = new[] { "Bebe {0} en la raid para ganar XP de la perk.", "Drink {0} in raid to earn perk XP." },
             ["raid.pending"]    = new[] { "DESAFÍOS PENDIENTES", "PENDING CHALLENGES" },

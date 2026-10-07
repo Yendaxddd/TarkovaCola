@@ -24,6 +24,7 @@ namespace TarkovaCola.Client
         private static string _noticeTitle = "", _noticeSub = "", _noticePerk;
 
         private static bool _escOpen;
+        private static bool _menuOpen;        // hay una pantalla del juego abierta (inventario, tareas, mapa, ESC...): el HUD no se dibuja encima
         private static float _escOpenedAt;
         private static object _lastScreen;
 
@@ -106,20 +107,23 @@ namespace TarkovaCola.Client
             _noticeStart = Time.realtimeSinceStartup;
         }
 
-        // Se llama cada frame: detecta si el menu de pausa (ESC) de la raid esta abierto.
+        // Se llama cada frame: detecta si el menu de pausa (ESC) de la raid esta abierto y si hay alguna pantalla del juego abierta.
         internal static void TickRaidPanel()
         {
-            bool open = false;
-            if (Plugin.CfgRaidPanel.Value && Plugin.InRaid)
+            bool open = false, menu = false;
+            if (Plugin.InRaid)
             {
                 var sm = EftScreenManager.Instance;
                 if (sm != null)
                 {
-                    var cur = sm.CurrentScreenController != null ? (object)sm.CurrentScreenController.ScreenType : null;
+                    var ctrl = sm.CurrentScreenController;
+                    var cur = ctrl != null ? (object)ctrl.ScreenType : null;
                     if (!Equals(cur, _lastScreen)) { _lastScreen = cur; Dbg.Log("PANTALLA", "pantalla en raid: " + cur); }
-                    open = sm.CheckCurrentScreen(EEftScreenType.MainMenu);
+                    menu = ctrl != null && ctrl.ScreenType != EEftScreenType.BattleUI;       // BattleUI es el propio HUD de la raid
+                    if (Plugin.CfgRaidPanel.Value) open = sm.CheckCurrentScreen(EEftScreenType.MainMenu);
                 }
             }
+            _menuOpen = menu;
             if (open != _escOpen)
             {
                 if (open) { _escOpenedAt = Time.realtimeSinceStartup; PerkService.EnsureLoaded(); }
@@ -136,7 +140,7 @@ namespace TarkovaCola.Client
             float scale = Screen.height / 1080f;
             EnsureStyles(scale);
 
-            if (!_escOpen) DrawPermanentIcons(scale);
+            if (!_escOpen && !_menuOpen) DrawPermanentIcons(scale);
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
         }
 
@@ -168,7 +172,7 @@ namespace TarkovaCola.Client
 
             float h = 84f * scale, w = 460f * scale;
             float x = (Screen.width - w) / 2f;
-            float y = Screen.height * 0.16f - slide;
+            float y = Screen.height * 0.24f - slide;       // por debajo de la brujula, que ocupa la parte alta
 
             GUI.color = new Color(0f, 0f, 0f, 0.65f * alpha);
             GUI.DrawTexture(new Rect(x, y, w, h), _white);
