@@ -144,6 +144,7 @@ namespace TarkovaCola.Client
         internal static void AddXp(string perk, int amount)
         {
             if (amount <= 0) return;
+            if (ClassicMode.Enabled) { Dbg.Log("XP", perk + ": modo Classic, no se suma XP"); return; }       // el progreso de Modern queda intacto
             if (IsMax(perk)) { Dbg.Log("XP", perk + ": nivel maximo, no se suma XP"); return; }
             int before = Level(perk);
             Sub(State, "xp")[perk] = Xp(perk) + amount;
@@ -177,6 +178,7 @@ namespace TarkovaCola.Client
         // Suma progreso a un desafio (solo si su nivel ya esta desbloqueado y no esta completo).
         internal static void AddProgress(string id, int n = 1)
         {
+            if (ClassicMode.Enabled) return;                              // en Classic no hay Research: los desafios de mejoras no avanzan
             var c = Data.Aug(id);
             if (c == null || !IsActive(c)) return;
 

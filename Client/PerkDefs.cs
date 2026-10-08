@@ -29,7 +29,8 @@ namespace TarkovaCola.Client
         public float HandRefHeight = 0.122f;   // altura en metros del modelo de la mano, para escalarlo
         public AugDef[] Augs;
         public string[] DrbMajor, DrbMinor;     // desventaja i = la ligada a la mejora i de su tipo
-        public Func<string> DrinkNotice;        // subtitulo del aviso al beberla
+        public Func<string> DrinkNotice;        // subtitulo del aviso al beberla (segun la fuerza con que esta activa)
+        public Func<float, string> EffectText;  // texto del efecto base segun la fuerza (1 = completo, Perks.ModifierPower = modificador de Classic)
         public Action<ActiveHealthController> OnDrink;   // efectos propios de la perk al beberla
 
         // Una perk solo sale en Research y en el panel del ESC cuando ya tiene su arbol de mejoras. Mientras no lo tenga se puede beber
@@ -67,6 +68,7 @@ namespace TarkovaCola.Client
             DrbMajor = new[] { "d_jitter", "d_over", "d_crash" },
             DrbMinor = new[] { "d_dry", "d_slurp", "d_jam", "d_sweet" },
             DrinkNotice = SpeedColaDrink.Notice,
+            EffectText = SpeedColaDrink.Effect,
             OnDrink = SpeedColaDrink.OnDrink,
         };
 
@@ -92,6 +94,7 @@ namespace TarkovaCola.Client
             DrbMajor = new[] { "dt_boots", "dt_burn", "dt_jelly" },
             DrbMinor = new[] { "dt_hungry", "dt_cramps", "dt_sweaty", "dt_chest" },
             DrinkNotice = TarkovaCola.Client.StaminUp.Notice,
+            EffectText = TarkovaCola.Client.StaminUp.Effect,
             OnDrink = TarkovaCola.Client.StaminUp.OnDrink,
         };
 
@@ -119,6 +122,7 @@ namespace TarkovaCola.Client
             DrbMajor = new[] { "dj_clank", "dj_plates", "dj_hands" },
             DrbMinor = new[] { "dj_dead", "dj_sluggish", "dj_metab", "dj_chew" },
             DrinkNotice = TarkovaCola.Client.Juggernog.Notice,
+            EffectText = TarkovaCola.Client.Juggernog.Effect,
             OnDrink = TarkovaCola.Client.Juggernog.OnDrink,
         };
 
@@ -144,6 +148,7 @@ namespace TarkovaCola.Client
             DrbMajor = new[] { "dp_concussed", "dp_throw" },
             DrbMinor = new[] { "dp_stagger", "dp_lazy", "dp_pockets", "dp_stomp" },
             DrinkNotice = TarkovaCola.Client.PhdFlopper.Notice,
+            EffectText = TarkovaCola.Client.PhdFlopper.Effect,
         };
 
         internal static readonly PerkDef WidowsWine = new PerkDef
@@ -168,6 +173,7 @@ namespace TarkovaCola.Client
             DrbMajor = new[] { "dw_loud", "dw_brittle", "dw_bitter" },
             DrbMinor = new[] { "dw_tangled", "dw_greasy", "dw_hungry", "dw_dry" },
             DrinkNotice = TarkovaCola.Client.WidowsWine.Notice,
+            EffectText = TarkovaCola.Client.WidowsWine.Effect,
         };
 
         internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine };
@@ -191,12 +197,21 @@ namespace TarkovaCola.Client
         // perk a la que pertenece una mejora o desventaja
         internal static PerkDef OfNode(string nodeId) { PerkDef p; return nodeId != null && _byNode.TryGetValue(nodeId, out p) ? p : null; }
 
-        // ---- perks activas en la raid actual (se bebieron en ella) ----
+        // ---- perks activas en la raid actual (se bebieron en ella; en Classic tambien las que persisten de raids anteriores) ----
+        internal const float ModifierPower = 0.4f;          // Classic: la perk "modificador" da el 40% de su efecto base
         private static readonly HashSet<string> _active = new HashSet<string>();
+        private static string _modifier;                    // perk activa como modificador (Classic): efecto reducido
         internal static bool IsActive(string perkId) { return _active.Contains(perkId); }
         internal static bool AnyActive { get { return _active.Count > 0; } }
-        internal static void Activate(string perkId) { _active.Add(perkId); }
-        internal static void ClearActive() { _active.Clear(); }
+        internal static bool IsModifier(string perkId) { return perkId != null && perkId == _modifier && _active.Contains(perkId); }
+        // Fuerza del efecto base: 0 = inactiva, 1 = completo, ModifierPower = modificador de Classic.
+        internal static float Power(string perkId) { return !_active.Contains(perkId) ? 0f : (perkId == _modifier ? ModifierPower : 1f); }
+        internal static void Activate(string perkId, bool modifier = false)
+        {
+            _active.Add(perkId);
+            if (modifier) _modifier = perkId; else if (_modifier == perkId) _modifier = null;
+        }
+        internal static void ClearActive() { _active.Clear(); _modifier = null; }
         internal static IEnumerable<PerkDef> ActivePerks { get { return All.Where(p => _active.Contains(p.Id)); } }
     }
 }

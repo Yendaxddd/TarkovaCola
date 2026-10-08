@@ -42,7 +42,9 @@ namespace TarkovaCola.Client
 
         internal static bool Reduces(EDamageType type) { return (type & NotReduced) == 0; }
 
-        internal static string Notice() { return L.F("notice.juggernog.sub", ((1f - DamageMult) * 100f).ToString("0")); }
+        internal static string Notice() { return Effect(Perks.Power(Id)); }
+
+        internal static string Effect(float power) { return L.F("notice.juggernog.sub", ((1f - DamageMult) * 100f * power).ToString("0")); }
 
         internal static void OnDrink(ActiveHealthController health)
         {
@@ -77,7 +79,7 @@ namespace TarkovaCola.Client
             if (hit) PerkService.AddProgress("jg_thick");                       // desafio de Thick Skin: golpes recibidos
 
             float before = damage;
-            if (Reduces(t)) damage *= DamageMult;
+            if (Reduces(t)) damage *= 1f - (1f - DamageMult) * Perks.Power(Id);      // como modificador (Classic) reduce solo una parte
             else if ((t & PerkFx.Bleeds) != 0) { if (Perk.Has("jg_thick")) damage *= ThickBleed; }
             else if ((t & PerkFx.Hunger) != 0) { if (Perk.Has("jg_keep")) damage *= KeepGoing; }
 

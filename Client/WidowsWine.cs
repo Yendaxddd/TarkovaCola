@@ -26,6 +26,9 @@ namespace TarkovaCola.Client
         internal const float Seconds = 6f;          // duracion (se renueva mientras la granada siga cerca)
         internal const float SpinRadius = 2f;       // Spinneret: doble radio...
         internal const float SpinExtra = 2f;        //   ...y 2 s mas
+        internal const float ModRadius = 6f;        // como modificador (Classic): radio, velocidad que les queda y duracion reducidos
+        internal const float ModSpeedLeft = 0.75f;
+        internal const float ModSeconds = 3f;
         internal const float StunSeconds = 3f;      // Venomous Bite / Web Burst: duracion del aturdimiento
         internal const float TangledLeft = 0.60f;   // Entangled: dentro de tu propia telarana te queda el 60% de velocidad
         internal const float BrittleDamage = 1.25f; // Brittle Plates: la armadura recibe un 25% mas de desgaste de las balas
@@ -50,7 +53,9 @@ namespace TarkovaCola.Client
         private static bool _burstPending, _lastRefunded;
         private static string _lastTpl;
 
-        internal static string Notice() { return L.T("notice.widowswine.sub"); }
+        internal static string Notice() { return Effect(Perks.Power(Id)); }
+
+        internal static string Effect(float power) { return L.T(power >= 1f ? "notice.widowswine.sub" : "notice.widowswine.mod"); }
 
         internal static void OnRaidStart()
         {
@@ -112,9 +117,10 @@ namespace TarkovaCola.Client
             var world = Singleton<GameWorld>.Instance;
             var me = Plugin.Me;
             if (world == null || me == null) return 0;
-            bool spin = Perk.Has("ww_spin"), venom = Perk.Has("ww_venom");
-            float radius = Radius * (spin ? SpinRadius : 1f);
-            float secs = Seconds + (spin ? SpinExtra : 0f);
+            bool spin = Perk.Has("ww_spin"), venom = Perk.Has("ww_venom"), mod = Perks.IsModifier(Id);
+            float radius = mod ? ModRadius : Radius * (spin ? SpinRadius : 1f);
+            float secs = mod ? ModSeconds : Seconds + (spin ? SpinExtra : 0f);
+            float speedLeft = mod ? ModSpeedLeft : SpeedLeft;
             float r2 = radius * radius, now = Time.time;
 
             HashSet<string> seen = null;
@@ -133,7 +139,7 @@ namespace TarkovaCola.Client
                     if (Perk.Has("dw_tangled")) mc.ChangeSpeedLimit(TangledLeft * mc.MaxSpeed, Player.ESpeedLimit.Shot, secs);
                     continue;
                 }
-                mc.ChangeSpeedLimit(SpeedLeft * mc.MaxSpeed, Player.ESpeedLimit.Swamp, secs);
+                mc.ChangeSpeedLimit(speedLeft * mc.MaxSpeed, Player.ESpeedLimit.Swamp, secs);
                 n++;
 
                 float until;

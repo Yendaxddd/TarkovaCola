@@ -115,6 +115,8 @@ namespace TarkovaCola.Client
             foreach (var r in new[] { _header, _left, _stage })
                 for (int i = r.childCount - 1; i >= 0; i--) Destroy(r.GetChild(i).gameObject);
 
+            if (ClassicMode.Enabled) { BuildClassic(); return; }       // en modo Classic no hay Research: se muestra el resumen de perks
+
             BuildHeader();
             BuildLeft();
             BuildHead();
@@ -208,6 +210,7 @@ namespace TarkovaCola.Client
 
             Tab("progress", L.T("nav.progress"), 700);
             Tab("equip", L.T("nav.equip"), 900);
+            ModeToggle(1190, 46);
 
             int lv = PerkService.Level(_perk.Id);
             var chip = UiKit.Panel(_header, 1540, 46, 150, 40, UiKit.PanelBg, UiKit.Line);
@@ -217,6 +220,139 @@ namespace TarkovaCola.Client
             var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
             var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
             UiKit.Stretch(x.rectTransform);
+        }
+
+        // Interruptor Moderno / Clasico (dos botones juntos; el activo va resaltado). Solo cambia el modo desde el menu, nunca en raid.
+        private void ModeToggle(float x, float y)
+        {
+            bool classic = ClassicMode.Enabled;
+            T(_header, L.T("mode.label"), x, y - 20, 200, 16, 12, UiKit.Dim, TextAlignmentOptions.TopLeft, false, true);
+            for (int i = 0; i < 2; i++)
+            {
+                bool isClassic = i == 1, on = isClassic == classic;
+                var b = UiButton.Make(_header, x + i * 150f, y, 150, 40, () => { if (!on) SwitchMode(isClassic); },
+                                      on ? UiKit.C(31, 138, 76, 0.9f) : UiKit.C(18, 34, 50, 0.9f), on ? UiKit.C(31, 138, 76, 0.9f) : UiKit.C(255, 255, 255, 0.10f));
+                var t = UiKit.Txt(b.transform, L.T(isClassic ? "mode.classic" : "mode.modern"), 18, on ? UiKit.White : UiKit.Dim, TextAlignmentOptions.Center, false, on);
+                UiKit.Stretch(t.rectTransform);
+            }
+            // marco del conjunto
+            UiKit.Place(UiKit.Img(_header, "ModeTop", UiKit.Line).rectTransform, x, y, 300, 1);
+            UiKit.Place(UiKit.Img(_header, "ModeBottom", UiKit.Line).rectTransform, x, y + 39, 300, 1);
+            UiKit.Place(UiKit.Img(_header, "ModeLeft", UiKit.Line).rectTransform, x, y, 1, 40);
+            UiKit.Place(UiKit.Img(_header, "ModeRight", UiKit.Line).rectTransform, x + 299, y, 1, 40);
+        }
+
+        private void SwitchMode(bool classic)
+        {
+            if (!ClassicMode.SetEnabled(classic)) return;
+            UiKit.Sound(EUISoundType.MenuInspectorWindowOpen);
+            _sel = null; _view = "progress";
+            Rebuild(true);
+        }
+
+        // ---------------------------------------------------------------- modo CLASSIC (sustituye a Research)
+        // Resumen de las perks que persisten (principales con su mejora al azar y el modificador), las reglas del modo y el interruptor.
+        private void BuildClassic()
+        {
+            T(_header, L.T("classic.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
+            T(_header, L.T("classic.title"), 60, 42, 800, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            ModeToggle(1190, 46);
+            var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
+            var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
+            UiKit.Stretch(x.rectTransform);
+
+            // columna izquierda: como funciona. El panel se ajusta a la altura del texto (se mide antes de crearlo).
+            var rt = T(_left, L.T("classic.rules"), 80, 210, 280, 700, 15, UiKit.Text, TextAlignmentOptions.TopLeft, true);
+            rt.lineSpacing = 8f; rt.paragraphSpacing = 12f;
+            float textH = rt.GetPreferredValues(rt.text, 280f, 0f).y + 6f;
+            var rules = UiKit.Panel(_left, 60, 150, 320, Mathf.Min(780f, 60f + textH + 24f), UiKit.PanelBg, UiKit.Line);
+            Enter(rules.rectTransform);
+            rt.transform.SetParent(rules.transform, false);                    // el texto pasa a ser hijo del panel (queda por encima de su fondo)
+            UiKit.Place(rt.rectTransform, 20, 60, 280, textH);
+            T(rules.transform, L.T("classic.rules.title"), 20, 18, 280, 22, 16, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            UiKit.Place(UiKit.Img(rules.transform, "Underline", UiKit.Gold).rectTransform, 20, 44, 280, 1);
+
+            // escenario: cuatro perks principales y el modificador
+            var entries = ClassicMode.Entries();
+            var mains = entries.Where(e => !e.Modifier).ToList();
+            var mod = entries.FirstOrDefault(e => e.Modifier);
+
+            T(_stage, L.T("classic.active"), 0, 8, 600, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_stage, L.F("classic.count", mains.Count, ClassicMode.MaxMain) + "  ·  " + L.T(mod != null ? "classic.slot.used" : "classic.slot.free"),
+              640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
+
+            const float cw = 270f, gap = 22f, cy = 60f, chh = 560f;
+            for (int i = 0; i < ClassicMode.MaxMain; i++)
+                ClassicCard(i * (cw + gap), cy, cw, chh, i < mains.Count ? mains[i] : null, false);
+            ClassicCard(ClassicMode.MaxMain * (cw + gap), cy, cw, chh, mod, true);
+
+            // desafio de raid y aviso de perdida
+            var info = UiKit.Panel(_stage, 0, 650, 1440, 150, UiKit.PanelBg, UiKit.Line);
+            Enter(info.rectTransform);
+            T(info.transform, L.T("classic.chal.title"), 20, 16, 600, 22, 16, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            UiKit.Place(UiKit.Img(info.transform, "Underline", UiKit.Gold).rectTransform, 20, 42, 1400, 1);
+            var ct = T(info.transform, L.T("classic.chal.text"), 20, 54, 1400, 48, 15, UiKit.Text, TextAlignmentOptions.TopLeft, true);
+            Fit(ct, 11, 15);
+            T(info.transform, L.T("classic.lost.hint"), 20, 112, 1400, 24, 15, UiKit.Red, TextAlignmentOptions.TopLeft, false, true);
+        }
+
+        // Una tarjeta de perk (o ranura vacia). 'modSlot' = la ranura del modificador (la 5.a).
+        private void ClassicCard(float x, float y, float w, float h, ClassicMode.Entry e, bool modSlot)
+        {
+            Color accent = modSlot ? UiKit.Cyan : UiKit.Gold;
+            if (e == null)
+            {
+                var empty = UiKit.Panel(_stage, x, y, w, h, UiKit.C(255, 255, 255, 0.03f), UiKit.Line);
+                Enter(empty.rectTransform);
+                UiKit.Badge(empty.transform, w / 2f, 90, 96, true, UiKit.C(80, 92, 104), null, Color.white, "+");
+                T(empty.transform, L.T(modSlot ? "classic.empty.mod" : "classic.empty.main"), 10, 160, w - 20, 26, 18, UiKit.Dim, TextAlignmentOptions.Top, false, true);
+                var hint = T(empty.transform, L.T(modSlot ? "classic.emptymod.hint" : "classic.empty.hint"), 20, 198, w - 40, 64, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
+                Fit(hint, 11, 14);
+                return;
+            }
+
+            var def = Perks.Get(e.Perk);
+            var card = UiKit.Panel(_stage, x, y, w, h, UiKit.Panel2, new Color(accent.r, accent.g, accent.b, 0.7f), 2f);
+            Enter(card.rectTransform);
+            UiKit.Badge(card.transform, w / 2f, 84, 108, true, accent, Hud.IconSprite(def.Id), Color.white);
+            Fit(T(card.transform, def.Name.ToUpperInvariant(), 10, 148, w - 20, 32, 24, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 24);
+            T(card.transform, L.T(modSlot ? "classic.tag.mod" : "classic.tag.main"), 10, 182, w - 20, 18, 13, accent, TextAlignmentOptions.Top, false, true);
+            float power = modSlot ? Perks.ModifierPower : 1f;
+            var eff = T(card.transform, def.EffectText != null ? def.EffectText(power) : "", 14, 206, w - 28, 44, 14, UiKit.Text, TextAlignmentOptions.Top, true);
+            Fit(eff, 11, 14);
+            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 14, 258, w - 28, 1);
+
+            if (modSlot)
+            {
+                var note = T(card.transform, L.F("classic.mod.note", Mathf.RoundToInt(Perks.ModifierPower * 100f)), 14, 274, w - 28, 80, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
+                Fit(note, 11, 14);
+                return;
+            }
+
+            // mejoras menores (la 2.a viene del desafio de raid)
+            for (int i = 0; i < e.Minors.Count && i < ClassicMode.MaxMinors; i++)
+                AugBlock(card.transform, 14, 272 + i * 138, w - 28, 128, e, e.Minors[i], i == 1);
+
+            // marca "NUEVA" en la tarjeta si la ultima mejora ganada con el desafio es de esta perk
+            if (e.Perk == ClassicMode.RewardPerk && e.Minors.Contains(ClassicMode.RewardAug))
+            {
+                string tag = L.T("classic.new");
+                float tw = 14 + tag.Length * 8f;
+                var tg = UiKit.Img(card.transform, "New", UiKit.Gold); UiKit.Place(tg.rectTransform, w - tw, 0, tw, 18);
+                var tt = UiKit.Txt(tg.transform, tag, 12, UiKit.C(17, 17, 17), TextAlignmentOptions.Center, false, true);
+                UiKit.Stretch(tt.rectTransform);
+            }
+        }
+
+        private void AugBlock(Transform p, float x, float y, float w, float h, ClassicMode.Entry e, string aug, bool second)
+        {
+            var box = UiKit.Rect(p, "Aug");
+            UiKit.Place(box, x, y, w, h);
+            UiKit.Badge(box, 22, 24, 44, false, UiKit.Cyan, Hud.IconSprite(e.Perk), Color.white);
+            T(box, L.T(second ? "classic.aug2" : "classic.aug"), 54, 0, w - 54, 14, 11, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(box, Data.Name(aug), 54, 15, w - 54, 24, 16, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 10, 16);
+            var d = T(box, Data.Desc(aug), 0, 54, w, h - 54, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
+            Fit(d, 10, 13);
         }
 
         private void Tab(string view, string label, float x)

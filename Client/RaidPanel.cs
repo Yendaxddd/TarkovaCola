@@ -109,17 +109,24 @@ namespace TarkovaCola.Client
             UiKit.Place(UiKit.Img(root, "Accent", UiKit.Green).rectTransform, 0, 0, 4, 300f);
             float y = 14f;
 
-            bool first = true;
-            foreach (var def in Perks.UiPerks)
+            if (ClassicMode.Enabled)
             {
-                if (!first)
+                y = ClassicBody(root, y, Pad, Inner);                    // modo Classic: perks persistentes y desafio de la raid
+            }
+            else
+            {
+                bool first = true;
+                foreach (var def in Perks.UiPerks)
                 {
-                    y += 4f;
-                    UiKit.Place(UiKit.Img(root, "Sep", UiKit.Line).rectTransform, Pad, y, Inner, 1);
-                    y += 12f;
+                    if (!first)
+                    {
+                        y += 4f;
+                        UiKit.Place(UiKit.Img(root, "Sep", UiKit.Line).rectTransform, Pad, y, Inner, 1);
+                        y += 12f;
+                    }
+                    first = false;
+                    y = Section(root, def, y, W, Pad, Inner, rawXp);
                 }
-                first = false;
-                y = Section(root, def, y, W, Pad, Inner, rawXp);
             }
 
             float h = y + 4f;
@@ -134,6 +141,91 @@ namespace TarkovaCola.Client
             if (h * s > maxH) s = maxH / h;
             _content.localScale = new Vector3(s, s, 1f);
             return panel.rectTransform;
+        }
+
+        // Texto que se pone debajo de 'y' y devuelve la altura que ocupa (con salto de linea automatico)
+        private float Para(Transform root, string text, float x, float y, float w, float size, Color c, float spacing = 2f)
+        {
+            var t = T(root, text, x, y, w, 30, size, c, TextAlignmentOptions.TopLeft, true);
+            t.lineSpacing = spacing;
+            return t.GetPreferredValues(t.text, w, 0f).y;
+        }
+
+        // Modo Classic: las perks activas (principales con sus mejoras y el modificador) y el desafio de la raid.
+        private float ClassicBody(Transform root, float y, float Pad, float Inner)
+        {
+            T(root, L.T("classic.title"), Pad, y, Inner, 28, 22, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            y += 38f;
+
+            var entries = ClassicMode.Entries();
+            if (entries.Count == 0) y += Para(root, L.T("rp.classic.empty"), Pad, y, Inner, 13, UiKit.Dim) + 10f;
+
+            foreach (var e in entries)
+            {
+                var def = Perks.Get(e.Perk);
+                var icon = Hud.IconSprite(def.Id);
+                if (icon != null)
+                {
+                    var ic = UiKit.Img(root, "Icon", Perks.IsActive(e.Perk) ? Color.white : UiKit.C(255, 255, 255, 0.5f), icon);
+                    UiKit.Place(ic.rectTransform, Pad, y, 30, 30);
+                }
+                T(root, def.Name.ToUpperInvariant(), Pad + 38, y + 3, Inner - 38 - 104, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+                T(root, L.T(e.Modifier ? "classic.tag.mod" : "classic.tag.main"), Pad + Inner - 104, y + 8, 104, 16, 11, e.Modifier ? UiKit.Cyan : UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+                y += 38f;
+
+                if (e.Modifier)
+                {
+                    y += Para(root, L.F("classic.mod.note", Mathf.RoundToInt(Perks.ModifierPower * 100f)), Pad + 8, y, Inner - 8, 12, UiKit.Dim) + 6f;
+                }
+                foreach (var aug in e.Minors)
+                {
+                    T(root, Data.Name(aug), Pad + 8, y, Inner - 8, 18, 14, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
+                    y += 18f;
+                    y += Para(root, Data.Desc(aug), Pad + 8, y, Inner - 8, 12, UiKit.Dim) + 6f;
+                }
+                y += 4f;
+                UiKit.Place(UiKit.Img(root, "Sep", UiKit.Line).rectTransform, Pad, y, Inner, 1);
+                y += 10f;
+            }
+
+            // desafio de la raid
+            T(root, L.T("classic.chal.title"), Pad, y, Inner, 20, 15, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            UiKit.Place(UiKit.Img(root, "Underline", UiKit.Gold).rectTransform, Pad, y + 20f, Inner, 1);
+            y += 28f;
+            var cur = ClassicChallenge.Current;
+            if (cur == null) return y + Para(root, L.T("rp.chal.none"), Pad, y, Inner, 12, UiKit.Dim) + 6f;
+
+            T(root, ClassicChallenge.Name(cur.Id), Pad, y, Inner - 90, 20, 16, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            if (cur.Id != "ghost")
+                T(root, ProgressText(cur, ClassicChallenge.Progress), Pad + Inner - 90, y + 2, 90, 18, 13, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+            y += 22f;
+            y += Para(root, ClassicChallenge.Desc(cur.Id), Pad, y, Inner, 12, UiKit.Dim) + 4f;
+
+            if (cur.Id == "ghost")
+            {
+                bool failed = ClassicChallenge.Failed;
+                T(root, L.T(failed ? "rp.chal.ghost.fail" : "rp.chal.ghost.ok"), Pad, y, Inner, 18, 13, failed ? UiKit.Red : UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
+                y += 22f;
+            }
+            else
+            {
+                var bb = UiKit.Img(root, "PBack", UiKit.C(255, 255, 255, 0.10f)); UiKit.Place(bb.rectTransform, Pad, y, Inner, 4);
+                UiKit.Place(UiKit.Img(bb.transform, "PFill", ClassicChallenge.Done ? UiKit.Green : UiKit.Gold).rectTransform, 0, 0,
+                            Inner * Mathf.Clamp01(ClassicChallenge.Progress / (float)cur.Goal), 4);
+                y += 12f;
+                if (ClassicChallenge.Done) { T(root, L.T("rp.chal.done"), Pad, y, Inner, 18, 13, UiKit.Green, TextAlignmentOptions.TopLeft, false, true); y += 22f; }
+            }
+            y += Para(root, L.T("rp.chal.reward"), Pad, y, Inner, 11, UiKit.Dim) + 6f;
+            return y;
+        }
+
+        // progreso legible del desafio: metros, minutos o simplemente "n / meta"
+        private static string ProgressText(ClassicChallenge.Def d, int p)
+        {
+            p = Mathf.Min(p, d.Goal);
+            if (d.Id == "run" || d.Id == "travel") return p + " / " + d.Goal + " m";
+            if (d.Id == "time") return (p / 60) + ":" + (p % 60).ToString("00") + " / " + (d.Goal / 60) + ":" + (d.Goal % 60).ToString("00");
+            return p + " / " + d.Goal;
         }
 
         // Nivel, XP y desafios pendientes de una perk (compacto). Devuelve la 'y' donde termina.

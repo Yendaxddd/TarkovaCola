@@ -46,6 +46,14 @@ namespace TarkovaCola.Client
         internal static void Refresh()
         {
             _eq.Clear();
+            if (ClassicMode.Enabled)
+            {
+                // Classic: no hay equipamiento de Research; valen las mejoras menores al azar de las perks principales
+                try { foreach (var id in ClassicMode.EquippedAugments()) _eq.Add(id); }
+                catch (System.Exception ex) { Plugin.Log.LogWarning("No se pudo leer las mejoras de Classic: " + ex.Message); }
+                Dbg.Log("EQUIP", "Classic, mejoras: " + (_eq.Count == 0 ? "(ninguna)" : string.Join(", ", _eq.ToArray())));
+                return;
+            }
             try
             {
                 foreach (var perk in Perks.All)
@@ -79,7 +87,8 @@ namespace TarkovaCola.Client
             get
             {
                 if (!Plugin.SpeedColaActive) return 1f;
-                return _eq.Contains("a_rush") ? RushReload : BaseReload;
+                float full = _eq.Contains("a_rush") ? RushReload : BaseReload;
+                return 1f + (full - 1f) * Perks.Power("speedcola");        // como modificador (Classic) da solo una parte
             }
         }
 

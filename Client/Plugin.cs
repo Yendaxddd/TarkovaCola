@@ -36,6 +36,7 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgJingle;
         internal static ConfigEntry<float> CfgJingleVolume;
         internal static ConfigEntry<bool> CfgPhdVfx;
+        internal static ConfigEntry<bool> CfgClassicBlock;
         internal static Plugin Instance;
 
         private void Awake()
@@ -59,6 +60,8 @@ namespace TarkovaCola.Client
             CfgJingle = Config.Bind("Audio", "Cancion al beber", true, "Reproduce la cancion de Speed Cola al beberla / Play the jingle when drinking");
             CfgJingleVolume = Config.Bind("Audio", "Volumen de la cancion", 0.6f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
             CfgPhdVfx = Config.Bind("HUD", "Efecto visual de PHD Flopper", true, "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion / Energy ring and sparks when PHD Flopper saves you from a fall or blast");
+            CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
+                "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
             CfgHandScale = Config.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Multiplicador del tamaño del modelo de la Speed Cola al beberla / Hand model size multiplier");
             CfgSwapWindow = Config.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas");
 
@@ -172,12 +175,16 @@ namespace TarkovaCola.Client
                 _crashSteps = 0;
                 _initTime = _nextInv = Time.time;
                 _colaCount = 0; _drinkCount = 0;
+                try { ClassicMode.OnPlayerReady(me); }          // modo Classic: aplica las perks persistentes y sortea el desafio de la raid
+                catch (Exception e) { Plugin.Log.LogError("Classic (inicio): " + e); }
                 return;
             }
 
             HandModel.Tick(hc);          // modelo de la perk en la mano (solo actua mientras se bebe)
             try { StaminUp.Tick(me); }   // efectos de Stamin-Up (sale enseguida si no esta activa)
             catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
+            try { ClassicMode.Tick(me); }
+            catch (Exception e) { Dbg.Throttled("classicfail", 10f, "ERROR", "Classic (frame): " + e); }
             try { PerkFx.Tick(me); }     // efectos por frame de Juggernog, PHD Flopper, Widow's Wine y las mejoras comunes (sale enseguida sin perks activas)
             catch (Exception e) { Dbg.Throttled("perkfxfail", 10f, "ERROR", "perks (frame): " + e); }
 
@@ -366,6 +373,7 @@ namespace TarkovaCola.Client
         private static void Prefix()
         {
             Perks.ClearActive();
+            Hud.ClearQueue();
             StaminUp.OnRaidStart();
             PerkFx.OnRaidStart();
             Tracker.Reset();
@@ -373,6 +381,7 @@ namespace TarkovaCola.Client
             Dbg.RaidStarted();
             Perk.OnRaidStart();
             PerkService.EnsureLoaded(force: true);
+            ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
             Perk.Refresh();
             Achievements.CheckState();
             Achievements.ClaimPending();
@@ -434,15 +443,29 @@ namespace TarkovaCola.Client
         {
             if (__instance.Player == null || !__instance.Player.IsYourPlayer) return;
             var def = item != null ? Perks.ByItem(item.StringTemplateId) : null;
-            if (def == null) { Juggernog.OnConsumed(item); return; }      // otra comida o medicina: cuenta para los desafios de Juggernog
+            if (def == null)                                              // otra comida o medicina: cuenta para los desafios
+            {
+                Juggernog.OnConsumed(item);
+                ClassicChallenge.OnConsumed(item);
+                return;
+            }
 
-            Perks.Activate(def.Id);
+            // Modo Classic: la perk entra en la lista persistente (principal con mejora al azar, o modificador); si no cabe se devuelve la botella
+            ClassicMode.Entry entry = null;
+            if (ClassicMode.Enabled)
+            {
+                entry = ClassicMode.OnDrink(def);
+                if (entry == null) return;
+            }
+
+            Perks.Activate(def.Id, entry != null && entry.Modifier);
             Jingle.Play(def);
             Perk.Refresh();
             PerkFx.RefreshPhysical(__instance.Player);                    // capacidad de estamina y de aire, y peso, con las perks activas
             Perk.LastKillOrDrink = Time.time;
             Hud.Notify(def.Name.ToUpperInvariant(), def.DrinkNotice != null ? def.DrinkNotice() : "", def.Id);
-            Dbg.Log("BEBIDA", def.Id + " activada");
+            Dbg.Log("BEBIDA", def.Id + " activada" + (entry != null ? (entry.Modifier ? " (modificador)" : " (Classic)") : ""));
+            if (entry != null) ClassicMode.AfterDrink(def, entry);       // avisa de la mejora al azar
             if (def.OnDrink != null) def.OnDrink(__instance);
         }
     }
@@ -451,6 +474,9 @@ namespace TarkovaCola.Client
     internal static class SpeedColaDrink
     {
         internal static string Notice() { return L.F("notice.cola.sub", Perk.ReloadMult.ToString("0.0")); }
+
+        // texto del efecto base a una fuerza dada (para la pantalla del modo Classic)
+        internal static string Effect(float power) { return L.F("notice.cola.sub", (1f + (Perk.BaseReload - 1f) * power).ToString("0.0")); }
 
         internal static void OnDrink(ActiveHealthController health)
         {

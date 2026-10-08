@@ -107,6 +107,30 @@ namespace TarkovaCola.Client
             _noticeStart = Time.realtimeSinceStartup;
         }
 
+        // Avisos encadenados: se muestran uno tras otro, cuando termina el que haya en pantalla (p. ej. perk activada -> mejora -> desafio).
+        private struct Pending { public float At; public string Title, Sub, Perk; }
+        private static readonly List<Pending> _pending = new List<Pending>();
+        private static float _queueEnd;
+
+        internal static void Enqueue(string title, string sub, string perkId = null)
+        {
+            float now = Time.realtimeSinceStartup, dur = Plugin.CfgNoticeSeconds.Value;
+            float at = Mathf.Max(now, Mathf.Max(_noticeStart + dur, _queueEnd)) + 0.15f;
+            _pending.Add(new Pending { At = at, Title = title, Sub = sub, Perk = perkId });
+            _queueEnd = at + dur;
+        }
+
+        internal static void ClearQueue() { _pending.Clear(); _queueEnd = 0f; }
+
+        private static void ShowPending()
+        {
+            if (_pending.Count == 0) return;
+            if (_pending[0].At > Time.realtimeSinceStartup) return;
+            var p = _pending[0];
+            _pending.RemoveAt(0);
+            Notify(p.Title, p.Sub, p.Perk);
+        }
+
         // Se llama cada frame: detecta si el menu de pausa (ESC) de la raid esta abierto y si hay alguna pantalla del juego abierta.
         internal static void TickRaidPanel()
         {
@@ -141,6 +165,7 @@ namespace TarkovaCola.Client
             EnsureStyles(scale);
 
             if (!_escOpen && !_menuOpen) DrawPermanentIcons(scale);
+            if (Event.current != null && Event.current.type == EventType.Repaint) ShowPending();      // (OnGUI se llama varias veces por frame)
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
         }
 
@@ -155,7 +180,7 @@ namespace TarkovaCola.Client
                 float size = Plugin.CfgIconSize.Value * scale;
                 float x = Plugin.CfgIconX.Value * scale;
                 float y = Screen.height - size - Plugin.CfgIconY.Value * scale - i * (size + 4f * scale);
-                GUI.color = Color.white;
+                GUI.color = Perks.IsModifier(perk.Id) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;       // el modificador (Classic) se ve atenuado
                 GUI.DrawTexture(new Rect(x, y, size, size), tex, ScaleMode.ScaleToFit, true);     // sin marco: pegado al borde de la pantalla
                 i++;
             }
@@ -189,11 +214,32 @@ namespace TarkovaCola.Client
             }
 
             float tx = x + pad * 2f + iconSize + 6f * scale;
+            float textW = w - (tx - x) - pad * 0.5f;
             _title.normal.textColor = new Color(Green.r, Green.g, Green.b, alpha);
             _sub.normal.textColor = new Color(1f, 1f, 1f, alpha);
-            GUI.Label(new Rect(tx, y + 8f * scale, w - (tx - x), 40f * scale), _noticeTitle, _title);
-            GUI.Label(new Rect(tx, y + 46f * scale, w - (tx - x), 32f * scale), _noticeSub, _sub);
+
+            // textos largos (descripciones de mejoras, nombres de desafios): el titulo se reduce hasta caber; el subtitulo se reduce y,
+            // si aun asi no cabe, pasa a dos lineas
+            _title.fontSize = FitSize(_title, _noticeTitle, textW, Mathf.RoundToInt(28f * scale), Mathf.RoundToInt(17f * scale));
+            int subSize = FitSize(_sub, _noticeSub, textW, Mathf.RoundToInt(20f * scale), Mathf.RoundToInt(14f * scale));
+            _sub.fontSize = subSize;
+            bool wrap = _sub.CalcSize(new GUIContent(_noticeSub)).x > textW;
+            _sub.wordWrap = wrap;
+            GUI.Label(new Rect(tx, y + 8f * scale, textW, 40f * scale), _noticeTitle, _title);
+            GUI.Label(new Rect(tx, y + (wrap ? 42f : 46f) * scale, textW, (wrap ? 40f : 32f) * scale), _noticeSub, _sub);
+            _sub.wordWrap = false;
             GUI.color = Color.white;
+        }
+
+        // Tamano de fuente mas grande (entre min y max) con el que el texto cabe en 'width' en una linea; 'min' si ni asi cabe.
+        private static int FitSize(GUIStyle style, string text, float width, int max, int min)
+        {
+            int saved = style.fontSize;
+            style.fontSize = max;
+            float w = style.CalcSize(new GUIContent(text)).x;
+            style.fontSize = saved;
+            if (w <= width || w <= 0f) return max;
+            return Mathf.Max(min, Mathf.FloorToInt(max * width / w));
         }
 
         private static void SetAlpha(float a)

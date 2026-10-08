@@ -67,7 +67,9 @@ namespace TarkovaCola.Client
         internal static bool Active { get { return Perks.IsActive(Id); } }
 
         // ---------------------------------------------------------------- al beberla
-        internal static string Notice() { return L.F("notice.stamin.sub", CapacityMult.ToString("0.0")); }
+        internal static string Notice() { return Effect(Perks.Power(Id)); }
+
+        internal static string Effect(float power) { return L.F("notice.stamin.sub", (1f + (CapacityMult - 1f) * power).ToString("0.0")); }
 
         internal static void OnDrink(ActiveHealthController health)
         {

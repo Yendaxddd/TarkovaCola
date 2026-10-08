@@ -133,6 +133,7 @@ namespace TarkovaCola.Client
             _lastPos = pos; _hasPos = true;
             float speed = dt > 0f ? moved / dt : 0f;
             bool still = speed < 0.15f;
+            ClassicChallenge.OnMove(moved, sprinting, dt);                // desafio de raid (modo Classic): correr, recorrer, sobrevivir
 
             if (Perks.IsActive(PhdFlopper.Id))
             {
@@ -271,9 +272,11 @@ namespace TarkovaCola.Client
         {
             try
             {
-                StaminUp.OnPlayerDead(victim, aggressor, info, part);
                 var me = Plugin.Me;
-                if (me == null || victim == null || aggressor == null || victim == me || aggressor.ProfileId != me.ProfileId) return;
+                if (me != null && victim == me) { ClassicMode.OnDeath(); return; }       // el operador murio: Classic pierde sus perks
+                StaminUp.OnPlayerDead(victim, aggressor, info, part);
+                if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
+                ClassicChallenge.OnKill(me, victim, info, part);                          // desafio de la raid (modo Classic)
                 if (!Perks.AnyActive) return;
 
                 bool boss = IsBoss(victim);
@@ -305,6 +308,7 @@ namespace TarkovaCola.Client
                 bool alive = status == ExitStatus.Survived || status == ExitStatus.Runner;
                 Dbg.Log("RAID", "fin de raid: " + status + " (con vida=" + alive + ")");
                 Juggernog.OnRaidEnd(alive);
+                ClassicMode.OnRaidEnd(status);
             }
             catch (Exception e) { Plugin.Log.LogError("fin de raid (perks): " + e); }
         }
@@ -325,7 +329,7 @@ namespace TarkovaCola.Client
             var me = Plugin.Me;
             if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
             float m = 1f;
-            if (StaminUp.Active) m *= StaminUp.CapacityMult;
+            if (StaminUp.Active) m *= 1f + (StaminUp.CapacityMult - 1f) * Perks.Power(StaminUp.Id);     // como modificador (Classic) solo una parte
             if (Perk.Has("dp_lazy")) m *= PerkFx.LazyLegs;
             if (m != 1f) __result *= m;
         }
@@ -396,6 +400,7 @@ namespace TarkovaCola.Client
                     if (damage <= 0f) return;
                     if (Perks.IsActive(Juggernog.Id)) damage = Juggernog.OnDamage(__instance, bodyPart, damage, damageInfo);
                     if (damage <= 0f) return;
+                    ClassicChallenge.OnDamageTaken(damageInfo);                 // desafio "ghost": solo cuenta el dano que de verdad recibes
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
                 }
                 else if (Perks.IsActive(PhdFlopper.Id))

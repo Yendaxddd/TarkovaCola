@@ -44,7 +44,12 @@ namespace TarkovaCola.Client
 
         internal static bool IsImmune(EDamageType type) { return (type & Immune) != 0; }
 
-        internal static string Notice() { return L.T("notice.phdflopper.sub"); }
+        internal static string Notice() { return Effect(Perks.Power(Id)); }
+
+        internal static string Effect(float power)
+        {
+            return power >= 1f ? L.T("notice.phdflopper.sub") : L.F("notice.phdflopper.mod", (power * 100f).ToString("0"));
+        }
 
         // Dano que recibe el jugador (desde DamageHubPatch): caidas y explosiones se anulan; Terrain Walker anula el alambre de puas.
         internal static float OnDamage(EBodyPart part, float damage, DamageInfo info)
@@ -52,6 +57,12 @@ namespace TarkovaCola.Client
             var t = info.DamageType;
             if (IsImmune(t))
             {
+                float p = Perks.Power(Id);                                   // 1 = inmunidad total; como modificador (Classic) solo una reduccion
+                if (p < 1f)
+                {
+                    Dbg.Throttled("phd", 5f, "EFECTO", "PHD Flopper (modificador): " + damage.ToString("0.0") + " de dano por " + t + " -> " + (damage * (1f - p)).ToString("0.0"));
+                    return damage * (1f - p);
+                }
                 Dbg.Throttled("phd", 5f, "EFECTO", "PHD Flopper: " + damage.ToString("0.0") + " de dano por " + t + " anulado");
                 var me = Plugin.Me;
                 if (me != null) PhdVfx.Play(me.Position, (t & EDamageType.Fall) != 0 ? Mathf.Clamp01(damage / 40f) : 1f);   // efecto visual (caidas pequenas = efecto pequeno)
