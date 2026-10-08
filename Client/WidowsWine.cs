@@ -31,6 +31,9 @@ namespace TarkovaCola.Client
         internal const float BrittleDamage = 1.25f; // Brittle Plates: la armadura recibe un 25% mas de desgaste de las balas
         internal const float ThrowForce = 1.16f;    // Sticky Floor: x1.16 de fuerza = +35% de alcance (el alcance crece con el cuadrado)
         internal const float LoudRadius = 20f;      // Loud Throw
+        internal const int WebbedNeeded = 50;       // logro "Sticky situation": enemigos atrapados en total
+        internal const int GrenadeKillsNeeded = 25; // logro "Silk and shrapnel": bajas con granada en total
+        internal const int WrapParty = 5;           // logro "Wrap party": enemigos atrapados por una sola granada
         internal const float BurstDamage = 100f;    // Web Burst: dano recibido...
         internal const float BurstWindow = 3f;      //   ...en menos de 3 s
         internal const float BurstCooldown = 300f;  //   una vez cada 5 min
@@ -140,11 +143,18 @@ namespace TarkovaCola.Client
                 {
                     PerkService.AddProgress("ww_spin");                              // desafios de Spinneret y Sticky Floor: enemigos atrapados
                     PerkService.AddProgress("ww_sticky");
+                    Achievements.Unlock("ww_first");                                 // logros: primer enemigo atrapado y 50 en total
+                    PerkService.AddStat("widow_webbed", 1);
+                    if (PerkService.Stat("widow_webbed") >= WebbedNeeded) Achievements.Unlock("ww_webbed");
                     if (venom || burst) Stun(p, StunSeconds);
                 }
                 if (seen != null) seen.Add(p.ProfileId);
             }
-            if (seen != null && seen.Count >= 3 && _fuseDone.Add(key)) PerkService.AddProgress("ww_fuse");   // 3 enemigos con una sola granada
+            if (seen != null)
+            {
+                if (seen.Count >= 3 && _fuseDone.Add(key)) PerkService.AddProgress("ww_fuse");     // desafio de Safe Fuse: 3 enemigos con una sola granada
+                if (seen.Count >= WrapParty) Achievements.Unlock("ww_secret");                    // logro: 5 con una sola granada
+            }
             return n;
         }
 
@@ -174,6 +184,8 @@ namespace TarkovaCola.Client
         {
             PerkService.AddProgress("ww_burst");
             PerkService.AddProgress("ww_bite");
+            PerkService.AddStat("widow_gkills", 1);                                 // logro "Silk and shrapnel"
+            if (PerkService.Stat("widow_gkills") >= GrenadeKillsNeeded) Achievements.Unlock("ww_grenades");
             if (!Perk.Has("ww_bite") || _lastRefunded || _lastTpl == null || Time.time - _lastTime > 20f) return;
             _lastRefunded = true;                                                   // una granada devuelve una sola vez, mate a cuantos mate
             PerkService.RequestRefund(_lastTpl, 1);

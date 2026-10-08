@@ -119,6 +119,7 @@ namespace TarkovaCola.Client
             DrbMajor = new[] { "dj_clank", "dj_plates", "dj_hands" },
             DrbMinor = new[] { "dj_dead", "dj_sluggish", "dj_metab", "dj_chew" },
             DrinkNotice = TarkovaCola.Client.Juggernog.Notice,
+            OnDrink = TarkovaCola.Client.Juggernog.OnDrink,
         };
 
         internal static readonly PerkDef PhdFlopper = new PerkDef

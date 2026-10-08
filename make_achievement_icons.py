@@ -1,11 +1,11 @@
-"""Genera las insignias de los logros (Server/ModFiles/achievements/*.png): hexagono con borde segun rareza y la lata de Speed Cola."""
+"""Genera las insignias de los logros (Server/ModFiles/achievements/*.png): hexagono con borde segun rareza y el icono de la perk."""
 import pathlib
 from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "Server" / "ModFiles" / "achievements"
 OUT.mkdir(parents=True, exist_ok=True)
-ICONS = {n: Image.open(ROOT / "Client" / "assets" / (n + "_icon.png")).convert("RGBA") for n in ("speedcola", "staminup")}
+ICONS = {n: Image.open(ROOT / "Client" / "assets" / (n + "_icon.png")).convert("RGBA") for n in ("speedcola", "staminup", "juggernog", "phdflopper", "widowswine")}
 
 W, H = 196, 224
 RARITY = {"common": (190, 196, 202), "rare": (79, 170, 255), "legendary": (240, 193, 75)}
@@ -15,6 +15,12 @@ BADGES = {
     "found": ("rare", "speedcola"), "die": ("common", "speedcola"), "hand": ("legendary", "speedcola"),
     "stfresh": ("common", "staminup"), "strushb": ("rare", "staminup"), "stmarathon": ("rare", "staminup"),
     "stlvl5": ("rare", "staminup"), "stcardio": ("legendary", "staminup"), "stdouble": ("legendary", "staminup"),
+    "jgfresh": ("common", "juggernog"), "jgrude": ("rare", "juggernog"), "jgred": ("rare", "juggernog"),
+    "jglvl5": ("rare", "juggernog"), "jgall": ("legendary", "juggernog"), "jgsecret": ("legendary", "juggernog"),
+    "pfflop": ("common", "phdflopper"), "pfhugs": ("rare", "phdflopper"), "pfgravity": ("rare", "phdflopper"),
+    "pflvl5": ("rare", "phdflopper"), "pfall": ("legendary", "phdflopper"), "pfsecret": ("legendary", "phdflopper"),
+    "wwfirst": ("common", "widowswine"), "wwwebbed": ("rare", "widowswine"), "wwgrenades": ("rare", "widowswine"),
+    "wwlvl5": ("rare", "widowswine"), "wwall": ("legendary", "widowswine"), "wwsecret": ("legendary", "widowswine"),
 }
 
 

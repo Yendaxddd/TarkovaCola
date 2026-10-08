@@ -216,8 +216,13 @@ namespace TarkovaCola.Client
             if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(hc.EnergyRate * e * step);
             if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(hc.HydrationRate * h * step);
 
-            // Heavy Bones (desafio): tiempo con la salud en rojo
-            if (Perks.IsActive(Juggernog.Id) && NearDeath(hc)) PerkService.AddProgress("jg_bones");
+            // salud en rojo con Juggernog: desafio de Heavy Bones (tiempo en rojo) y logro de extraer con vida en rojo
+            if (Perks.IsActive(Juggernog.Id))
+            {
+                bool red = NearDeath(hc);
+                Juggernog.SetRed(red);
+                if (red) PerkService.AddProgress("jg_bones");
+            }
         }
 
         // ---------------------------------------------------------------- velocidad de las animaciones de las manos
@@ -284,7 +289,7 @@ namespace TarkovaCola.Client
                 }
                 if (grenade)
                 {
-                    if (phd) PerkService.AddProgress("pf_shock");
+                    if (phd) { PerkService.AddProgress("pf_shock"); PhdFlopper.OnGrenadeKill(); }
                     if (wid) WidowsWine.OnGrenadeKill();
                 }
                 if (wid && WidowsWine.IsWebbed(victim)) PerkService.AddProgress("ww_venom");
@@ -299,7 +304,7 @@ namespace TarkovaCola.Client
             {
                 bool alive = status == ExitStatus.Survived || status == ExitStatus.Runner;
                 Dbg.Log("RAID", "fin de raid: " + status + " (con vida=" + alive + ")");
-                if (alive && Perks.IsActive(Juggernog.Id)) PerkService.AddProgress("jg_bastion");
+                Juggernog.OnRaidEnd(alive);
             }
             catch (Exception e) { Plugin.Log.LogError("fin de raid (perks): " + e); }
         }
@@ -467,19 +472,17 @@ namespace TarkovaCola.Client
         }
     }
 
-    // ---------- Stagger: aterrizar de 3 m o mas te quita estamina ----------
+    // ---------- Aterrizajes con PHD Flopper: Stagger y logros de caidas ----------
+    // El juego llama a HandleFall en cada frame con el jugador en el suelo (height = lo caido desde el punto mas alto, casi siempre 0):
+    // la primera linea descarta todo lo que no sea una caida de verdad.
     [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.HandleFall))]
-    internal static class StaggerPatch
+    internal static class FallPatch
     {
         [HarmonyPrefix]
         private static void Prefix(ActiveHealthController __instance, float height)
         {
-            if (!Perks.IsActive(PhdFlopper.Id) || height < PhdFlopper.StaggerHeight || !Util.IsMe(__instance.Player)) return;
-            if (!Perk.Has("dp_stagger")) return;
-            var phys = __instance.Player.Physical;
-            if (phys == null || phys.Stamina == null) return;
-            phys.Stamina.Current = Mathf.Max(0f, phys.Stamina.Current - PhdFlopper.StaggerCost);
-            Dbg.Log("EFECTO", "Stagger: caida de " + height.ToString("0.0") + " m, -" + PhdFlopper.StaggerCost + " de estamina");
+            if (height < PhdFlopper.MinFall || !Perks.IsActive(PhdFlopper.Id) || !Util.IsMe(__instance.Player)) return;
+            PhdFlopper.OnFall(__instance.Player, height);
         }
     }
 

@@ -26,20 +26,40 @@ namespace TarkovaCola.Client
         internal const float BonesBleed = 0.20f;          //   ...pero cada golpe tiene un 20% extra de hacer sangrar
         internal const float KeepGoing = 0.35f;           // Keep Going: hambre y sed hacen un 65% menos de dano
         internal const float PlatesDurability = 0.5f;     // Bone Plating: la armadura se desgasta la mitad
+        internal const int RudeDamage = 4000;             // logro "Rude suggestions": dano total recibido
+        internal const int PincushionHits = 25;           // logro "Pincushion": impactos en una raid (y extraer con vida)
 
         // Lo que NO se reduce: efectos del propio cuerpo (hambre, sed, sangrado, veneno, medicinas...), no golpes.
         private const EDamageType NotReduced = EDamageType.Medicine | EDamageType.Existence | EDamageType.Dehydration | EDamageType.Exhaustion
             | EDamageType.RadExposure | EDamageType.Stimulator | EDamageType.Poison | EDamageType.LethalToxin
             | EDamageType.LightBleeding | EDamageType.HeavyBleeding;
 
-        private static bool _bastionUsed;
+        private static bool _bastionUsed, _red;
         private static float _dmgAcc;
+        private static int _raidHits;
 
-        internal static void OnRaidStart() { _bastionUsed = false; _dmgAcc = 0f; }
+        internal static void OnRaidStart() { _bastionUsed = false; _red = false; _dmgAcc = 0f; _raidHits = 0; }
 
         internal static bool Reduces(EDamageType type) { return (type & NotReduced) == 0; }
 
         internal static string Notice() { return L.F("notice.juggernog.sub", ((1f - DamageMult) * 100f).ToString("0")); }
+
+        internal static void OnDrink(ActiveHealthController health)
+        {
+            Achievements.Unlock("jg_fresh");
+        }
+
+        // La salud esta en rojo ahora mismo (lo actualiza PerkFx cada segundo): para el logro de extraer con vida en rojo
+        internal static void SetRed(bool red) { _red = red; }
+
+        // Fin de raid (desde PerkFx.OnRaidEnd): desafio de Last Bastion y logros que piden extraer con vida
+        internal static void OnRaidEnd(bool alive)
+        {
+            if (!alive || !Perks.IsActive(Id)) return;
+            PerkService.AddProgress("jg_bastion");
+            if (_red) Achievements.Unlock("jg_red");
+            if (_raidHits >= PincushionHits) Achievements.Unlock("jg_secret");
+        }
 
         private static bool HasHelmet()
         {
@@ -83,12 +103,19 @@ namespace TarkovaCola.Client
                 }
             }
 
-            // desafio de Skull Cap: dano de golpes recibido (en enteros)
+            // desafio de Skull Cap y logros: dano de golpes recibido (en enteros) e impactos de la raid
             if (hit && damage > 0f)
             {
+                _raidHits++;
                 _dmgAcc += damage;
                 int whole = (int)_dmgAcc;
-                if (whole > 0) { _dmgAcc -= whole; PerkService.AddProgress("jg_skull", whole); }
+                if (whole > 0)
+                {
+                    _dmgAcc -= whole;
+                    PerkService.AddProgress("jg_skull", whole);
+                    PerkService.AddStat("juggernog_dmg", whole);
+                    if (PerkService.Stat("juggernog_dmg") >= RudeDamage) Achievements.Unlock("jg_rude");
+                }
             }
 
             if (damage != before) Dbg.Throttled("jugg", 5f, "EFECTO", "Juggernog: dano " + before.ToString("0.0") + " -> " + damage.ToString("0.0") + " (" + t + ")");

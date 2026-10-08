@@ -31,6 +31,27 @@ namespace TarkovaCola.Client
             new Def { Key = "st_lvl5",     ServerId = "6a1c00000000000000000a0a" },
             new Def { Key = "st_cardio",   ServerId = "6a1c00000000000000000a0b" },
             new Def { Key = "st_double",   ServerId = "6a1c00000000000000000a0c", Secret = true },
+            // Juggernog
+            new Def { Key = "jg_fresh",    ServerId = "6a1c00000000000000000a0d" },
+            new Def { Key = "jg_rude",     ServerId = "6a1c00000000000000000a0e" },
+            new Def { Key = "jg_red",      ServerId = "6a1c00000000000000000a0f" },
+            new Def { Key = "jg_lvl5",     ServerId = "6a1c00000000000000000a10" },
+            new Def { Key = "jg_all",      ServerId = "6a1c00000000000000000a11" },
+            new Def { Key = "jg_secret",   ServerId = "6a1c00000000000000000a12", Secret = true },
+            // PHD Flopper
+            new Def { Key = "pf_flop",     ServerId = "6a1c00000000000000000a13" },
+            new Def { Key = "pf_hugs",     ServerId = "6a1c00000000000000000a14" },
+            new Def { Key = "pf_gravity",  ServerId = "6a1c00000000000000000a15" },
+            new Def { Key = "pf_lvl5",     ServerId = "6a1c00000000000000000a16" },
+            new Def { Key = "pf_all",      ServerId = "6a1c00000000000000000a17" },
+            new Def { Key = "pf_secret",   ServerId = "6a1c00000000000000000a18", Secret = true },
+            // Widow's Wine
+            new Def { Key = "ww_first",    ServerId = "6a1c00000000000000000a19" },
+            new Def { Key = "ww_webbed",   ServerId = "6a1c00000000000000000a1a" },
+            new Def { Key = "ww_grenades", ServerId = "6a1c00000000000000000a1b" },
+            new Def { Key = "ww_lvl5",     ServerId = "6a1c00000000000000000a1c" },
+            new Def { Key = "ww_all",      ServerId = "6a1c00000000000000000a1d" },
+            new Def { Key = "ww_secret",   ServerId = "6a1c00000000000000000a1e", Secret = true },
         };
 
         private static JObject Store { get { return PerkService.AchState; } }
@@ -74,6 +95,12 @@ namespace TarkovaCola.Client
             if (Perks.SpeedCola.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("a_all");
             if (PerkService.IsMax("staminup")) Unlock("st_lvl5");
             if (Perks.StaminUp.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("st_cardio");
+            if (PerkService.IsMax("juggernog")) Unlock("jg_lvl5");
+            if (Perks.Juggernog.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("jg_all");
+            if (PerkService.IsMax("phdflopper")) Unlock("pf_lvl5");
+            if (Perks.PhdFlopper.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("pf_all");
+            if (PerkService.IsMax("widowswine")) Unlock("ww_lvl5");
+            if (Perks.WidowsWine.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("ww_all");
         }
 
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).
