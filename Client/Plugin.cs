@@ -374,6 +374,7 @@ namespace TarkovaCola.Client
         {
             Perks.ClearActive();
             Hud.ClearQueue();
+            RaidPanel.ResetSelection();
             StaminUp.OnRaidStart();
             PerkFx.OnRaidStart();
             Tracker.Reset();
@@ -382,6 +383,7 @@ namespace TarkovaCola.Client
             Perk.OnRaidStart();
             PerkService.EnsureLoaded(force: true);
             ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
+            PerkService.Sanitize();                   // sin su desventaja, una mejora no puede estar equipada
             Perk.Refresh();
             Achievements.CheckState();
             Achievements.ClaimPending();

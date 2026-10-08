@@ -258,6 +258,20 @@ namespace TarkovaCola.Client
             return a != null && a.Kind == NodeKind.Major;
         }
 
+        // Hace cumplir la regla de pareja sobre lo que ya hay guardado: sin desventaja principal no hay mejora principal, y sin
+        // desventaja secundaria no hay mejoras secundarias. Devuelve true si tuvo que desequipar algo.
+        internal static bool Sanitize()
+        {
+            bool changed = false;
+            foreach (var def in Perks.UiPerks)
+            {
+                if (EquippedMajor(def.Id, false) != null && EquippedMajor(def.Id, true) == null) { Side(def.Id, false)["major"] = null; changed = true; }
+                if (EquippedMinors(def.Id, false).Count > 0 && EquippedMinors(def.Id, true).Count == 0) { Side(def.Id, false)["minor"] = new JArray(); changed = true; }
+            }
+            if (changed) { Save(); Dbg.Log("EQUIP", "estado saneado: mejoras sin su desventaja desequipadas"); }
+            return changed;
+        }
+
         // Equipa o desequipa. Devuelve un mensaje de error (ya traducido) si no esta permitido, o null si se hizo.
         // 'info' recibe un aviso si ademas se desequipo algo por regla.
         internal static string ToggleEquip(string id, out string info)
@@ -282,6 +296,12 @@ namespace TarkovaCola.Client
                 else
                 {
                     side["minor"] = new JArray(EquippedMinors(perk, drb).Where(x => x != id));
+                    // al quitar la ultima desventaja secundaria, las mejoras secundarias tampoco pueden quedarse equipadas
+                    if (drb && EquippedMinors(perk, true).Count == 0 && EquippedMinors(perk, false).Count > 0)
+                    {
+                        Side(perk, false)["minor"] = new JArray();
+                        info = L.T("toast.drbremoved.minor");
+                    }
                 }
                 Save();
                 return null;
@@ -294,6 +314,7 @@ namespace TarkovaCola.Client
             }
             else
             {
+                if (!drb && EquippedMinors(perk, true).Count == 0) return L.T("err.needdrbn");     // igual que las principales: sin su desventaja no hay mejora
                 var list = EquippedMinors(perk, drb);
                 list.Add(id);
                 int n = MinorSlots(perk, !drb);

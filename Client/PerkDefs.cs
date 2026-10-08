@@ -7,6 +7,9 @@ namespace TarkovaCola.Client
 {
     internal enum NodeKind { Major, Minor, Special }
 
+    // como se muestra el progreso de un desafio: cuenta normal, metros (se ven en km) o segundos (se ven como m:ss)
+    internal enum ProgUnit { None, Meters, Seconds }
+
     internal class AugDef
     {
         public string Id;
@@ -15,6 +18,7 @@ namespace TarkovaCola.Client
         public int Seq;        // orden en el camino en serpiente (1..9)
         public int Lvl;        // nivel de la perk que revela el desafio
         public int Goal;       // objetivo del desafio
+        public ProgUnit Unit;  // unidad del progreso (solo para mostrarlo)
     }
 
     // Una perk: su item, sus recursos y su arbol de mejoras. Los ids de mejoras/desventajas deben ser unicos entre perks.
@@ -85,8 +89,8 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "st_rush",    Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 1 },
                 new AugDef { Id = "st_shooter", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 15 },
                 new AugDef { Id = "st_wind",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },
-                new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 },
-                new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10000 },
+                new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 , Unit = ProgUnit.Meters },
+                new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10000 , Unit = ProgUnit.Meters },
                 new AugDef { Id = "st_land",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 3 },
                 new AugDef { Id = "st_lungs",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 30 },
                 new AugDef { Id = "st_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
@@ -115,7 +119,7 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "jg_bastion", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 5 },      // un golpe letal por raid te deja a 1 PV
                 new AugDef { Id = "jg_skull",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 1500 },   // rebote de balas en el casco
                 new AugDef { Id = "jg_thick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 40 },     // menos sangrado, mas fracturas
-                new AugDef { Id = "jg_bones",   Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 120 },    // menos fracturas, mas sangrado
+                new AugDef { Id = "jg_bones",   Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 120 , Unit = ProgUnit.Seconds },    // menos fracturas, mas sangrado
                 new AugDef { Id = "jg_keep",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 15 },     // hambre y sed hacen menos dano
                 new AugDef { Id = "jg_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
@@ -139,10 +143,10 @@ namespace TarkovaCola.Client
             {
                 new AugDef { Id = "pf_absorb",  Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 500 },    // curas el 25% del dano de explosion que causas
                 new AugDef { Id = "pf_shock",   Kind = NodeKind.Major,   Seq = 6, Lvl = 4, Goal = 5 },      // granadas: doble radio y mitad de mecha
-                new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 2000 },   // aterrizar no te frena
-                new AugDef { Id = "pf_stop",    Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 300 },    // quieto: estamina x2 de rapida
+                new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 2000 , Unit = ProgUnit.Meters },   // aterrizar no te frena
+                new AugDef { Id = "pf_stop",    Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 300 , Unit = ProgUnit.Seconds },    // quieto: estamina x2 de rapida
                 new AugDef { Id = "pf_ears",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // inmune a la contusion
-                new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 5000 },   // inmune a alambre de puas y barro
+                new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 5000 , Unit = ProgUnit.Meters },   // inmune a alambre de puas y barro
                 new AugDef { Id = "pf_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
             DrbMajor = new[] { "dp_concussed", "dp_throw" },

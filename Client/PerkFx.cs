@@ -486,9 +486,13 @@ namespace TarkovaCola.Client
         [HarmonyPrefix]
         private static void Prefix(ActiveHealthController __instance, float height)
         {
-            if (height < PhdFlopper.MinFall || !Perks.IsActive(PhdFlopper.Id) || !Util.IsMe(__instance.Player)) return;
-            PhdFlopper.OnFall(__instance.Player, height);
+            if (!Perks.IsActive(PhdFlopper.Id) || !Util.IsMe(__instance.Player)) return;
+            PhdFlopper.InFall = true;                                     // dentro de HandleFall: el dano "Fall" que se aplique es una caida de verdad
+            if (height >= PhdFlopper.MinFall) PhdFlopper.OnFall(__instance.Player, height);
         }
+
+        [HarmonyFinalizer]
+        private static void Finalizer() { PhdFlopper.InFall = false; }
     }
 
     // ---------- armadura: Bone Plating, Safe Fuse, Brittle Plates y el desafio de Bone Plating ----------

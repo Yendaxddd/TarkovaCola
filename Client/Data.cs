@@ -94,7 +94,7 @@ namespace TarkovaCola.Client
             ["tag.notunlocked"] = new[] { "NO DESBLOQUEADA", "NOT UNLOCKED" },
             ["tag.locked"]      = new[] { "BLOQUEADA", "LOCKED" },
             ["tile.challenge"]  = new[] { "Desafío de nivel {0}", "Level {0} challenge" },
-            ["tile.unlocks"]    = new[] { "Desbloquea {0}", "Unlocks {0}" },
+            ["tile.unlocks"]    = new[] { "Se desbloquea con {0}", "Unlocked by {0}" },
             ["slot.major"]      = new[] { "PRINCIPAL", "MAJOR" },
             ["slot.minor"]      = new[] { "SECUNDARIA", "MINOR" },
             ["slot.level5"]     = new[] { "NIVEL 5", "LEVEL 5" },
@@ -102,14 +102,17 @@ namespace TarkovaCola.Client
             ["equip.drawbacks"] = new[] { "DESVENTAJAS", "DRAWBACKS" },
             ["equip.rules"]     = new[]
             {
-                "Mejoras: 1 principal + {0} secundaria(s).\nDesventajas: 1 principal + 1 secundaria.\nNo puedes llevar una mejora principal sin su desventaja principal.",
-                "Augments: 1 major + {0} minor.\nDrawbacks: 1 major + 1 minor.\nYou can't carry a major augment without a major drawback.",
+                "Mejoras: 1 principal + {0} secundaria(s).\nDesventajas: 1 principal + 1 secundaria.\nNo puedes llevar una mejora principal sin su desventaja principal, ni una secundaria sin su desventaja secundaria.",
+                "Augments: 1 major + {0} minor.\nDrawbacks: 1 major + 1 minor.\nYou can't carry a major augment without a major drawback, nor a minor augment without a minor drawback.",
             },
             ["xp.max"]          = new[] { "NIVEL MÁXIMO", "MAX LEVEL" },
             ["xp.mult"]         =new[] { "MULTIPLICADOR DE XP", "XP MULTIPLIER" },
             ["xp.note"]         = new[] { "+25% de XP mientras la perk está activa en la raid", "+25% XP while the perk is active in raid" },
             ["err.needdrb"]     = new[] { "Equipa primero una desventaja principal.", "Equip a major drawback first." },
+            ["err.needdrbn"]    = new[] { "Equipa primero una desventaja secundaria.", "Equip a minor drawback first." },
             ["toast.drbremoved"]= new[] { "Sin desventaja principal, la mejora principal también se desequipa.", "Without a major drawback, the major augment is unequipped too." },
+            ["toast.drbremoved.minor"] = new[] { "Sin desventaja secundaria, las mejoras secundarias también se desequipan.", "Without a minor drawback, minor augments are unequipped too." },
+            ["toast.sanitized"] = new[] { "Se desequiparon mejoras que no tenían su desventaja.", "Augments without their drawback were unequipped." },
             ["toast.locked"]    = new[] { "Aún no está desbloqueada.", "Not unlocked yet." },
 
             // ---- avisos en pantalla (HUD) ----
@@ -129,7 +132,9 @@ namespace TarkovaCola.Client
             ["raid.active"]     = new[] { "ACTIVA", "ACTIVE" },
             ["raid.xpraid"]     = new[] { "+{0} XP esta raid (x1.25)", "+{0} XP this raid (x1.25)" },
             ["raid.drink"]      = new[] { "Bebe {0} en la raid para ganar XP de la perk.", "Drink {0} in raid to earn perk XP." },
-            ["raid.pending"]    = new[] { "DESAFÍOS PENDIENTES", "PENDING CHALLENGES" },
+            ["raid.pending"]    = new[] { "DESAFÍOS PENDIENTES ({0})", "PENDING CHALLENGES ({0})" },
+            ["rp.tabs.hint"]    = new[] { "Clic en un icono, o la rueda del ratón sobre el panel, para cambiar de perk.", "Click an icon, or use the mouse wheel over the panel, to switch perk." },
+            ["raid.alldone"]    = new[] { "¡Todos los desafíos completados!", "All challenges completed!" },
             ["raid.none"]       = new[] { "Sin desafíos activos. Sube de nivel para revelar más.", "No active challenges. Level up to reveal more." },
 
             // ---- mejoras: nombre (.n), efecto (.d), desafio (.c) ----
@@ -490,6 +495,17 @@ namespace TarkovaCola.Client
             if (i >= 0) return perk.AugsOf(NodeKind.Major).ElementAt(i).Id;
             i = Array.IndexOf(perk.DrbMinor, drbId);
             return i >= 0 ? perk.AugsOf(NodeKind.Minor).ElementAt(i).Id : null;
+        }
+
+        // progreso de un desafio con su unidad: 6300 m -> "6.3 km", 125 s -> "2:05"
+        internal static string Prog(AugDef c, int v)
+        {
+            switch (c.Unit)
+            {
+                case ProgUnit.Meters: return v == 0 || v >= 1000 ? (v / 1000f).ToString(v % 1000 == 0 ? "0" : "0.0") + " km" : v + " m";
+                case ProgUnit.Seconds: return (v / 60) + ":" + (v % 60).ToString("00");
+                default: return v.ToString();
+            }
         }
 
         internal static string Name(string id) { return L.T(id + ".n"); }

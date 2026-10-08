@@ -31,12 +31,14 @@ namespace TarkovaCola.Client
             try
             {
                 PerkService.EnsureLoaded(force: true);
+                bool sanitized = PerkService.Sanitize();          // mejoras que se equiparon sin su desventaja (versiones anteriores)
                 Achievements.CheckState();
                 Achievements.ClaimPending();
                 UiKit.EnsureAssets();
                 go = new GameObject("TarkovaCola_Research");
                 _inst = go.AddComponent<ResearchScreen>();
                 _inst.Build();
+                if (sanitized) _inst.Toast(L.T("toast.sanitized"));
                 UiKit.Sound(EUISoundType.MenuInspectorWindowOpen);
                 Dbg.Log("MENU", "pantalla Research abierta (idioma " + (L.Spanish ? "es" : "en") + ")");
             }
@@ -513,7 +515,7 @@ namespace TarkovaCola.Client
             if (pair != null) Fit(T(node, L.F("unlocks", Data.Name(pair)), 20, 156, NodeW - 40, 16, 12, UiKit.Red, TextAlignmentOptions.Top), 9, 12);
 
             string status = st == "done" ? L.T("status.done") : st == "locked" ? L.F("status.level", a.Lvl)
-                          : L.F("status.challenge", Mathf.Min(PerkService.Progress(a.Id), a.Goal), a.Goal);
+                          : L.F("status.challenge", Data.Prog(a, Mathf.Min(PerkService.Progress(a.Id), a.Goal)), Data.Prog(a, a.Goal));
             Color sc = st == "done" ? UiKit.Green : st == "active" ? UiKit.Gold : UiKit.Dim;
             T(node, status, 0, 178, NodeW, 16, 12, sc, TextAlignmentOptions.Top, false, true);
 
@@ -542,7 +544,7 @@ namespace TarkovaCola.Client
             string pair = Data.PairOf(a.Id);
             if (pair != null) T(info.transform, L.F("info.drawback", Data.Name(pair), Data.Desc(pair)), 24, 104, 1390, 20, 13, UiKit.Red);
             if (st == "active") Bar(info.transform, 1080, 24, 300, 8, PerkService.Progress(a.Id) / (float)a.Goal, UiKit.Gold);
-            if (st == "active") T(info.transform, PerkService.Progress(a.Id) + " / " + a.Goal, 1080, 36, 300, 18, 13, UiKit.Dim, TextAlignmentOptions.TopRight);
+            if (st == "active") T(info.transform, Data.Prog(a, Mathf.Min(PerkService.Progress(a.Id), a.Goal)) + " / " + Data.Prog(a, a.Goal), 1080, 36, 300, 18, 13, UiKit.Dim, TextAlignmentOptions.TopRight);
         }
 
         // ---------------------------------------------------------------- pantalla EQUIPAR
@@ -636,9 +638,10 @@ namespace TarkovaCola.Client
         private void BuildSlots(Transform p)
         {
             Fit(T(p, _perk.Name, 20, 16, 300, 30, 26, UiKit.Green, TextAlignmentOptions.TopLeft, false, true), 16, 26);       // (antes decia siempre "Speed Cola")
-            var rules = T(p, L.F("equip.rules", PerkService.MinorSlots(_perk.Id, true)), 20, 56, 300, 110, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
+            var rules = T(p, L.F("equip.rules", PerkService.MinorSlots(_perk.Id, true)), 20, 56, 300, 128, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
             rules.lineSpacing = 10f;
             rules.paragraphSpacing = 8f;
+            Fit(rules, 10, 13);
 
             Section(p, 20, 190, 300, "equip.augments", "am");
             var augMinor = PerkService.EquippedMinors(_perk.Id, false);

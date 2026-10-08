@@ -32,7 +32,10 @@ namespace TarkovaCola.Client
         private const float BlastGap = 1.2f;          // varios impactos de una misma explosion llegan seguidos: cuentan como una
         private const float SingleGrenade = 1.5f;     // "Explosive personality": 3 bajas con granada en menos de 1.5 s = una sola granada
 
-        private const EDamageType Immune = EDamageType.Fall | PerkFx.Blast;
+        // El juego tambien aplica como dano "Fall" lo que te hace una pierna rota: correr (2 PV cada 1-1.5 s), saltar y saltar obstaculos.
+        // Eso NO es una caida: la perk no lo anula ni saca el efecto visual. Solo cuenta como caida lo que ocurre dentro de HandleFall.
+        internal static bool InFall;
+        internal const float VfxMinDamage = 3f;       // las caidas que harian menos dano que esto no sacan el efecto visual
 
         private static readonly EBodyPart[] Parts =
             { EBodyPart.Head, EBodyPart.Chest, EBodyPart.Stomach, EBodyPart.LeftArm, EBodyPart.RightArm, EBodyPart.LeftLeg, EBodyPart.RightLeg };
@@ -42,7 +45,7 @@ namespace TarkovaCola.Client
 
         internal static void OnRaidStart() { _acc = 0f; _lastBlast = -99f; _grenadeKills.Clear(); }
 
-        internal static bool IsImmune(EDamageType type) { return (type & Immune) != 0; }
+        internal static bool IsImmune(EDamageType type) { return (type & PerkFx.Blast) != 0 || ((type & EDamageType.Fall) != 0 && InFall); }
 
         internal static string Notice() { return Effect(Perks.Power(Id)); }
 
@@ -65,7 +68,8 @@ namespace TarkovaCola.Client
                 }
                 Dbg.Throttled("phd", 5f, "EFECTO", "PHD Flopper: " + damage.ToString("0.0") + " de dano por " + t + " anulado");
                 var me = Plugin.Me;
-                if (me != null) PhdVfx.Play(me.Position, (t & EDamageType.Fall) != 0 ? Mathf.Clamp01(damage / 40f) : 1f);   // efecto visual (caidas pequenas = efecto pequeno)
+                bool fall = (t & EDamageType.Fall) != 0;
+                if (me != null && (!fall || damage >= VfxMinDamage)) PhdVfx.Play(me.Position, fall ? Mathf.Clamp01(damage / 40f) : 1f);   // efecto visual (caidas pequenas = efecto pequeno)
                 if ((t & PerkFx.Blast) != 0) OnBlast();
                 return 0f;
             }
