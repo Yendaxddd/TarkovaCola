@@ -83,6 +83,16 @@ namespace TarkovaCola.Client
             }
         }
 
-        internal static float DrawMult { get { return Has("a_quick") ? QuickHandsDraw : 1f; } }
+        // sacar / cambiar de arma: Quick Hands la acelera; Sluggish Reflexes y Greasy Fingers la frenan
+        internal static float DrawMult
+        {
+            get
+            {
+                float m = Has("a_quick") ? QuickHandsDraw : 1f;
+                if (Has("dj_sluggish")) m *= PerkFx.SluggishDraw;
+                if (Has("dw_greasy")) m *= PerkFx.GreasyDraw;
+                return m;
+            }
+        }
     }
 }

@@ -35,6 +35,7 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<float> CfgHandScale;
         internal static ConfigEntry<bool> CfgJingle;
         internal static ConfigEntry<float> CfgJingleVolume;
+        internal static ConfigEntry<bool> CfgPhdVfx;
         internal static Plugin Instance;
 
         private void Awake()
@@ -54,9 +55,10 @@ namespace TarkovaCola.Client
                 "Con un brazo danado el juego anula el buff de recarga; con esto Speed Cola se mantiene");
             CfgOpenKey = Config.Bind("Menu", "Tecla para abrir Research", KeyCode.F9, "Atajo alternativo al botón Research del menú principal / Alternative shortcut to the Research button");
             Instance = this;
-            Player.OnPlayerDeadStatic += StaminUp.OnPlayerDead;
+            Player.OnPlayerDeadStatic += PerkFx.OnKill;        // bajas del jugador (Stamin-Up y las perks nuevas)
             CfgJingle = Config.Bind("Audio", "Cancion al beber", true, "Reproduce la cancion de Speed Cola al beberla / Play the jingle when drinking");
             CfgJingleVolume = Config.Bind("Audio", "Volumen de la cancion", 0.6f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
+            CfgPhdVfx = Config.Bind("HUD", "Efecto visual de PHD Flopper", true, "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion / Energy ring and sparks when PHD Flopper saves you from a fall or blast");
             CfgHandScale = Config.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Multiplicador del tamaño del modelo de la Speed Cola al beberla / Hand model size multiplier");
             CfgSwapWindow = Config.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas");
 
@@ -78,6 +80,7 @@ namespace TarkovaCola.Client
             if (!InRaidWorld && Input.GetKeyDown(CfgOpenKey.Value)) { Dbg.Log("MENU", "tecla " + CfgOpenKey.Value + " pulsada"); ResearchScreen.Toggle(); }
             Tracker.Tick();
             Hud.TickRaidPanel();
+            PerkService.TickSave();      // el progreso se envia al servidor unos segundos despues del ultimo cambio
         }
 
         private void OnGUI()
@@ -175,8 +178,8 @@ namespace TarkovaCola.Client
             HandModel.Tick(hc);          // modelo de la perk en la mano (solo actua mientras se bebe)
             try { StaminUp.Tick(me); }   // efectos de Stamin-Up (sale enseguida si no esta activa)
             catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
-            try { WidowsWine.Tick(); }   // telaranas por proximidad de las granadas (sale enseguida si no hay ninguna)
-            catch (Exception e) { Dbg.Throttled("widowfail", 10f, "ERROR", "Widow's Wine: " + e); }
+            try { PerkFx.Tick(me); }     // efectos por frame de Juggernog, PHD Flopper, Widow's Wine y las mejoras comunes (sale enseguida sin perks activas)
+            catch (Exception e) { Dbg.Throttled("perkfxfail", 10f, "ERROR", "perks (frame): " + e); }
 
             // ---- cambio de arma ----
             if (!ReferenceEquals(hc, _hands))
@@ -364,7 +367,7 @@ namespace TarkovaCola.Client
         {
             Perks.ClearActive();
             StaminUp.OnRaidStart();
-            WidowsWine.OnRaidStart();
+            PerkFx.OnRaidStart();
             Tracker.Reset();
             XpPatch.Awarded = false;
             Dbg.RaidStarted();
@@ -395,9 +398,10 @@ namespace TarkovaCola.Client
         }
 
         [HarmonyPostfix]
-        private static void Postfix()
+        private static void Postfix(ExitStatus __0)
         {
             var me = Plugin.Me;
+            if (!Awarded) PerkFx.OnRaidEnd(__0);        // desafios que dependen de extraer con vida
             Award("EndStatisticsSession", me != null ? me.Profile : null, 0);
         }
 
@@ -415,7 +419,7 @@ namespace TarkovaCola.Client
                 if (raidXp > 0)
                     foreach (var perk in active)
                         PerkService.AddXp(perk.Id, (int)Math.Round(raidXp * (1.0 + PerkService.XpBonus)));
-                PerkService.Save();
+                PerkService.Flush();
             }
             catch (Exception e) { Plugin.Log.LogError("Error otorgando XP de perk: " + e); }
         }
@@ -428,13 +432,14 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(ActiveHealthController __instance, Item item)
         {
-            var def = item != null ? Perks.ByItem(item.StringTemplateId) : null;
-            if (def == null) return;
             if (__instance.Player == null || !__instance.Player.IsYourPlayer) return;
+            var def = item != null ? Perks.ByItem(item.StringTemplateId) : null;
+            if (def == null) { Juggernog.OnConsumed(item); return; }      // otra comida o medicina: cuenta para los desafios de Juggernog
 
             Perks.Activate(def.Id);
             Jingle.Play(def);
             Perk.Refresh();
+            PerkFx.RefreshPhysical(__instance.Player);                    // capacidad de estamina y de aire, y peso, con las perks activas
             Perk.LastKillOrDrink = Time.time;
             Hud.Notify(def.Name.ToUpperInvariant(), def.DrinkNotice != null ? def.DrinkNotice() : "", def.Id);
             Dbg.Log("BEBIDA", def.Id + " activada");

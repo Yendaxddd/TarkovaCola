@@ -12,8 +12,10 @@ namespace TarkovaCola.Client
 {
     // Stamin-Up: mas estamina de piernas y mejoras para correr / rushear.
     //   Base: la estamina de las PIERNAS (la barra de correr) sube x1.5 durante el resto de la raid.
-    //   Mejoras: Rush Hour, Second Wind, Sprint Shooter, Light Feet, Quick Recovery, Soft Landing, Extra Slot.
-    //   Desventajas ligadas: Loud Boots, Jelly Legs, Burnout, Hungry Legs, Cramps, Sweaty.
+    //   Mejoras: Rush Hour, Second Wind, Sprint Shooter, Light Feet, Quick Recovery, Soft Landing, Iron Lungs, Extra Slot.
+    //   Desventajas ligadas: Loud Boots, Jelly Legs, Burnout, Hungry Legs, Cramps, Sweaty, Tight Chest.
+    // Peso (Light Feet), capacidad de estamina, aire (Iron Lungs), balanceo (Tight Chest) y velocidad de animaciones (Sprint Shooter)
+    // se aplican en los ganchos compartidos de PerkFx.cs.
     // Lo que se consulta cada frame son campos simples; el calculo pesado solo ocurre mientras la perk esta activa.
     internal static class StaminUp
     {
@@ -25,10 +27,8 @@ namespace TarkovaCola.Client
         internal const float KillWindow = 180f;          // Rush Hour (desafio): 3 bajas en menos de 3 min
         internal const float LowHealth = 0.30f;          // Second Wind: salud "en rojo" (parte vital o total por debajo del 30%)
         internal const float WindSeconds = 5f;           //   duracion de la estamina infinita y la inmunidad al dolor (sin cooldown: se reactiva cada vez que la salud vuelve a estar en rojo)
-        internal const float WeightMult = 0.90f;         // Light Feet: -10% de peso
         internal const float RecoveryBonus = 0.25f;      // Quick Recovery: +25% de recuperacion
         internal const float LandingMult = 0.70f;        // Soft Landing: -30% de dano por caida
-        internal const float AnimSpeed = 1.75f;          // Sprint Shooter: las animaciones del arma van siempre x1.75 (menos las recargas)
         internal const float BootsRadius = 25f;          // Loud Boots: ruido de pasos al correr (m)
         internal const float BootsInterval = 0.5f;
         internal const float BurnoutLow = 0.30f;         // Burnout: por debajo del 30% de estamina se recupera a la mitad
@@ -47,7 +47,6 @@ namespace TarkovaCola.Client
         internal static bool JellyOn;                    // balanceo extra activo (lo lee JitterPatch)
         private static float _raidStart, _windUntil, _sprintStart, _jellyUntil, _nextBoots, _nextDrain;
         private static bool _wasSprinting, _exhaustArmed = true;
-        private static IAnimator _spedAnimator;                // animador al que se le acelero la velocidad (para devolverla a 1)
         private static int _kills, _doubleKills;
         private static float _distance;
         private static Vector3 _lastPos;
@@ -60,7 +59,7 @@ namespace TarkovaCola.Client
             _raidStart = Time.time;
             JellyOn = false;
             _windUntil = 0f; _sprintStart = 0f; _jellyUntil = 0f; _nextBoots = 0f; _nextDrain = 0f;
-            _wasSprinting = false; _exhaustArmed = true; _spedAnimator = null;
+            _wasSprinting = false; _exhaustArmed = true;
             _kills = 0; _doubleKills = 0; _distance = 0f; _hasPos = false;
             _killTimes.Clear(); _earlyKills.Clear();
         }
@@ -75,22 +74,7 @@ namespace TarkovaCola.Client
             var me = health.Player;
             Dbg.Log("BEBIDA", "Stamin-Up: estamina de piernas x" + CapacityMult.ToString("0.0"));
             Achievements.Unlock("st_fresh");
-            ApplyCapacity(me);
-            _lastPos = me.Position; _hasPos = true;
-        }
-
-        // La capacidad se multiplica en el calculo del juego (CapacityPatch); aqui se fuerza que lo recalcule y se conserva la proporcion llena.
-        private static void ApplyCapacity(Player me)
-        {
-            var phys = me.Physical;
-            if (phys == null || phys.Stamina == null) return;
-            float before = phys.Stamina.TotalCapacity;
-            phys.Stamina.TotalCapacity.SetDirty();
-            float after = phys.Stamina.TotalCapacity;
-            if (before > 0f) phys.Stamina.Current = Mathf.Min(after, phys.Stamina.Current * after / before);
-            Dbg.Log("EFECTO", "Stamin-Up: capacidad de piernas " + before.ToString("0") + " -> " + after.ToString("0"));
-            // Light Feet cambia el peso: el juego lo recalcula al avisarle
-            (phys._playerBridge as PhysicalBase.PlayerBridge)?.CallOnTotalWeightUpdated();
+            _lastPos = me.Position; _hasPos = true;      // (la capacidad de piernas la recalcula PerkFx.RefreshPhysical, comun a todas las perks)
         }
 
         // ---------------------------------------------------------------- cada frame (solo si la perk esta activa)
@@ -102,7 +86,6 @@ namespace TarkovaCola.Client
             float dt = Time.deltaTime, now = Time.time;
             var stamina = phys.Stamina;
             bool sprinting = phys.Sprinting;
-            if (me.ProceduralWeaponAnimation != null) Perk.MyBreath = me.ProceduralWeaponAnimation.Breath;   // lo usa JitterPatch (Jelly Legs)
             float cap = stamina.TotalCapacity;
 
             // ---- distancia corriendo (desafios Light Feet / Quick Recovery y logro Marathon man) ----
@@ -147,7 +130,7 @@ namespace TarkovaCola.Client
             else if (stamina.Current > cap * 0.3f) _exhaustArmed = true;
 
             // ---- Second Wind: cada vez que la salud esta en rojo, 5 s de estamina infinita e inmunidad al dolor (sin cooldown) ----
-            if (now >= _windUntil && Perk.Has("st_wind") && me.HealthController.IsAlive && IsNearDeath(me.HealthController))
+            if (now >= _windUntil && Perk.Has("st_wind") && me.HealthController.IsAlive && PerkFx.NearDeath(me.HealthController, LowHealth))
             {
                 _windUntil = now + WindSeconds;
                 me.ActiveHealthController.AddEffect<ActiveHealthController.PainKiller>(EBodyPart.Head, 0f, WindSeconds, 0f);
@@ -179,43 +162,12 @@ namespace TarkovaCola.Client
                 }
             }
             else _nextDrain = now + 1f;
-
-            // ---- Sprint Shooter: animaciones aceleradas un instante tras dejar de correr ----
-            UpdateAnimSpeed(me);
-        }
-
-        private static bool IsNearDeath(IHealthController hc)
-        {
-            return hc.GetBodyPartHealth(EBodyPart.Common).Normalized <= LowHealth
-                || hc.GetBodyPartHealth(EBodyPart.Head).Normalized <= LowHealth
-                || hc.GetBodyPartHealth(EBodyPart.Chest).Normalized <= LowHealth;
-        }
-
-        // Sprint Shooter: mientras este equipada, las animaciones del arma van siempre aceleradas. Al cambiar de arma el animador
-        // es otro (velocidad 1), asi que se reaplica cada frame; al desequiparla o acabar la raid se devuelve a 1.
-        private static void UpdateAnimSpeed(Player me)
-        {
-            var animator = me.HandsController != null && me.HandsController.FirearmsAnimator != null ? me.HandsController.FirearmsAnimator.Animator : null;
-            // las recargas NO se aceleran (su velocidad es cosa de Speed Cola): durante una recarga el animador vuelve a x1
-            bool reloading = me.HandsController is Player.FirearmController fc && fc.IsInReloadOperation();
-            if (animator != null && Perk.Has("st_shooter") && !reloading)
-            {
-                if (!ReferenceEquals(_spedAnimator, animator) && _spedAnimator != null) _spedAnimator.speed = 1f;
-                animator.speed = AnimSpeed;
-                _spedAnimator = animator;
-            }
-            else if (_spedAnimator != null)
-            {
-                _spedAnimator.speed = 1f;
-                _spedAnimator = null;
-            }
         }
 
         // Si la perk deja de estar activa (nueva raid) no debe quedar nada tocado.
         private static void ResetFlags(Player me)
         {
             JellyOn = false;
-            if (_spedAnimator != null) { _spedAnimator.speed = 1f; _spedAnimator = null; }
         }
 
         // ---------------------------------------------------------------- bajas del jugador (evento estatico del juego)
@@ -230,8 +182,7 @@ namespace TarkovaCola.Client
 
                 float now = Time.time;
                 _kills++;
-                bool boss = victim.Profile != null && victim.Profile.Info != null && victim.Profile.Info.Settings != null
-                            && victim.Profile.Info.Settings.Role.ToString().StartsWith("boss", StringComparison.OrdinalIgnoreCase);
+                bool boss = PerkFx.IsBoss(victim);
                 bool below = me.Position.y - victim.Position.y >= BelowMeters;
                 Dbg.Log("BAJA", "Stamin-Up: baja #" + _kills + " boss=" + boss + " porDebajo=" + below);
 
@@ -264,33 +215,6 @@ namespace TarkovaCola.Client
             foreach (var it in me.Profile.Inventory.GetPlayerItems(EFT.InventoryLogic.EPlayerItems.Equipment))
                 if (EnergyDrinks.Contains(it.StringTemplateId)) n += it.StackObjectsCount;
             return n;
-        }
-    }
-
-    // ---------- base: la estamina de piernas se multiplica en el calculo del juego ----------
-    [HarmonyPatch(typeof(Physical), nameof(Physical.GetStaminaCapacityFunc))]
-    internal static class StaminUpCapacityPatch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(Physical __instance, ref float __result)
-        {
-            if (!StaminUp.Active) return;
-            var me = Plugin.Me;
-            if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
-            __result *= StaminUp.CapacityMult;
-        }
-    }
-
-    // ---------- Light Feet: -10% de peso transportado ----------
-    [HarmonyPatch(typeof(PhysicalBase.PlayerBridge), "get_TotalWeight")]
-    internal static class StaminUpWeightPatch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(PhysicalBase.PlayerBridge __instance, ref float __result)
-        {
-            if (!Perk.Has("st_feet")) return;
-            if (!Util.IsMe(__instance._iPlayer)) return;
-            __result *= StaminUp.WeightMult;
         }
     }
 

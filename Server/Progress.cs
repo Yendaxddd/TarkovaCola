@@ -62,7 +62,7 @@ namespace TarkovaCola.Server
     [Injectable(InjectionType.Transient, int.MaxValue, TypePriority = 400000)]
     public class TarkovaColaRouter : StaticRouter
     {
-        public TarkovaColaRouter(JsonUtil jsonUtil, HttpResponseUtil http, PerkStore store, AchievementStore ach)
+        public TarkovaColaRouter(JsonUtil jsonUtil, HttpResponseUtil http, PerkStore store, AchievementStore ach, RefundStore refund)
             : base(jsonUtil, new List<RouteAction>
             {
                 new RouteAction<PerkRequest>("/tarkovacola/state/get",
@@ -74,6 +74,13 @@ namespace TarkovaCola.Server
                     {
                         if (!string.IsNullOrEmpty(info?.Json)) store.Save(sessionId.ToString(), info.Json);
                         return http.NoBody(new PerkResponse { Json = "ok" });
+                    }),
+
+                new RouteAction<RefundRequest>("/tarkovacola/refund",
+                    async (url, info, sessionId, output, ct) =>
+                    {
+                        bool ok = info != null && refund.Send(sessionId, info.Tpl, info.Count);
+                        return http.NoBody(new PerkResponse { Json = ok ? "ok" : "no" });
                     }),
 
                 new RouteAction<AchRequest>("/tarkovacola/ach/claim",

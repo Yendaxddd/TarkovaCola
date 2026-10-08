@@ -4,6 +4,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SPT.Common.Http;
+using UnityEngine;
 
 namespace TarkovaCola.Client
 {
@@ -31,6 +32,7 @@ namespace TarkovaCola.Client
         internal static void EnsureLoaded(bool force = false)
         {
             if (_state != null && !force) return;
+            if (force && _dirty) FlushSync();          // lo que aun no se haya enviado se envia antes de volver a leer del servidor
             try
             {
                 var resp = JObject.Parse(RequestHandler.PostJson("/tarkovacola/state/get", "{}"));
@@ -45,18 +47,62 @@ namespace TarkovaCola.Client
             }
         }
 
+        // Guardar = marcar como pendiente: el envio ocurre unos segundos despues del ultimo cambio (los desafios suman progreso muy a
+        // menudo, p. ej. cada 100 m recorridos). Flush() lo envia ya; TickSave() lo llama el plugin cada frame.
+        private static bool _dirty;
+        private static float _saveAt;
+
         internal static void Save()
         {
             if (_state == null) return;
+            if (!_dirty) _saveAt = Time.realtimeSinceStartup + 2f;
+            _dirty = true;
+        }
+
+        internal static void TickSave()
+        {
+            if (_dirty && Time.realtimeSinceStartup >= _saveAt) Flush();
+        }
+
+        private static string Body()
+        {
+            return new JObject { ["json"] = _state.ToString(Formatting.None) }.ToString(Formatting.None);
+        }
+
+        internal static void Flush()
+        {
+            if (_state == null || !_dirty) return;
+            _dirty = false;
             try
             {
-                var body = new JObject { ["json"] = _state.ToString(Formatting.None) }.ToString(Formatting.None);
-                RequestHandler.PostJsonAsync("/tarkovacola/state/save", body).ContinueWith(t =>
+                RequestHandler.PostJsonAsync("/tarkovacola/state/save", Body()).ContinueWith(t =>
                 {
                     if (t.IsFaulted) Plugin.Log.LogWarning("No se pudo guardar el progreso: " + t.Exception?.GetBaseException().Message);
                 });
             }
             catch (Exception e) { Plugin.Log.LogWarning("Error guardando el progreso: " + e.Message); }
+        }
+
+        private static void FlushSync()
+        {
+            if (_state == null || !_dirty) return;
+            _dirty = false;
+            try { RequestHandler.PostJson("/tarkovacola/state/save", Body()); }
+            catch (Exception e) { Plugin.Log.LogWarning("Error guardando el progreso: " + e.Message); }
+        }
+
+        // Pide al servidor que envie por correo una o mas unidades de un item (Widow's Bite: la granada que mato).
+        internal static void RequestRefund(string tpl, int count)
+        {
+            try
+            {
+                var body = new JObject { ["tpl"] = tpl, ["count"] = count }.ToString(Formatting.None);
+                RequestHandler.PostJsonAsync("/tarkovacola/refund", body).ContinueWith(t =>
+                {
+                    if (t.IsFaulted) Plugin.Log.LogWarning("No se pudo pedir la devolucion: " + t.Exception?.GetBaseException().Message);
+                });
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Error pidiendo la devolucion: " + e.Message); }
         }
 
         private static JObject Sub(JObject parent, string key)

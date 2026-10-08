@@ -36,3 +36,7 @@ UnityBundle/perks_hierarchy.txt
 UnityBundle/Assets/Models/perks/perks.fbx*
 UnityBundle/Assets/Models/perks/tex/
 UnityBundle/Assets/Models/perks/tex.meta
+
+# --- copia temporal de PhdVfx.cs para la previsualizacion (la crea preview_phdvfx.ps1) ---
+UnityBundle/Assets/Editor/PhdVfxPreview/PhdVfx.cs
+UnityBundle/Assets/Editor/PhdVfxPreview/PhdVfx.cs.meta

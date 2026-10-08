@@ -81,15 +81,16 @@ namespace TarkovaCola.Client
             Augs = new[]
             {
                 new AugDef { Id = "st_rush",    Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 1 },
-                new AugDef { Id = "st_shooter", Kind = NodeKind.Major,   Seq = 6, Lvl = 4, Goal = 15 },
+                new AugDef { Id = "st_shooter", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 15 },
                 new AugDef { Id = "st_wind",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },
                 new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 },
                 new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10000 },
                 new AugDef { Id = "st_land",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 3 },
-                new AugDef { Id = "st_slot",    Kind = NodeKind.Special, Seq = 7, Lvl = 5, Goal = 1 },
+                new AugDef { Id = "st_lungs",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 30 },
+                new AugDef { Id = "st_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
             DrbMajor = new[] { "dt_boots", "dt_burn", "dt_jelly" },
-            DrbMinor = new[] { "dt_hungry", "dt_cramps", "dt_sweaty" },
+            DrbMinor = new[] { "dt_hungry", "dt_cramps", "dt_sweaty", "dt_chest" },
             DrinkNotice = TarkovaCola.Client.StaminUp.Notice,
             OnDrink = TarkovaCola.Client.StaminUp.OnDrink,
         };
@@ -103,7 +104,20 @@ namespace TarkovaCola.Client
             JingleFile = "juggernog_jingle.mp3",
             HandBundle = "juggernog_hand.bundle",
             HandRefHeight = 0.17f,
-            Augs = new AugDef[0], DrbMajor = new string[0], DrbMinor = new string[0],
+            // la desventaja i de cada tipo es la ligada a la mejora i de ese tipo (en el orden de esta lista)
+            Augs = new[]
+            {
+                new AugDef { Id = "jg_patch",   Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 10 },     // curaciones x2 de rapidas
+                new AugDef { Id = "jg_plates",  Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 60 },     // placas aguantan el doble
+                new AugDef { Id = "jg_bastion", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 5 },      // un golpe letal por raid te deja a 1 PV
+                new AugDef { Id = "jg_skull",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 1500 },   // rebote de balas en el casco
+                new AugDef { Id = "jg_thick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 40 },     // menos sangrado, mas fracturas
+                new AugDef { Id = "jg_bones",   Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 120 },    // menos fracturas, mas sangrado
+                new AugDef { Id = "jg_keep",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 15 },     // hambre y sed hacen menos dano
+                new AugDef { Id = "jg_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "dj_clank", "dj_plates", "dj_hands" },
+            DrbMinor = new[] { "dj_dead", "dj_sluggish", "dj_metab", "dj_chew" },
             DrinkNotice = TarkovaCola.Client.Juggernog.Notice,
         };
 
@@ -115,7 +129,19 @@ namespace TarkovaCola.Client
             JingleFile = "phdflopper_jingle.mp3",
             HandBundle = "phdflopper_hand.bundle",
             HandRefHeight = 0.17f,
-            Augs = new AugDef[0], DrbMajor = new string[0], DrbMinor = new string[0],
+            // (Master of Movement, el deslizamiento, sera el tercer mayor: Seq 7 queda libre para el)
+            Augs = new[]
+            {
+                new AugDef { Id = "pf_absorb",  Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 500 },    // curas el 25% del dano de explosion que causas
+                new AugDef { Id = "pf_shock",   Kind = NodeKind.Major,   Seq = 6, Lvl = 4, Goal = 5 },      // granadas: doble radio y mitad de mecha
+                new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 2000 },   // aterrizar no te frena
+                new AugDef { Id = "pf_stop",    Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 300 },    // quieto: estamina x2 de rapida
+                new AugDef { Id = "pf_ears",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // inmune a la contusion
+                new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 5000 },   // inmune a alambre de puas y barro
+                new AugDef { Id = "pf_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "dp_concussed", "dp_throw" },
+            DrbMinor = new[] { "dp_stagger", "dp_lazy", "dp_pockets", "dp_stomp" },
             DrinkNotice = TarkovaCola.Client.PhdFlopper.Notice,
         };
 
@@ -127,7 +153,19 @@ namespace TarkovaCola.Client
             JingleFile = "widowswine_jingle.mp3",
             HandBundle = "widowswine_hand.bundle",
             HandRefHeight = 0.17f,
-            Augs = new AugDef[0], DrbMajor = new string[0], DrbMinor = new string[0],
+            Augs = new[]
+            {
+                new AugDef { Id = "ww_spin",    Kind = NodeKind.Major,   Seq = 4, Lvl = 3, Goal = 25 },     // telarana x2 de radio y +2 s
+                new AugDef { Id = "ww_fuse",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 1 },      // las explosiones no dañan tu armadura
+                new AugDef { Id = "ww_burst",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 3 },      // 100 de dano en 3 s: gastas una granada y atrapas
+                new AugDef { Id = "ww_venom",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 5 },      // los atrapados tambien quedan aturdidos
+                new AugDef { Id = "ww_quick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },     // granadas mas rapidas de lanzar
+                new AugDef { Id = "ww_sticky",  Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 15 },     // granadas mas lejos
+                new AugDef { Id = "ww_bite",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 4, Goal = 10 },     // si tu granada mata, te la devuelven
+                new AugDef { Id = "ww_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "dw_loud", "dw_brittle", "dw_bitter" },
+            DrbMinor = new[] { "dw_tangled", "dw_greasy", "dw_hungry", "dw_dry" },
             DrinkNotice = TarkovaCola.Client.WidowsWine.Notice,
         };
 
@@ -155,6 +193,7 @@ namespace TarkovaCola.Client
         // ---- perks activas en la raid actual (se bebieron en ella) ----
         private static readonly HashSet<string> _active = new HashSet<string>();
         internal static bool IsActive(string perkId) { return _active.Contains(perkId); }
+        internal static bool AnyActive { get { return _active.Count > 0; } }
         internal static void Activate(string perkId) { _active.Add(perkId); }
         internal static void ClearActive() { _active.Clear(); }
         internal static IEnumerable<PerkDef> ActivePerks { get { return All.Where(p => _active.Contains(p.Id)); } }

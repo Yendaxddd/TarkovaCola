@@ -48,11 +48,14 @@ namespace TarkovaCola.Client
         [HarmonyPrefix]
         private static void Prefix(FirearmsAnimator __instance, ref float reload, ref float draw)
         {
-            if (!Plugin.SpeedColaActive) return;
+            if (!Perks.AnyActive) return;
             var me = Plugin.Me;
             if (me == null || me.HandsController == null || me.HandsController.FirearmsAnimator != __instance) return;
-            float rm = Perk.ReloadMult;
-            if (Plugin.CfgIgnoreArmPenalty.Value && reload < rm) reload = rm;
+            if (Plugin.SpeedColaActive)
+            {
+                float rm = Perk.ReloadMult;
+                if (Plugin.CfgIgnoreArmPenalty.Value && reload < rm) reload = rm;
+            }
             draw *= Perk.DrawMult;
         }
     }
@@ -62,11 +65,16 @@ namespace TarkovaCola.Client
     internal static class BodySpeedPatch
     {
         [HarmonyPrefix]
-        private static void Prefix(ref float reload, ref float draw)
+        private static void Prefix(PlayerAnimator __instance, ref float reload, ref float draw)
         {
-            if (!Plugin.SpeedColaActive) return;
-            float rm = Perk.ReloadMult;
-            if (Plugin.CfgIgnoreArmPenalty.Value && reload < rm) reload = rm;
+            if (!Perks.AnyActive) return;
+            var me = Plugin.Me;
+            if (me == null || me.MovementContext == null || !ReferenceEquals(me.MovementContext.PlayerAnimator, __instance)) return;    // (antes tambien afectaba a los bots)
+            if (Plugin.SpeedColaActive)
+            {
+                float rm = Perk.ReloadMult;
+                if (Plugin.CfgIgnoreArmPenalty.Value && reload < rm) reload = rm;
+            }
             draw *= Perk.DrawMult;
         }
     }
@@ -197,7 +205,7 @@ namespace TarkovaCola.Client
         }
     }
 
-    // ---------- Jittery Hands: balanceo del arma +25% si un brazo no esta sano ----------
+    // ---------- Balanceo del arma: todos los factores de las perks (ver PerkFx.SwayMult) ----------
     [HarmonyPatch(typeof(BreathEffector), "Process")]
     internal static class JitterPatch
     {
@@ -205,7 +213,7 @@ namespace TarkovaCola.Client
         private static void Prefix(BreathEffector __instance, out float __state)
         {
             __state = __instance.Intensity;
-            if ((Perk.JitterOn || StaminUp.JellyOn) && ReferenceEquals(__instance, Perk.MyBreath)) __instance.Intensity = __state * Perk.JitterSway;
+            if (PerkFx.SwayMult != 1f && ReferenceEquals(__instance, Perk.MyBreath)) __instance.Intensity = __state * PerkFx.SwayMult;     // Jittery Hands, Jelly Legs, Tight Chest, Heavy Hands, Concussed...
         }
 
         [HarmonyPostfix]
