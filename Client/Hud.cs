@@ -164,9 +164,77 @@ namespace TarkovaCola.Client
             float scale = Screen.height / 1080f;
             EnsureStyles(scale);
 
-            if (!_escOpen && !_menuOpen) DrawPermanentIcons(scale);
+            if (!_escOpen && !_menuOpen) { DrawPermanentIcons(scale); Powerup.DrawMarker(scale, _white); }
             if (Event.current != null && Event.current.type == EventType.Repaint) ShowPending();      // (OnGUI se llama varias veces por frame)
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
+        }
+
+        // ---- contorno de la Eternal Perk: la silueta del icono ensanchada, en blanco (el tinte azul lo pone el dibujo) ----
+        private const float OutlineFrac = 0.07f;                      // grosor del contorno, como fraccion del tamano del icono
+        private static readonly Dictionary<string, Texture2D> _outlines = new Dictionary<string, Texture2D>();
+
+        private static Texture2D Outline(string perkId)
+        {
+            Texture2D o;
+            if (_outlines.TryGetValue(perkId, out o)) return o;
+            Texture2D src;
+            o = _icons.TryGetValue(perkId, out src) && src != null ? MakeOutline(src) : null;
+            _outlines[perkId] = o;
+            return o;
+        }
+
+        // Se calcula una sola vez por perk, a una resolucion de como mucho 128 px (un contorno no necesita mas)
+        private static Texture2D MakeOutline(Texture2D src)
+        {
+            int step = Mathf.Max(1, Mathf.Max(src.width, src.height) / 128);
+            int w = src.width / step, h = src.height / step;
+            int r = Mathf.Max(2, Mathf.RoundToInt(Mathf.Max(w, h) * OutlineFrac));
+            int mw = w + 2 * r, mh = h + 2 * r;
+            var px = src.GetPixels32();
+            var a = new float[mw * mh];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                    a[(y + r) * mw + x + r] = px[(y * step) * src.width + x * step].a / 255f;
+
+            // dilatacion circular
+            var offs = new List<int[]>();
+            for (int dy = -r; dy <= r; dy++)
+                for (int dx = -r; dx <= r; dx++)
+                    if (dx * dx + dy * dy <= r * r) offs.Add(new[] { dx, dy });
+            var d = new float[mw * mh];
+            for (int y = 0; y < mh; y++)
+                for (int x = 0; x < mw; x++)
+                {
+                    float m = 0f;
+                    for (int k = 0; k < offs.Count && m < 1f; k++)
+                    {
+                        int xx = x + offs[k][0], yy = y + offs[k][1];
+                        if (xx < 0 || yy < 0 || xx >= mw || yy >= mh) continue;
+                        float v = a[yy * mw + xx];
+                        if (v > m) m = v;
+                    }
+                    d[y * mw + x] = m;
+                }
+
+            // suavizado 3x3 para que el borde no se vea escalonado
+            var o = new Color32[mw * mh];
+            for (int y = 0; y < mh; y++)
+                for (int x = 0; x < mw; x++)
+                {
+                    float s = 0f; int n = 0;
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            int xx = x + dx, yy = y + dy;
+                            if (xx < 0 || yy < 0 || xx >= mw || yy >= mh) continue;
+                            s += d[yy * mw + xx]; n++;
+                        }
+                    o[y * mw + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(s / n) * 255f));
+                }
+            var tex = new Texture2D(mw, mh, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp, name = "TC_Outline" };
+            tex.SetPixels32(o);
+            tex.Apply(false, true);
+            return tex;
         }
 
         // un icono por cada perk activa, apilados hacia arriba desde la posicion configurada
@@ -180,6 +248,16 @@ namespace TarkovaCola.Client
                 float size = Plugin.CfgIconSize.Value * scale;
                 float x = Plugin.CfgIconX.Value * scale;
                 float y = Screen.height - size - Plugin.CfgIconY.Value * scale - i * (size + 4f * scale);
+                if (Eternal.Is(perk.Id))                                                                  // Eternal Perk: contorno azul que late despacio
+                {
+                    var outline = Outline(perk.Id);
+                    if (outline != null)
+                    {
+                        float pad = size * OutlineFrac;
+                        GUI.color = new Color(0.25f, 0.65f, 1f, 0.8f + 0.2f * Mathf.Sin(Time.realtimeSinceStartup * 3f));
+                        GUI.DrawTexture(new Rect(x - pad, y - pad, size + pad * 2f, size + pad * 2f), outline, ScaleMode.ScaleToFit, true);
+                    }
+                }
                 GUI.color = Perks.IsModifier(perk.Id) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;       // el modificador (Classic) se ve atenuado
                 GUI.DrawTexture(new Rect(x, y, size, size), tex, ScaleMode.ScaleToFit, true);     // sin marco: pegado al borde de la pantalla
                 i++;

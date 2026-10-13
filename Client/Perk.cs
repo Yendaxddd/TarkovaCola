@@ -71,8 +71,12 @@ namespace TarkovaCola.Client
                 }
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("No se pudo leer el equipamiento: " + ex.Message); }
+            Eternal.Strip(_eq);                                   // las perks eternas pierden una desventaja
             Dbg.Log("EQUIP", "equipado: " + (_eq.Count == 0 ? "(nada)" : string.Join(", ", _eq.ToArray())));
         }
+
+        // equipada en el estado guardado (sin mirar si la perk esta activa ni si es eterna)
+        internal static bool Equipped(string id) { return _eq.Contains(id); }
 
         // La mejora/desventaja esta equipada Y su perk esta activa (se bebio en esta raid).
         internal static bool Has(string id)

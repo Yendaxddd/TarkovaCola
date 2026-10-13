@@ -135,6 +135,7 @@ namespace TarkovaCola.Client
             ["raid.pending"]    = new[] { "DESAFÍOS PENDIENTES ({0})", "PENDING CHALLENGES ({0})" },
             ["rp.tabs.hint"]    = new[] { "Clic en un icono, o la rueda del ratón sobre el panel, para cambiar de perk.", "Click an icon, or use the mouse wheel over the panel, to switch perk." },
             ["raid.alldone"]    = new[] { "¡Todos los desafíos completados!", "All challenges completed!" },
+            ["raid.eternal"]    = new[] { "ETERNA", "ETERNAL" },
             ["raid.none"]       = new[] { "Sin desafíos activos. Sube de nivel para revelar más.", "No active challenges. Level up to reveal more." },
 
             // ---- mejoras: nombre (.n), efecto (.d), desafio (.c) ----
@@ -245,6 +246,17 @@ namespace TarkovaCola.Client
                 "Every raid brings an optional challenge (see it with ESC inside the raid). Complete it and extract alive, and a random main perk gains a 2nd minor augment (max 2 per perk).",
             },
             ["classic.lost.hint"] = new[] { "Si tu operador muere o no extrae, pierdes todas estas perks.", "If your operator dies or doesn't extract, you lose all these perks." },
+
+            // Eternal Perk y powerup de perk aleatoria
+            ["eternal.title"]     = new[] { "ETERNAL PERK", "ETERNAL PERK" },
+            ["eternal.sub.drb"]   = new[] { "{0}: sin la desventaja {1}", "{0}: drawback {1} removed" },
+            ["eternal.sub.none"]  = new[] { "{0}: sin desventajas que quitar", "{0}: no drawbacks to remove" },
+            ["eternal.promise"]   = new[] { "Si mueres, la botella vuelve por correo", "If you die, the bottle comes back by mail" },
+            ["eternal.block"]     = new[] { "{0} ya es eterna.", "{0} is already eternal." },
+            ["eternal.returned"]  = new[] { "Perk eterna: botella devuelta por correo ({0})", "Eternal perk: bottle returned by mail ({0})" },
+            ["powerup.title"]     = new[] { "PERK ALEATORIA", "RANDOM PERK" },
+            ["powerup.spawn"]     = new[] { "Ha caído una botella: recógela en {0} s", "A bottle dropped: grab it within {0} s" },
+            ["powerup.mail"]      = new[] { "Todas tus perks son eternas: {0} por correo", "All your perks are eternal: {0} sent by mail" },
 
             // avisos del modo Classic
             ["classic.start.sub"] = new[] { "{0} perk(s) activa(s)", "{0} active perk(s)" },

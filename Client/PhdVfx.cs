@@ -155,7 +155,7 @@ namespace TarkovaCola.Client
         }
 
         // primer shader de particulas que exista en el juego (los aditivos dan el brillo; Sprites/Default siempre esta)
-        private static Shader FindShader()
+        internal static Shader FindShader()
         {
             foreach (var n in new[] { "Legacy Shaders/Particles/Additive", "Mobile/Particles/Additive", "Particles/Additive", "Sprites/Default", "UI/Default" })
             {
@@ -166,7 +166,7 @@ namespace TarkovaCola.Client
         }
 
         // textura blanca cuya opacidad depende de la distancia al centro (0 = centro, 1 = borde)
-        private static Texture2D MakeTexture(int size, Func<float, float> alphaByRadius)
+        internal static Texture2D MakeTexture(int size, Func<float, float> alphaByRadius)
         {
             var t = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "TC_PHD_Tex" };
             var px = new Color32[size * size];

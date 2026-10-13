@@ -22,7 +22,7 @@ namespace TarkovaCola.Client
         private static GameObject _instance;
         private static readonly List<Renderer> _hidden = new List<Renderer>();
 
-        private static GameObject Load(PerkDef perk)
+        internal static GameObject Load(PerkDef perk)
         {
             GameObject prefab;
             if (_prefabs.TryGetValue(perk.Id, out prefab)) return prefab;

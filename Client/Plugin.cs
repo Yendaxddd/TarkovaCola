@@ -37,6 +37,10 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<float> CfgJingleVolume;
         internal static ConfigEntry<bool> CfgPhdVfx;
         internal static ConfigEntry<bool> CfgClassicBlock;
+        internal static ConfigEntry<bool> CfgVoice;
+        internal static ConfigEntry<float> CfgVoiceVolume;
+        internal static ConfigEntry<bool> CfgPowerup;
+        internal static ConfigEntry<float> CfgPowerupChance;
         internal static Plugin Instance;
 
         private void Awake()
@@ -62,6 +66,10 @@ namespace TarkovaCola.Client
             CfgPhdVfx = Config.Bind("HUD", "Efecto visual de PHD Flopper", true, "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion / Energy ring and sparks when PHD Flopper saves you from a fall or blast");
             CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
                 "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
+            CfgVoice = Config.Bind("Audio", "Voz del locutor", true, "Voz de 'Random Perk' y 'Eternal Perk' / Announcer voice for 'Random Perk' and 'Eternal Perk'");
+            CfgVoiceVolume = Config.Bind("Audio", "Volumen de la voz", 0.9f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
+            CfgPowerup = Config.Bind("Powerup", "Perk aleatoria al matar", true, "Al matar puede caer una botella flotante que da una perk al azar (como mucho una por raid) / Kills can drop a floating bottle that gives a random perk (at most one per raid)");
+            CfgPowerupChance = Config.Bind("Powerup", "Probabilidad por baja (%)", 4f, new ConfigDescription("Probabilidad de que caiga al matar a un enemigo / Chance per kill", new AcceptableValueRange<float>(0f, 100f)));
             CfgHandScale = Config.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Multiplicador del tamaño del modelo de la Speed Cola al beberla / Hand model size multiplier");
             CfgSwapWindow = Config.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas");
 
@@ -185,6 +193,8 @@ namespace TarkovaCola.Client
             catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
             try { ClassicMode.Tick(me); }
             catch (Exception e) { Dbg.Throttled("classicfail", 10f, "ERROR", "Classic (frame): " + e); }
+            try { Powerup.Tick(me); }    // perk aleatoria: caducidad y recogida
+            catch (Exception e) { Dbg.Throttled("powerupfail", 10f, "ERROR", "powerup (frame): " + e); }
             try { PerkFx.Tick(me); }     // efectos por frame de Juggernog, PHD Flopper, Widow's Wine y las mejoras comunes (sale enseguida sin perks activas)
             catch (Exception e) { Dbg.Throttled("perkfxfail", 10f, "ERROR", "perks (frame): " + e); }
 
@@ -377,6 +387,8 @@ namespace TarkovaCola.Client
             RaidPanel.ResetSelection();
             StaminUp.OnRaidStart();
             PerkFx.OnRaidStart();
+            Eternal.OnRaidStart();
+            Powerup.OnRaidStart();
             Tracker.Reset();
             XpPatch.Awarded = false;
             Dbg.RaidStarted();
@@ -452,23 +464,7 @@ namespace TarkovaCola.Client
                 return;
             }
 
-            // Modo Classic: la perk entra en la lista persistente (principal con mejora al azar, o modificador); si no cabe se devuelve la botella
-            ClassicMode.Entry entry = null;
-            if (ClassicMode.Enabled)
-            {
-                entry = ClassicMode.OnDrink(def);
-                if (entry == null) return;
-            }
-
-            Perks.Activate(def.Id, entry != null && entry.Modifier);
-            Jingle.Play(def);
-            Perk.Refresh();
-            PerkFx.RefreshPhysical(__instance.Player);                    // capacidad de estamina y de aire, y peso, con las perks activas
-            Perk.LastKillOrDrink = Time.time;
-            Hud.Notify(def.Name.ToUpperInvariant(), def.DrinkNotice != null ? def.DrinkNotice() : "", def.Id);
-            Dbg.Log("BEBIDA", def.Id + " activada" + (entry != null ? (entry.Modifier ? " (modificador)" : " (Classic)") : ""));
-            if (entry != null) ClassicMode.AfterDrink(def, entry);       // avisa de la mejora al azar
-            if (def.OnDrink != null) def.OnDrink(__instance);
+            PerkGrant.Apply(def, __instance.Player, false);               // activa la perk (o la vuelve eterna si ya la llevabas)
         }
     }
 

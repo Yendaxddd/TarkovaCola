@@ -122,7 +122,7 @@ namespace TarkovaCola.Client
         // null = se puede beber; si no, el motivo (ya traducido) por el que no
         internal static string DrinkBlockReason(PerkDef def)
         {
-            if (!Enabled) return null;
+            if (!Enabled) return Eternal.BlockReason(def);              // Modern: solo se bloquea beber una perk que ya es eterna
             var list = Entries();
             if (list.Any(e => e.Perk == def.Id)) return L.F("classic.block.dup", def.Name);
             if (list.Count(e => !e.Modifier) >= MaxMain && list.Any(e => e.Modifier)) return L.F("classic.block.full", MaxMain);
@@ -276,14 +276,15 @@ namespace TarkovaCola.Client
         {
             try
             {
-                if (!Plugin.CfgClassicBlock.Value || !Util.IsMe(__instance) || foodDrink == null) return true;
+                if (!Util.IsMe(__instance) || foodDrink == null) return true;
+                if (ClassicMode.Enabled && !Plugin.CfgClassicBlock.Value) return true;      // (el bloqueo de Classic se puede apagar en F12)
                 var def = Perks.ByItem(foodDrink.StringTemplateId);
                 if (def == null) return true;
                 string why = ClassicMode.DrinkBlockReason(def);
                 if (why == null) return true;
 
                 Dbg.Log("CLASSIC", "beber " + def.Id + " bloqueado: " + why);
-                Hud.Notify(L.T("classic.title"), why, def.Id);
+                Hud.Notify(L.T(ClassicMode.Enabled ? "classic.title" : "eternal.title"), why, def.Id);
                 __instance.SetInHands(false);                                           // el cuerpo no debe quedarse en "usando un objeto"
                 if (callback != null) callback(new Result<IMedsController>(null, why));  // fallo normal: la interfaz se recupera
                 return false;

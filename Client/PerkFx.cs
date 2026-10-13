@@ -273,10 +273,11 @@ namespace TarkovaCola.Client
             try
             {
                 var me = Plugin.Me;
-                if (me != null && victim == me) { ClassicMode.OnDeath(); return; }       // el operador murio: Classic pierde sus perks
+                if (me != null && victim == me) { ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
                 StaminUp.OnPlayerDead(victim, aggressor, info, part);
                 if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
                 ClassicChallenge.OnKill(me, victim, info, part);                          // desafio de la raid (modo Classic)
+                Powerup.OnKill(me, victim);                                               // puede caer una perk aleatoria
                 if (!Perks.AnyActive) return;
 
                 bool boss = IsBoss(victim);
@@ -309,6 +310,7 @@ namespace TarkovaCola.Client
                 Dbg.Log("RAID", "fin de raid: " + status + " (con vida=" + alive + ")");
                 Juggernog.OnRaidEnd(alive);
                 ClassicMode.OnRaidEnd(status);
+                Eternal.OnRaidEnd(status);
             }
             catch (Exception e) { Plugin.Log.LogError("fin de raid (perks): " + e); }
         }

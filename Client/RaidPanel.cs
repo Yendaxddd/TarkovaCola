@@ -17,6 +17,7 @@ namespace TarkovaCola.Client
     internal class RaidPanel : MonoBehaviour
     {
         private const float Width = 360f;
+        private static readonly Color EternalBlue = new Color(0.25f, 0.65f, 1f, 1f);
         private static RaidPanel _inst;
         private static string _selPerk;           // perk elegida en las pestanas; se conserva mientras dure la raid
 
@@ -128,7 +129,7 @@ namespace TarkovaCola.Client
             sb.Append('M').Append(_selPerk).Append(Mathf.RoundToInt(RawXp()));
             foreach (var def in Perks.UiPerks)
             {
-                sb.Append('|').Append(def.Id).Append(PerkService.Xp(def.Id)).Append(Perks.IsActive(def.Id) ? 'a' : 'i');
+                sb.Append('|').Append(def.Id).Append(PerkService.Xp(def.Id)).Append(Perks.IsActive(def.Id) ? (Eternal.Is(def.Id) ? 'e' : 'a') : 'i');
                 foreach (var c in PerkService.ActiveChallenges(def.Id)) sb.Append(',').Append(c.Id).Append(PerkService.Progress(c.Id));
             }
             return sb.ToString();
@@ -243,7 +244,7 @@ namespace TarkovaCola.Client
                 var b = UiButton.Make(root, x, y, Tile, Tile, () => Select(id),
                                       on ? UiKit.C(240, 193, 75, 0.16f) : UiKit.C(18, 34, 50, 0.95f),
                                       on ? UiKit.C(240, 193, 75, 0.26f) : UiKit.C(42, 68, 94, 0.97f));
-                Color border = on ? UiKit.Gold : UiKit.Line;
+                Color border = Eternal.Is(id) ? EternalBlue : on ? UiKit.Gold : UiKit.Line;       // Eternal Perk: borde azul
                 float bw = on ? 2f : 1f;
                 UiKit.Place(UiKit.Img(b.transform, "bt", border).rectTransform, 0, 0, Tile, bw);
                 UiKit.Place(UiKit.Img(b.transform, "bb", border).rectTransform, 0, Tile - bw, Tile, bw);
@@ -284,7 +285,7 @@ namespace TarkovaCola.Client
             }
             T(root, def.Name.ToUpperInvariant(), Pad + 42, y + 2, Inner - 42 - 90, 28, 22, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             T(root, L.F("raid.level", lvl), Pad + Inner - 90, y + 2, 90, 20, 14, UiKit.Green, TextAlignmentOptions.TopRight, false, true);
-            if (active) T(root, L.T("raid.active"), Pad + Inner - 90, y + 20, 90, 16, 11, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+            if (active) T(root, L.T(Eternal.Is(id) ? "raid.eternal" : "raid.active"), Pad + Inner - 90, y + 20, 90, 16, 11, Eternal.Is(id) ? EternalBlue : UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
             y += 42f;
 
             // barra de XP fina (verde = XP guardada, dorado = XP de esta raid)
