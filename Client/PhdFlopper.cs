@@ -88,6 +88,7 @@ namespace TarkovaCola.Client
             bool fresh = now - _lastBlast > BlastGap;
             _lastBlast = now;
             if (!fresh) return;
+            if (Plugin.Me != null) Synergy.OnAbsorb(Plugin.Me);
             PerkService.AddStat("phd_blasts", 1);
             if (PerkService.Stat("phd_blasts") >= HugsNeeded) Achievements.Unlock("pf_hugs");
         }
@@ -95,6 +96,7 @@ namespace TarkovaCola.Client
         // Aterrizaje (desde FallPatch, con la perk activa y una caida de MinFall m o mas): logros de caidas y Stagger.
         internal static void OnFall(Player me, float height)
         {
+            Synergy.OnAbsorb(me);
             if (height >= FlopHeight) Achievements.Unlock("pf_flop");
             PerkService.AddStat("phd_fall_m", Mathf.RoundToInt(height));
             if (PerkService.Stat("phd_fall_m") >= GravityMeters) Achievements.Unlock("pf_gravity");

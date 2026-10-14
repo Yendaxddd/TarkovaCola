@@ -51,7 +51,7 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- estado
-        private string _view = "progress";      // progress | equip
+        private string _view = "progress";      // progress | equip | syn
         private PerkDef _perk = Perks.UiPerks.First();   // perk que se esta viendo
         private string _sel;                     // nodo seleccionado en Progreso
         private bool _animate = true;
@@ -117,6 +117,7 @@ namespace TarkovaCola.Client
             foreach (var r in new[] { _header, _left, _stage })
                 for (int i = r.childCount - 1; i >= 0; i--) Destroy(r.GetChild(i).gameObject);
 
+            if (_view == "syn") { BuildSynergy(); return; }              // sinergias (Modern y Classic)
             if (ClassicMode.Enabled) { BuildClassic(); return; }       // en modo Classic no hay Research: se muestra el resumen de perks
 
             BuildHeader();
@@ -208,10 +209,11 @@ namespace TarkovaCola.Client
         private void BuildHeader()
         {
             T(_header, L.T("augments"), 60, 26, 400, 20, 14, UiKit.Dim);
-            T(_header, L.T(_view == "progress" ? "title.progress" : "title.equip"), 60, 42, 600, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_header, L.T(_view == "progress" ? "title.progress" : "title.equip"), 60, 42, 520, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
 
-            Tab("progress", L.T("nav.progress"), 700);
-            Tab("equip", L.T("nav.equip"), 900);
+            Tab("progress", L.T("nav.progress"), 600);
+            Tab("equip", L.T("nav.equip"), 780);
+            Tab("syn", L.T("nav.syn"), 960);
             ModeToggle(1190, 46);
 
             int lv = PerkService.Level(_perk.Id);
@@ -257,7 +259,9 @@ namespace TarkovaCola.Client
         private void BuildClassic()
         {
             T(_header, L.T("classic.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
-            T(_header, L.T("classic.title"), 60, 42, 800, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_header, L.T("classic.title"), 60, 42, 520, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            Tab("progress", L.T("nav.summary"), 600);
+            Tab("syn", L.T("nav.syn"), 780);
             ModeToggle(1190, 46);
             var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
             var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
@@ -355,6 +359,105 @@ namespace TarkovaCola.Client
             Fit(T(box, Data.Name(aug), 54, 15, w - 54, 24, 16, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 10, 16);
             var d = T(box, Data.Desc(aug), 0, 54, w, h - 54, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true);
             Fit(d, 10, 13);
+        }
+
+
+        // ---------------------------------------------------------------- pestana SINERGIA
+        // Tres tarjetas (una por sinergia): las dos perks, el bono, el desafio para desbloquearla y el boton de equipar (maximo 2).
+        private void BuildSynergy()
+        {
+            T(_header, L.T("syn.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
+            T(_header, L.T("syn.title"), 60, 42, 520, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            if (ClassicMode.Enabled)
+            {
+                Tab("progress", L.T("nav.summary"), 600);
+                Tab("syn", L.T("nav.syn"), 780);
+            }
+            else
+            {
+                Tab("progress", L.T("nav.progress"), 600);
+                Tab("equip", L.T("nav.equip"), 780);
+                Tab("syn", L.T("nav.syn"), 960);
+            }
+            ModeToggle(1190, 46);
+            var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
+            var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
+            UiKit.Stretch(x.rectTransform);
+
+            // columna izquierda: reglas
+            var rt = T(_left, L.T("syn.rules"), 80, 210, 280, 700, 15, UiKit.Text, TextAlignmentOptions.TopLeft, true);
+            rt.lineSpacing = 8f; rt.paragraphSpacing = 12f;
+            float textH = rt.GetPreferredValues(rt.text, 280f, 0f).y + 6f;
+            var rules = UiKit.Panel(_left, 60, 150, 320, Mathf.Min(780f, 60f + textH + 24f), UiKit.PanelBg, UiKit.Line);
+            Enter(rules.rectTransform);
+            rt.transform.SetParent(rules.transform, false);
+            UiKit.Place(rt.rectTransform, 20, 60, 280, textH);
+            T(rules.transform, L.T("syn.rules.title"), 20, 18, 280, 22, 16, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            UiKit.Place(UiKit.Img(rules.transform, "Underline", UiKit.Gold).rectTransform, 20, 44, 280, 1);
+
+            // escenario
+            int n = Synergy.Equipped().Count;
+            T(_stage, L.T("syn.equipped"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_stage, n + " / " + Synergy.MaxEquipped, 640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
+            const float cw = 450f, gap = 45f;
+            for (int i = 0; i < Synergy.All.Length; i++) SynCard(i * (cw + gap), 60, cw, 690, Synergy.All[i]);
+        }
+
+        private void SynCard(float x, float y, float w, float h, SynDef s)
+        {
+            bool unlocked = Synergy.IsUnlocked(s.Id), eq = Synergy.IsEquipped(s.Id);
+            Color accent = eq ? UiKit.Green : unlocked ? UiKit.Gold : UiKit.C(110, 126, 142);
+            var card = UiKit.Panel(_stage, x, y, w, h, UiKit.Panel2, new Color(accent.r, accent.g, accent.b, 0.75f), 2f);
+            Enter(card.rectTransform);
+            var a = Perks.Get(s.A); var b = Perks.Get(s.B);
+            UiKit.Badge(card.transform, w / 2f - 86f, 84, 100, true, accent, Hud.IconSprite(a.Id), unlocked ? Color.white : UiKit.C(255, 255, 255, 0.6f));
+            UiKit.Badge(card.transform, w / 2f + 86f, 84, 100, true, accent, Hud.IconSprite(b.Id), unlocked ? Color.white : UiKit.C(255, 255, 255, 0.6f));
+            T(card.transform, "+", w / 2f - 30f, 54, 60, 60, 44, accent, TextAlignmentOptions.Center, false, true);
+
+            Fit(T(card.transform, Synergy.Name(s).ToUpperInvariant(), 14, 152, w - 28, 34, 26, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 26);
+            T(card.transform, a.Name + "  +  " + b.Name, 14, 190, w - 28, 20, 14, UiKit.Dim, TextAlignmentOptions.Top, false, false);
+            T(card.transform, L.T(eq ? "syn.tag.eq" : unlocked ? "syn.tag.un" : "syn.tag.lock"), 14, 214, w - 28, 18, 13, accent, TextAlignmentOptions.Top, false, true);
+            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 20, 242, w - 40, 1);
+
+            T(card.transform, L.T("syn.bonus"), 20, 256, w - 40, 16, 12, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(card.transform, Synergy.Desc(s), 20, 276, w - 40, 96, 16, UiKit.Text, TextAlignmentOptions.TopLeft, true), 11, 16);
+            UiKit.Place(UiKit.Img(card.transform, "Sep2", UiKit.Line).rectTransform, 20, 384, w - 40, 1);
+
+            T(card.transform, L.T("syn.challenge"), 20, 398, w - 40, 16, 12, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(card.transform, Synergy.Challenge(s), 20, 418, w - 40, 70, 15, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 11, 15);
+            if (unlocked)
+                T(card.transform, L.T("syn.done"), 20, 500, w - 40, 22, 16, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
+            else
+            {
+                int p = Synergy.Progress(s.Id);
+                var tmp = new AugDef { Unit = s.Unit };
+                T(card.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, s.Goal), 20, 496, w - 40, 20, 15, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+                Bar(card.transform, 20, 522, w - 40, 8, p / (float)s.Goal, UiKit.Gold);
+            }
+            Fit(T(card.transform, L.F("syn.need", a.Name, b.Name), 20, 546, w - 40, 40, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+
+            string id = s.Id;
+            if (unlocked)
+            {
+                var btn = UiButton.Make(card.transform, 20, h - 76, w - 40, 56, () => OnSyn(id),
+                                        eq ? UiKit.C(120, 30, 30, 0.9f) : UiKit.C(31, 138, 76, 0.9f), eq ? UiKit.C(160, 40, 40, 0.95f) : UiKit.C(40, 170, 96, 0.95f));
+                var bt = UiKit.Txt(btn.transform, L.T(eq ? "syn.unequip" : "syn.equip"), 20, UiKit.White, TextAlignmentOptions.Center, false, true);
+                UiKit.Stretch(bt.rectTransform);
+            }
+            else
+            {
+                var dim = UiKit.Panel(card.transform, 20, h - 76, w - 40, 56, UiKit.C(255, 255, 255, 0.04f), UiKit.Line);
+                var dt = UiKit.Txt(dim.transform, L.T("syn.locked"), 18, UiKit.Dim, TextAlignmentOptions.Center, false, true);
+                UiKit.Stretch(dt.rectTransform);
+            }
+        }
+
+        private void OnSyn(string id)
+        {
+            string err = Synergy.Toggle(id);
+            if (err != null) { Toast(L.T(err)); return; }
+            UiKit.Sound(EUISoundType.MenuInspectorWindowOpen);
+            Rebuild(false);
         }
 
         private void Tab(string view, string label, float x)

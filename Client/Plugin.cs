@@ -193,6 +193,7 @@ namespace TarkovaCola.Client
             catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
             try { ClassicMode.Tick(me); }
             catch (Exception e) { Dbg.Throttled("classicfail", 10f, "ERROR", "Classic (frame): " + e); }
+            Synergy.Tick(me);
             try { Powerup.Tick(me); }    // perk aleatoria: caducidad y recogida
             catch (Exception e) { Dbg.Throttled("powerupfail", 10f, "ERROR", "powerup (frame): " + e); }
             try { PerkFx.Tick(me); }     // efectos por frame de Juggernog, PHD Flopper, Widow's Wine y las mejoras comunes (sale enseguida sin perks activas)
@@ -394,6 +395,7 @@ namespace TarkovaCola.Client
             Dbg.RaidStarted();
             Perk.OnRaidStart();
             PerkService.EnsureLoaded(force: true);
+            Synergy.OnRaidStart();                    // sinergias equipadas
             ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
             PerkService.Sanitize();                   // sin su desventaja, una mejora no puede estar equipada
             Perk.Refresh();

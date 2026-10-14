@@ -134,6 +134,7 @@ namespace TarkovaCola.Client
             float speed = dt > 0f ? moved / dt : 0f;
             bool still = speed < 0.15f;
             ClassicChallenge.OnMove(moved, sprinting, dt);                // desafio de raid (modo Classic): correr, recorrer, sobrevivir
+            if (sprinting) Synergy.OnRun(moved);                          // desafio de la sinergia Speed Cola + Stamin-Up
 
             if (Perks.IsActive(PhdFlopper.Id))
             {
@@ -164,6 +165,12 @@ namespace TarkovaCola.Client
             {
                 float drop = _prevStamina - stamina.Current;
                 if (drop > 0f) stamina.Current = Mathf.Max(0f, stamina.Current - drop * extra);
+            }
+            float save = Synergy.StaminaSave;                                // sinergia Speed Cola + Stamin-Up: correr gasta algo menos
+            if (save > 0f && sprinting && _prevStamina >= 0f)
+            {
+                float spent = _prevStamina - stamina.Current;
+                if (spent > 0f) stamina.Current = Mathf.Min(cap, stamina.Current + spent * save);
             }
             _prevStamina = stamina.Current;
 
@@ -296,7 +303,7 @@ namespace TarkovaCola.Client
                     if (phd) { PerkService.AddProgress("pf_shock"); PhdFlopper.OnGrenadeKill(); }
                     if (wid) WidowsWine.OnGrenadeKill();
                 }
-                if (wid && WidowsWine.IsWebbed(victim)) PerkService.AddProgress("ww_venom");
+                if (wid && WidowsWine.IsWebbed(victim)) { PerkService.AddProgress("ww_venom"); Synergy.OnWebbedKill(); }
             }
             catch (Exception e) { Plugin.Log.LogError("baja (perks): " + e); }
         }
@@ -402,6 +409,7 @@ namespace TarkovaCola.Client
                     if (damage <= 0f) return;
                     if (Perks.IsActive(Juggernog.Id)) damage = Juggernog.OnDamage(__instance, bodyPart, damage, damageInfo);
                     if (damage <= 0f) return;
+                    if (Synergy.AnyEquipped) damage *= Synergy.DamageMult;      // sinergia Juggernog + Widow's Wine
                     ClassicChallenge.OnDamageTaken(damageInfo);                 // desafio "ghost": solo cuenta el dano que de verdad recibes
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
                 }

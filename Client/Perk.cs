@@ -92,7 +92,7 @@ namespace TarkovaCola.Client
             {
                 if (!Plugin.SpeedColaActive) return 1f;
                 float full = _eq.Contains("a_rush") ? RushReload : BaseReload;
-                return 1f + (full - 1f) * Perks.Power("speedcola");        // como modificador (Classic) da solo una parte
+                return (1f + (full - 1f) * Perks.Power("speedcola")) * Synergy.ReloadBoost;        // como modificador (Classic) da solo una parte; la sinergia con PHD Flopper suma un empujon temporal
             }
         }
 
@@ -104,7 +104,7 @@ namespace TarkovaCola.Client
                 float m = Has("a_quick") ? QuickHandsDraw : 1f;
                 if (Has("dj_sluggish")) m *= PerkFx.SluggishDraw;
                 if (Has("dw_greasy")) m *= PerkFx.GreasyDraw;
-                return m;
+                return m * Synergy.DrawMult;
             }
         }
     }
