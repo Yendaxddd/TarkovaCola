@@ -12,8 +12,8 @@ namespace TarkovaCola.Client
     // Cada archivo se carga una vez desde assets/ y se reproduce en 2D.
     internal static class Jingle
     {
-        internal const string RandomVoice = "randomperk_voice.mp3";
-        internal const string EternalVoice = "eternalperk_voice.mp3";
+        internal const string RandomVoice = "randomperk_voice.wav";
+        internal const string EternalVoice = "eternalperk_voice.wav";
 
         private static readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
         private static readonly HashSet<string> _loading = new HashSet<string>();
@@ -71,10 +71,15 @@ namespace TarkovaCola.Client
             if (!File.Exists(path)) Dbg.Log("AUDIO", "falta " + path);
             else
             {
-                using (var req = UnityWebRequestMultimedia.GetAudioClip(new Uri(path).AbsoluteUri, AudioType.MPEG))
+                using (var req = UnityWebRequestMultimedia.GetAudioClip(new Uri(path).AbsoluteUri, path.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) ? AudioType.WAV : AudioType.MPEG))
                 {
                     yield return req.SendWebRequest();
-                    if (req.result == UnityWebRequest.Result.Success) clip = DownloadHandlerAudioClip.GetContent(req);
+                    if (req.result == UnityWebRequest.Result.Success)
+                    {
+                        clip = DownloadHandlerAudioClip.GetContent(req);
+                        if (clip != null && clip.length <= 0f) { Dbg.Log("AUDIO", "el archivo no se pudo decodificar: " + file); clip = null; }      // (un mp3 que Unity no decodifica sale con 0 s)
+                        else if (clip != null) clip.name = file;
+                    }
                     else Dbg.Log("AUDIO", "no se pudo cargar: " + req.error);
                 }
             }

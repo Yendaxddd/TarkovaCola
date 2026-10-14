@@ -40,7 +40,7 @@ namespace TarkovaCola.Client
             return sp;
         }
 
-        private static Texture2D IconTex(string perkId)
+        internal static Texture2D IconTex(string perkId)
         {
             Texture2D tex;
             if (perkId != null && _icons.TryGetValue(perkId, out tex)) return tex;
@@ -240,14 +240,16 @@ namespace TarkovaCola.Client
         // un icono por cada perk activa, apilados hacia arriba desde la posicion configurada
         private static void DrawPermanentIcons(float scale)
         {
-            int i = 0;
-            foreach (var perk in Perks.ActivePerks)
+            var list = Perks.ActivePerks.Where(p => _icons.ContainsKey(p.Id) && _icons[p.Id] != null).ToList();
+            if (list.Count == 0) return;
+            float size = Plugin.CfgIconSize.Value * scale, gap = 6f * scale;
+            float total = list.Count * size + (list.Count - 1) * gap;
+            float x0 = (Screen.width - total) / 2f + Plugin.CfgIconX.Value * scale;          // fila centrada, abajo en el centro de la pantalla
+            float y = Screen.height - size - Plugin.CfgIconY.Value * scale;
+            for (int i = 0; i < list.Count; i++)
             {
-                Texture2D tex;
-                if (!_icons.TryGetValue(perk.Id, out tex) || tex == null) continue;
-                float size = Plugin.CfgIconSize.Value * scale;
-                float x = Plugin.CfgIconX.Value * scale;
-                float y = Screen.height - size - Plugin.CfgIconY.Value * scale - i * (size + 4f * scale);
+                var perk = list[i];
+                float x = x0 + i * (size + gap);
                 if (Eternal.Is(perk.Id))                                                                  // Eternal Perk: contorno azul que late despacio
                 {
                     var outline = Outline(perk.Id);
@@ -259,9 +261,9 @@ namespace TarkovaCola.Client
                     }
                 }
                 GUI.color = Perks.IsModifier(perk.Id) ? new Color(1f, 1f, 1f, 0.55f) : Color.white;       // el modificador (Classic) se ve atenuado
-                GUI.DrawTexture(new Rect(x, y, size, size), tex, ScaleMode.ScaleToFit, true);     // sin marco: pegado al borde de la pantalla
-                i++;
+                GUI.DrawTexture(new Rect(x, y, size, size), _icons[perk.Id], ScaleMode.ScaleToFit, true);
             }
+            GUI.color = Color.white;
         }
 
         private static void DrawNotice(float scale)

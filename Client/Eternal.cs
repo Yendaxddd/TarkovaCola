@@ -57,7 +57,7 @@ namespace TarkovaCola.Client
             if (me != null) PerkFx.RefreshPhysical(me);              // capacidad de estamina / peso sin la desventaja
             Dbg.Log("ETERNAL", def.Id + " es eterna" + (drb != null ? ", desventaja quitada: " + drb : ", sin desventajas que quitar"));
 
-            Jingle.Voice(Jingle.EternalVoice, viaPowerup ? Jingle.Length(Jingle.RandomVoice) + 0.2f : 0f);
+            Jingle.Voice(Jingle.EternalVoice, viaPowerup ? Powerup.EternalVoiceDelay : 0f);
             string sub = drb != null ? L.F("eternal.sub.drb", def.Name, Data.Name(drb)) : L.F("eternal.sub.none", def.Name);
             if (viaPowerup) Hud.Enqueue(L.T("eternal.title"), sub, def.Id);
             else Hud.Notify(L.T("eternal.title"), sub, def.Id);

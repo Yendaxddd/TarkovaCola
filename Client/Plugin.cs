@@ -53,8 +53,8 @@ namespace TarkovaCola.Client
             CfgShowNotice = Config.Bind("HUD", "Mostrar aviso", true, "Muestra el aviso al consumir una perk o completar un desafío");
             CfgNoticeSeconds = Config.Bind("HUD", "Duracion del aviso (s)", 4f, "Segundos que se queda el aviso en pantalla");
             CfgIconSize = Config.Bind("HUD", "Tamano del icono (v2)", 72f, "Tamano del icono permanente (px a 1080p)");
-            CfgIconX = Config.Bind("HUD", "Icono X (borde izquierdo)", 0f, "Distancia al borde izquierdo (px a 1080p); 0 = pegado al borde");
-            CfgIconY = Config.Bind("HUD", "Icono Y (desde abajo)", 140f, "Distancia al borde inferior (px a 1080p)");
+            CfgIconX = Config.Bind("HUD", "Icono X (desde el centro)", 0f, "Desplazamiento horizontal de la fila de iconos respecto al centro de la pantalla (px a 1080p)");
+            CfgIconY = Config.Bind("HUD", "Icono Y (desde abajo, v2)", 24f, "Distancia al borde inferior (px a 1080p)");
             CfgRaidPanel = Config.Bind("HUD", "Panel de progreso en raid", true, "Muestra nivel, XP y desafíos pendientes al abrir el menú (ESC) en raid");
             CfgIgnoreArmPenalty = Config.Bind("Perks", "Ignorar penalizacion de brazos", true,
                 "Con un brazo danado el juego anula el buff de recarga; con esto Speed Cola se mantiene");

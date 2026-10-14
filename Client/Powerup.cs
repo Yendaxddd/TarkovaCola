@@ -99,19 +99,22 @@ namespace TarkovaCola.Client
             var pick = pool[Random.Range(0, pool.Length)];
             Dbg.Log("POWERUP", "perk aleatoria: " + pick.Id + (!ClassicMode.Enabled && Perks.IsActive(pick.Id) ? " (ya la llevabas: eterna)" : ""));
             Hud.Notify(L.T("powerup.title"), pick.Name, pick.Id);
-            PerkGrant.Apply(pick, me, true);
+            DrinkAnim.Play(pick, () => { if (Plugin.InRaid) PerkGrant.Apply(pick, Plugin.Me, true); });     // se bebe la botella y, a media animacion, hace efecto
         }
 
         // ---------------------------------------------------------------- marcador en pantalla (distancia y tiempo)
         internal static Camera Cam()
         {
-            if (_cam != null && _cam.enabled) return _cam;
-            var c = Camera.main;
-            if (c == null || !c.enabled)                                  // sin etiqueta de camara principal: la camara de la vista en primera persona
-                c = Camera.allCameras.FirstOrDefault(x => x.enabled && x.name.IndexOf("FPS", System.StringComparison.OrdinalIgnoreCase) >= 0);
+            if (_cam != null && _cam.enabled && _cam.gameObject.activeInHierarchy) return _cam;
+            var c = Camera.allCameras.FirstOrDefault(x => x.enabled && x.targetTexture == null && x.name.IndexOf("FPS", System.StringComparison.OrdinalIgnoreCase) >= 0);
+            if (c == null) c = Camera.main;
+            if (c != null) Dbg.Log("POWERUP", "camara: " + c.name + " (fov " + c.fieldOfView.ToString("0") + ")");
             _cam = c;
             return c;
         }
+
+        // Tiempo que espera la voz de Eternal tras aplicarse la perk del powerup (para no pisar la voz de "Random Perk")
+        internal static float EternalVoiceDelay { get { return Mathf.Max(0f, Jingle.Length(Jingle.RandomVoice) + 0.2f - DrinkAnim.ApplyAt); } }
 
         internal static void DrawMarker(float scale, Texture2D white)
         {
@@ -133,29 +136,32 @@ namespace TarkovaCola.Client
             y = Mathf.Clamp(y, m, Screen.height - m);
 
             float t = _fx.TimeLeft;
-            float pulse = 0.8f + 0.2f * Mathf.Sin(Time.time * 6f);
+            float pulse = 0.85f + 0.15f * Mathf.Sin(Time.time * 6f);
             if (t < 12f && Mathf.Repeat(Time.time * 3f, 1f) < 0.5f) pulse *= 0.35f;      // parpadea cuando va a caducar
             Color c = _fx.CurrentColor; c.a = pulse;
-            float s = 30f * scale;
+            float s = 52f * scale, b = 3f * scale;
 
-            var prev = GUI.matrix;
-            GUIUtility.RotateAroundPivot(45f, new Vector2(x, y));
-            GUI.color = new Color(0f, 0f, 0f, 0.55f * pulse);
-            GUI.DrawTexture(new Rect(x - s * 0.5f - 2f * scale, y - s * 0.5f - 2f * scale, s + 4f * scale, s + 4f * scale), white);
+            // marco de color con el icono de una perk que cambia sin parar (como la botella)
+            var icon = Hud.IconTex(Perks.All[((int)(Time.time * 3f)) % Perks.All.Length].Id);
+            GUI.color = new Color(0f, 0f, 0f, 0.6f * pulse);
+            GUI.DrawTexture(new Rect(x - s * 0.5f - b - 2f * scale, y - s * 0.5f - b - 2f * scale, s + 2f * (b + 2f * scale), s + 2f * (b + 2f * scale)), white);
             GUI.color = c;
+            GUI.DrawTexture(new Rect(x - s * 0.5f - b, y - s * 0.5f - b, s + 2f * b, s + 2f * b), white);
+            GUI.color = new Color(0.07f, 0.1f, 0.14f, 0.95f);
             GUI.DrawTexture(new Rect(x - s * 0.5f, y - s * 0.5f, s, s), white);
-            GUI.matrix = prev;
+            if (icon != null)
+            {
+                GUI.color = new Color(1f, 1f, 1f, pulse);
+                GUI.DrawTexture(new Rect(x - s * 0.5f + 3f * scale, y - s * 0.5f + 3f * scale, s - 6f * scale, s - 6f * scale), icon, ScaleMode.ScaleToFit, true);
+            }
 
-            _marker.fontSize = Mathf.RoundToInt(22f * scale);
-            _marker.normal.textColor = new Color(0.05f, 0.08f, 0.1f, pulse);
-            GUI.Label(new Rect(x - s, y - s * 0.5f, s * 2f, s), "?", _marker);
-
-            _markerSmall.fontSize = Mathf.RoundToInt(15f * scale);
+            _markerSmall.fontSize = Mathf.RoundToInt(17f * scale);
             string txt = Mathf.RoundToInt(Vector3.Distance(me.Position, _fx.Position)) + " m  ·  " + Mathf.CeilToInt(t) + " s";
-            _markerSmall.normal.textColor = new Color(0f, 0f, 0f, 0.8f * pulse);
-            GUI.Label(new Rect(x - 80f * scale + 1f, y + s * 0.7f + 1f, 160f * scale, 22f * scale), txt, _markerSmall);
+            float ty = y + s * 0.5f + b + 3f * scale;
+            _markerSmall.normal.textColor = new Color(0f, 0f, 0f, 0.85f * pulse);
+            GUI.Label(new Rect(x - 90f * scale + 1f, ty + 1f, 180f * scale, 24f * scale), txt, _markerSmall);
             _markerSmall.normal.textColor = new Color(1f, 1f, 1f, pulse);
-            GUI.Label(new Rect(x - 80f * scale, y + s * 0.7f, 160f * scale, 22f * scale), txt, _markerSmall);
+            GUI.Label(new Rect(x - 90f * scale, ty, 180f * scale, 24f * scale), txt, _markerSmall);
             GUI.color = Color.white;
         }
     }
@@ -226,9 +232,9 @@ namespace TarkovaCola.Client
                 Destroy(q.GetComponent<Collider>());
                 q.name = "Beam" + i;
                 q.transform.SetParent(_visual.transform, false);
-                q.transform.localPosition = new Vector3(0f, 5.4f, 0f);
+                q.transform.localPosition = new Vector3(0f, 6.9f, 0f);
                 q.transform.localRotation = Quaternion.Euler(0f, i * 90f, 0f);
-                q.transform.localScale = new Vector3(0.9f, 13f, 1f);
+                q.transform.localScale = new Vector3(1.3f, 16f, 1f);
                 q.GetComponent<Renderer>().sharedMaterial = _beamMat;
             }
 
@@ -352,8 +358,8 @@ namespace TarkovaCola.Client
             }
 
             _color = Color.HSVToRGB(Mathf.Repeat(t * 0.22f, 1f), 0.55f, 1f);
-            Tint(_glowMat, _color, 0.55f);
-            Tint(_beamMat, _color, 0.42f);
+            Tint(_glowMat, _color, 0.9f);
+            Tint(_beamMat, _color, 0.8f);
             if (_light != null) _light.color = _color;
 
             var cam = Powerup.Cam();
@@ -376,6 +382,62 @@ namespace TarkovaCola.Client
         {
             foreach (var m in _mats) if (m != null) Destroy(m);
             foreach (var t in _texs) if (t != null) Destroy(t);
+        }
+    }
+}
+
+namespace TarkovaCola.Client
+{
+    // Animacion de beber para el powerup: la botella de la perk sube hasta la boca delante de la camara, se inclina y baja. No hay botella
+    // real en la mano (viene del suelo), asi que el movimiento se hace en codigo con el modelo de la mano de esa perk. El efecto de la
+    // perk se aplica a media animacion.
+    internal class DrinkAnim : MonoBehaviour
+    {
+        internal const float ApplyAt = 0.95f, Total = 1.8f;
+        private Transform _bottle;
+        private float _t0;
+        private System.Action _apply;
+        private bool _applied;
+
+        internal static void Play(PerkDef perk, System.Action apply)
+        {
+            var cam = Powerup.Cam();
+            var prefab = cam != null ? HandModel.Load(perk) : null;
+            if (prefab == null) { apply(); return; }                          // sin modelo o camara: sin animacion, pero la perk se da igual
+            var go = new GameObject("TarkovaCola_DrinkAnim");
+            go.transform.SetParent(cam.transform, false);
+            var d = go.AddComponent<DrinkAnim>();
+            d._apply = apply;
+            d._t0 = Time.time;
+            var b = Instantiate(prefab, go.transform, false);
+            foreach (var c in b.GetComponentsInChildren<Collider>(true)) Destroy(c);
+            b.transform.localScale = Vector3.one * (0.2f / perk.HandRefHeight);
+            d._bottle = b.transform;
+            var lg = new GameObject("Light");
+            lg.transform.SetParent(go.transform, false);
+            lg.transform.localPosition = new Vector3(0f, 0f, 0.1f);
+            var l = lg.AddComponent<Light>();
+            l.type = LightType.Point; l.range = 2f; l.intensity = 1.2f; l.shadows = LightShadows.None;       // para que se vea tambien de noche
+            d.Pose(0f);
+        }
+
+        // 0 = abajo a la derecha, ~0.35 = junto a la boca (inclinada), 1 = otra vez abajo
+        private void Pose(float u)
+        {
+            var low = new Vector3(0.30f, -0.40f, 0.55f);
+            var high = new Vector3(0.0f, -0.17f, 0.36f);
+            float up = u < 0.28f ? Mathf.SmoothStep(0f, 1f, u / 0.28f) : u > 0.75f ? Mathf.SmoothStep(1f, 0f, (u - 0.75f) / 0.25f) : 1f;
+            float sip = u > 0.28f && u < 0.75f ? Mathf.Sin((u - 0.28f) / 0.47f * Mathf.PI * 2f) * 4f : 0f;
+            _bottle.localPosition = Vector3.Lerp(low, high, up);
+            _bottle.localRotation = Quaternion.Euler(Mathf.Lerp(0f, -72f + sip, up), Mathf.Lerp(-25f, 0f, up), Mathf.Lerp(12f, 0f, up));
+        }
+
+        private void Update()
+        {
+            float t = Time.time - _t0;
+            if (!_applied && t >= ApplyAt) { _applied = true; try { _apply(); } catch (System.Exception e) { Plugin.Log.LogError("powerup (aplicar): " + e); } }
+            if (t >= Total || !Plugin.InRaid) { if (!_applied) { _applied = true; if (Plugin.InRaid) _apply(); } Destroy(gameObject); return; }
+            Pose(t / Total);
         }
     }
 }
