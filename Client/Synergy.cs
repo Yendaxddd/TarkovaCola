@@ -24,16 +24,16 @@ namespace TarkovaCola.Client
 
     internal static class Synergy
     {
-        internal const int MaxEquipped = 2;
+        internal const int MaxEquipped = 1;
 
         internal const string Cardio = "syn_cardio", Iron = "syn_iron", Blast = "syn_blast";
 
         // --- balance ---
-        internal const float CardioDraw = 0.25f;       // Speed Cola + Stamin-Up: sacar el arma +25%
-        internal const float CardioStamina = 0.10f;    //   y correr gasta un 10% menos de estamina
-        internal const float IronDamage = 0.06f;       // Juggernog + Widow's Wine: -6% de dano recibido
-        internal const float BlastReload = 0.35f;      // Speed Cola + PHD Flopper: tras absorber una explosion o caida, recarga +35%...
-        internal const float BlastSeconds = 8f;        //   ...durante 8 s
+        internal const float CardioDraw = 0.12f;       // Speed Cola + Stamin-Up: sacar el arma +12%
+        internal const float CardioStamina = 0.05f;    //   y correr gasta un 5% menos de estamina
+        internal const float IronDamage = 0.03f;       // Juggernog + Widow's Wine: -3% de dano recibido
+        internal const float BlastReload = 0.20f;      // Speed Cola + PHD Flopper: tras absorber una explosion o caida, recarga +20%...
+        internal const float BlastSeconds = 6f;        //   ...durante 6 s
 
         internal static readonly SynDef[] All =
         {
@@ -75,6 +75,7 @@ namespace TarkovaCola.Client
             var list = new List<string>();
             var arr = Root["equipped"] as JArray;
             if (arr != null) foreach (var t in arr) if (t.Type == JTokenType.String && Get((string)t) != null && IsUnlocked((string)t) && !list.Contains((string)t)) list.Add((string)t);
+            if (list.Count > MaxEquipped) list.RemoveRange(MaxEquipped, list.Count - MaxEquipped);      // (guardado de cuando se permitian 2)
             return list;
         }
 
@@ -86,8 +87,7 @@ namespace TarkovaCola.Client
             if (Get(id) == null || !IsUnlocked(id)) return "toast.locked";
             var list = Equipped();
             if (list.Contains(id)) list.Remove(id);
-            else if (list.Count >= MaxEquipped) return "err.synmax";
-            else list.Add(id);
+            else { list.Clear(); list.Add(id); }                          // solo se lleva una: equipar otra sustituye a la anterior
             Root["equipped"] = new JArray(list);
             PerkService.Save();
             Refresh();

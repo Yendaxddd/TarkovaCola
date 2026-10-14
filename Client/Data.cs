@@ -252,7 +252,7 @@ namespace TarkovaCola.Client
             // sinergias
             ["syn.kicker"]      = new[] { "PERKS", "PERKS" },
             ["syn.title"]       = new[] { "SINERGIAS", "SYNERGIES" },
-            ["syn.equipped"]    = new[] { "Sinergias equipadas", "Equipped synergies" },
+            ["syn.equipped"]    = new[] { "Sinergia equipada", "Equipped synergy" },
             ["syn.bonus"]       = new[] { "BONO", "BONUS" },
             ["syn.challenge"]   = new[] { "DESAFÍO PARA DESBLOQUEARLA", "UNLOCK CHALLENGE" },
             ["syn.tag.eq"]      = new[] { "EQUIPADA", "EQUIPPED" },
@@ -269,17 +269,17 @@ namespace TarkovaCola.Client
             ["syn.rules.title"] = new[] { "CÓMO FUNCIONAN", "HOW THEY WORK" },
             ["syn.rules"]       = new[]
             {
-                "Una sinergia es un pequeño bono que se activa al llevar dos perks concretas a la vez.\nCada una se desbloquea con su propio desafío, que solo avanza con las dos perks activas en la raid.\nPuedes equipar hasta 2 sinergias.\nEn el modo Clásico también valen: si una de las dos perks es el modificador, el bono es más pequeño.",
-                "A synergy is a small bonus that kicks in when you carry two specific perks at once.\nEach one unlocks with its own challenge, which only advances with both perks active in the raid.\nYou can equip up to 2 synergies.\nThey also work in Classic mode: if one of the two perks is the modifier, the bonus is smaller.",
+                "Una sinergia es un pequeño bono que se activa al llevar dos perks concretas a la vez.\nCada una se desbloquea con su propio desafío, que solo avanza con las dos perks activas en la raid.\nSolo puedes llevar 1 sinergia equipada; equipar otra sustituye a la anterior.\nEn el modo Clásico también valen: si una de las dos perks es el modificador, el bono es más pequeño.",
+                "A synergy is a small bonus that kicks in when you carry two specific perks at once.\nEach one unlocks with its own challenge, which only advances with both perks active in the raid.\nYou can only carry 1 equipped synergy; equipping another replaces the first.\nThey also work in Classic mode: if one of the two perks is the modifier, the bonus is smaller.",
             },
             ["syn_cardio.n"]    = new[] { "Cardio", "Cardio" },
-            ["syn_cardio.d"]    = new[] { "Sacas y cambias de arma un 25% más rápido y correr gasta un 10% menos de estamina.", "You draw and swap weapons 25% faster and sprinting uses 10% less stamina." },
+            ["syn_cardio.d"]    = new[] { "Sacas y cambias de arma un 12% más rápido y correr gasta un 5% menos de estamina.", "You draw and swap weapons 12% faster and sprinting uses 5% less stamina." },
             ["syn_cardio.c"]    = new[] { "Corre 3 km con Speed Cola y Stamin-Up activas.", "Sprint 3 km with Speed Cola and Stamin-Up active." },
             ["syn_iron.n"]      = new[] { "Telaraña de acero", "Steel Web" },
-            ["syn_iron.d"]      = new[] { "Recibes un 6% menos de daño.", "You take 6% less damage." },
+            ["syn_iron.d"]      = new[] { "Recibes un 3% menos de daño.", "You take 3% less damage." },
             ["syn_iron.c"]      = new[] { "Mata a 5 enemigos atrapados en tu telaraña con Juggernog y Widow's Wine activas.", "Kill 5 enemies caught in your web with Juggernog and Widow's Wine active." },
             ["syn_blast.n"]     = new[] { "Recarga explosiva", "Blast Reload" },
-            ["syn_blast.d"]     = new[] { "Cuando PHD Flopper anula una explosión o una caída, recargas un 35% más rápido durante 8 s.", "When PHD Flopper cancels an explosion or a fall, you reload 35% faster for 8 s." },
+            ["syn_blast.d"]     = new[] { "Cuando PHD Flopper anula una explosión o una caída, recargas un 20% más rápido durante 6 s.", "When PHD Flopper cancels an explosion or a fall, you reload 20% faster for 6 s." },
             ["syn_blast.c"]     = new[] { "Absorbe 5 explosiones o caídas con Speed Cola y PHD Flopper activas.", "Absorb 5 explosions or falls with Speed Cola and PHD Flopper active." },
 
             // Eternal Perk y powerup de perk aleatoria
@@ -349,7 +349,7 @@ namespace TarkovaCola.Client
             // ---- Stamin-Up: Iron Lungs ----
             ["st_lungs.n"]    = new[] { "PULMONES DE ACERO", "IRON LUNGS" },
             ["st_lungs.d"]    = new[] { "Aguantas la respiración un 60% más y la recuperas más rápido.", "You hold your breath 60% longer and recover it faster." },
-            ["st_lungs.c"]    = new[] { "Aguanta la respiración 30 veces con Stamin-Up activa.", "Hold your breath 30 times with Stamin-Up active." },
+            ["st_lungs.c"]    = new[] { "Aguanta la respiración 20 veces con Stamin-Up activa.", "Hold your breath 20 times with Stamin-Up active." },
             ["dt_chest.n"]    = new[] { "PECHO APRETADO", "TIGHT CHEST" },
             ["dt_chest.d"]    = new[] { "Con menos del 30% de estamina, el balanceo del arma sube un 10%.", "Below 30% stamina, weapon sway rises by 10%." },
 
@@ -359,10 +359,10 @@ namespace TarkovaCola.Client
             ["jg_skull.c"]    = new[] { "Recibe 1,500 de daño con Juggernog activa.", "Take 1,500 damage with Juggernog active." },
             ["jg_thick.n"]    = new[] { "PIEL GRUESA", "THICK SKIN" },
             ["jg_thick.d"]    = new[] { "Sangras menos, pero los huesos se rompen más fácil.", "You bleed less, but your bones break more easily." },
-            ["jg_thick.c"]    = new[] { "Recibe 40 impactos con Juggernog activa.", "Take 40 hits with Juggernog active." },
+            ["jg_thick.c"]    = new[] { "Arregla 5 sangrados pesados con Juggernog activa.", "Fix 5 heavy bleeds with Juggernog active." },
             ["jg_bones.n"]    = new[] { "HUESOS PESADOS", "HEAVY BONES" },
             ["jg_bones.d"]    = new[] { "Te fracturas menos, pero sangras más fácil.", "Your bones break less, but you bleed more easily." },
-            ["jg_bones.c"]    = new[] { "Pasa 2 minutos en total con la salud en rojo, con Juggernog activa.", "Spend 2 minutes in total with your health in the red, with Juggernog active." },
+            ["jg_bones.c"]    = new[] { "Arregla 5 fracturas con Juggernog activa.", "Fix 5 fractures with Juggernog active." },
             ["jg_patch.n"]    = new[] { "PARCHE RÁPIDO", "QUICK PATCH" },
             ["jg_patch.d"]    = new[] { "Las animaciones de curación van el doble de rápido.", "Healing animations are twice as fast." },
             ["jg_patch.c"]    = new[] { "Usa 10 items médicos con Juggernog activa.", "Use 10 medical items with Juggernog active." },

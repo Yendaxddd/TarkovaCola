@@ -38,7 +38,33 @@ namespace TarkovaCola.Client
         private static float _dmgAcc;
         private static int _raidHits;
 
-        internal static void OnRaidStart() { _bastionUsed = false; _red = false; _dmgAcc = 0f; _raidHits = 0; }
+        internal static void OnRaidStart() { _bastionUsed = false; _red = false; _dmgAcc = 0f; _raidHits = 0; _polled = false; }
+
+        // Desafios de Heavy Bones (arreglar fracturas) y Thick Skin (arreglar sangrados pesados): se vigila cada segundo que una fractura
+        // o un sangrado pesado DESAPAREZCA de una parte del cuerpo que sigue en pie (si se pierde la parte, no cuenta como arreglo).
+        private static readonly EBodyPart[] Parts = { EBodyPart.Head, EBodyPart.Chest, EBodyPart.Stomach, EBodyPart.LeftArm, EBodyPart.RightArm, EBodyPart.LeftLeg, EBodyPart.RightLeg };
+        private static readonly bool[] _wasBroken = new bool[7], _wasHeavy = new bool[7];
+        private static bool _polled;
+
+        internal static void PollHealing(IHealthController hc)
+        {
+            for (int i = 0; i < Parts.Length; i++)
+            {
+                var part = Parts[i];
+                bool destroyed = hc.IsBodyPartDestroyed(part);
+                bool broken = hc.IsBodyPartBroken(part);
+                bool heavy = false;
+                foreach (var e in hc.GetAllActiveEffects(part))
+                    if (e.Type != null && e.Type.Name.IndexOf("HeavyBleeding", System.StringComparison.OrdinalIgnoreCase) >= 0) { heavy = true; break; }
+                if (_polled && !destroyed)
+                {
+                    if (_wasBroken[i] && !broken) { Dbg.Log("DESAFIO", "fractura arreglada: " + part); PerkService.AddProgress("jg_bones"); }
+                    if (_wasHeavy[i] && !heavy) { Dbg.Log("DESAFIO", "sangrado pesado arreglado: " + part); PerkService.AddProgress("jg_thick"); }
+                }
+                _wasBroken[i] = broken; _wasHeavy[i] = heavy;
+            }
+            _polled = true;
+        }
 
         internal static bool Reduces(EDamageType type) { return (type & NotReduced) == 0; }
 
@@ -76,7 +102,6 @@ namespace TarkovaCola.Client
         {
             var t = info.DamageType;
             bool hit = (t & PerkFx.Hits) != 0;
-            if (hit) PerkService.AddProgress("jg_thick");                       // desafio de Thick Skin: golpes recibidos
 
             float before = damage;
             if (Reduces(t)) damage *= 1f - (1f - DamageMult) * Perks.Power(Id);      // como modificador (Classic) reduce solo una parte

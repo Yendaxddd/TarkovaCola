@@ -39,12 +39,27 @@ namespace TarkovaCola.Client
                 var json = (string)resp["json"];
                 _state = string.IsNullOrEmpty(json) ? Default() : JObject.Parse(json);
                 Plugin.Log.LogInfo("Progreso de perks cargado (" + (string.IsNullOrEmpty(json) ? "nuevo" : "existente") + ")");
+                Migrate();
             }
             catch (Exception e)
             {
                 Plugin.Log.LogWarning("No se pudo cargar el progreso del servidor: " + e.Message);
                 if (_state == null) _state = Default();
             }
+        }
+
+        // Cambios de significado de desafios entre versiones: el progreso antiguo (segundos / golpes) se reinicia si el desafio no estaba completo
+        private static void Migrate()
+        {
+            int v = (int?)_state["chv"] ?? 0;
+            if (v >= 1) return;
+            var prog = _state["prog"] as JObject;
+            var jug = prog != null ? prog["juggernog"] as JObject : null;
+            if (jug != null)
+                foreach (var id in new[] { "jg_bones", "jg_thick" })
+                    if (!IsDone(id) && jug.Remove(id)) Plugin.Log.LogInfo("Desafio " + id + " reiniciado (cambio de objetivo)");
+            _state["chv"] = 1;
+            Save();
         }
 
         // Guardar = marcar como pendiente: el envio ocurre unos segundos despues del ultimo cambio (los desafios suman progreso muy a

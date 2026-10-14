@@ -34,7 +34,7 @@ namespace TarkovaCola.Client
         // Carga el archivo con antelacion (asi suena sin retraso cuando toca y se conoce lo que dura)
         public static void Preload(string file)
         {
-            if (_clips.ContainsKey(file) || !_loading.Add(file)) return;
+            if (Valid(file) || !_loading.Add(file)) return;
             Plugin.Instance.StartCoroutine(Load(file, 0f, 0f, false));
         }
 
@@ -45,10 +45,21 @@ namespace TarkovaCola.Client
             return _clips.TryGetValue(file, out clip) && clip != null ? clip.length : 0f;
         }
 
+        // El clip guardado sigue vivo (el juego descarga assets sin usar al cargar la raid: un clip descargado sale con 0 s)
+        private static bool Valid(string file)
+        {
+            AudioClip clip;
+            if (!_clips.TryGetValue(file, out clip)) return false;
+            if (clip != null && clip.length > 0f) return true;
+            _clips.Remove(file);
+            Dbg.Log("AUDIO", "el clip " + file + " se habia descargado: se vuelve a cargar");
+            return false;
+        }
+
         private static void PlayFile(string file, float volume, float delay)
         {
             AudioClip clip;
-            if (_clips.TryGetValue(file, out clip) && clip != null)
+            if (Valid(file) && _clips.TryGetValue(file, out clip))
             {
                 if (delay <= 0f) Emit(clip, volume);
                 else Plugin.Instance.StartCoroutine(Later(clip, volume, delay));
@@ -78,7 +89,7 @@ namespace TarkovaCola.Client
                     {
                         clip = DownloadHandlerAudioClip.GetContent(req);
                         if (clip != null && clip.length <= 0f) { Dbg.Log("AUDIO", "el archivo no se pudo decodificar: " + file); clip = null; }      // (un mp3 que Unity no decodifica sale con 0 s)
-                        else if (clip != null) clip.name = file;
+                        else if (clip != null) { clip.name = file; clip.hideFlags = HideFlags.DontUnloadUnusedAsset; }
                     }
                     else Dbg.Log("AUDIO", "no se pudo cargar: " + req.error);
                 }

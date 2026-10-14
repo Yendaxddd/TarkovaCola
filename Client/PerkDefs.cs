@@ -92,7 +92,7 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 , Unit = ProgUnit.Meters },
                 new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10000 , Unit = ProgUnit.Meters },
                 new AugDef { Id = "st_land",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 3 },
-                new AugDef { Id = "st_lungs",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 30 },
+                new AugDef { Id = "st_lungs",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 20 },
                 new AugDef { Id = "st_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
             DrbMajor = new[] { "dt_boots", "dt_burn", "dt_jelly" },
@@ -118,8 +118,8 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "jg_plates",  Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 60 },     // placas aguantan el doble
                 new AugDef { Id = "jg_bastion", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 5 },      // un golpe letal por raid te deja a 1 PV
                 new AugDef { Id = "jg_skull",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 1500 },   // rebote de balas en el casco
-                new AugDef { Id = "jg_thick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 40 },     // menos sangrado, mas fracturas
-                new AugDef { Id = "jg_bones",   Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 120 , Unit = ProgUnit.Seconds },    // menos fracturas, mas sangrado
+                new AugDef { Id = "jg_thick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5 },      // menos sangrado, mas fracturas (desafio: arreglar 5 sangrados pesados)
+                new AugDef { Id = "jg_bones",   Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // menos fracturas, mas sangrado (desafio: arreglar 5 fracturas)
                 new AugDef { Id = "jg_keep",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 15 },     // hambre y sed hacen menos dano
                 new AugDef { Id = "jg_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },

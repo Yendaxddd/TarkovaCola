@@ -224,12 +224,12 @@ namespace TarkovaCola.Client
             if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(hc.EnergyRate * e * step);
             if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(hc.HydrationRate * h * step);
 
-            // salud en rojo con Juggernog: desafio de Heavy Bones (tiempo en rojo) y logro de extraer con vida en rojo
+            // salud en rojo con Juggernog: logro de extraer con vida en rojo, y vigilancia de curaciones para los desafios
             if (Perks.IsActive(Juggernog.Id))
             {
                 bool red = NearDeath(hc);
                 Juggernog.SetRed(red);
-                if (red) PerkService.AddProgress("jg_bones");
+                Juggernog.PollHealing(hc);                       // desafios de Heavy Bones y Thick Skin
             }
         }
 
