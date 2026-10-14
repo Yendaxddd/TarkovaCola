@@ -37,6 +37,7 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<float> CfgJingleVolume;
         internal static ConfigEntry<bool> CfgPhdVfx;
         internal static ConfigEntry<bool> CfgClassicBlock;
+        internal static ConfigEntry<KeyCode> CfgPosKey;
         internal static ConfigEntry<bool> CfgVoice;
         internal static ConfigEntry<float> CfgVoiceVolume;
         internal static ConfigEntry<bool> CfgPowerup;
@@ -66,6 +67,7 @@ namespace TarkovaCola.Client
             CfgPhdVfx = Config.Bind("HUD", "Efecto visual de PHD Flopper", true, "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion / Energy ring and sparks when PHD Flopper saves you from a fall or blast");
             CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
                 "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
+            CfgPosKey = Config.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones) / In raid, copies the map and your coordinates to the clipboard (to place quests)");
             CfgVoice = Config.Bind("Audio", "Voz del locutor", true, "Voz de 'Random Perk' y 'Eternal Perk' / Announcer voice for 'Random Perk' and 'Eternal Perk'");
             CfgVoiceVolume = Config.Bind("Audio", "Volumen de la voz", 0.9f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
             CfgPowerup = Config.Bind("Powerup", "Perk aleatoria al matar", true, "Al matar puede caer una botella flotante que da una perk al azar (como mucho una por raid) / Kills can drop a floating bottle that gives a random perk (at most one per raid)");
@@ -89,6 +91,7 @@ namespace TarkovaCola.Client
         private void Update()
         {
             if (!InRaidWorld && Input.GetKeyDown(CfgOpenKey.Value)) { Dbg.Log("MENU", "tecla " + CfgOpenKey.Value + " pulsada"); ResearchScreen.Toggle(); }
+            if (InRaid && Input.GetKeyDown(CfgPosKey.Value)) CopyPosition();
             Tracker.Tick();
             Hud.TickRaidPanel();
             PerkService.TickSave();      // el progreso se envia al servidor unos segundos despues del ultimo cambio
@@ -97,6 +100,24 @@ namespace TarkovaCola.Client
         private void OnGUI()
         {
             Hud.Draw();
+        }
+
+        // Herramienta de autor: copia "mapa x y z" de donde estas para poner las zonas y puntos de aparicion de las misiones
+        private static void CopyPosition()
+        {
+            try
+            {
+                var me = Me;
+                string map = Singleton<GameWorld>.Instance.LocationId;
+                var p = me.Position;
+                string text = "map=" + map + " at={ \"x\": " + p.x.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                              + ", \"y\": " + p.y.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                              + ", \"z\": " + p.z.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " }";
+                GUIUtility.systemCopyBuffer = text;
+                Log.LogInfo("[POSICION] " + text);
+                Hud.Notify(L.T("pos.title"), text, null);
+            }
+            catch (Exception e) { Log.LogError("No se pudo copiar la posicion: " + e.Message); }
         }
 
         // El jugador de la RAID. En el Hideout tambien existe un mundo de juego con jugador (HideoutPlayer), pero no es una raid:
@@ -396,6 +417,7 @@ namespace TarkovaCola.Client
             Perk.OnRaidStart();
             PerkService.EnsureLoaded(force: true);
             Synergy.OnRaidStart();                    // sinergias equipadas
+            QuestGuards.OnRaidStart();                // punto de los guardias de la mision de Skier
             ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
             PerkService.Sanitize();                   // sin su desventaja, una mejora no puede estar equipada
             Perk.Refresh();

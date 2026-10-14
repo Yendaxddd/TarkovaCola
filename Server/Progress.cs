@@ -83,6 +83,11 @@ namespace TarkovaCola.Server
                         return http.NoBody(new PerkResponse { Json = ok ? "ok" : "no" });
                     }),
 
+                // el punto donde aparecen los guardias de la mision de Skier (o "" si no hay)
+                new RouteAction<PerkRequest>("/tarkovacola/quest/post",
+                    async (url, info, sessionId, output, ct) =>
+                        http.NoBody(new PerkResponse { Json = QuestIds.ReadPost() ?? "" })),
+
                 new RouteAction<AchRequest>("/tarkovacola/ach/claim",
                     async (url, info, sessionId, output, ct) =>
                     {

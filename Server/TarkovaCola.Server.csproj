@@ -30,6 +30,10 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModDir)" ContinueOnError="true" />
     <ItemGroup><ModFile Include="$(MSBuildThisFileDirectory)ModFiles\**\*" /></ItemGroup>
     <Copy SourceFiles="@(ModFile)" DestinationFiles="@(ModFile->'$(ModDir)\%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="true" />
+    <!-- Pack de misiones para VisitAPI (solo si VisitAPI esta instalado) -->
+    <PropertyGroup><VisitDir>$(SptRoot)\user\mods\VisitAPI-Server</VisitDir></PropertyGroup>
+    <ItemGroup><QuestPack Include="$(MSBuildThisFileDirectory)Packs\**\*" Condition="Exists('$(VisitDir)')" /></ItemGroup>
+    <Copy SourceFiles="@(QuestPack)" DestinationFiles="@(QuestPack->'$(VisitDir)\packs\%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="true" Condition="Exists('$(VisitDir)')" />
     <Message Importance="high" Text="[TarkovaCola.Server] desplegado en $(ModDir)" />
   </Target>
 </Project>

@@ -249,6 +249,8 @@ namespace TarkovaCola.Client
             },
             ["classic.lost.hint"] = new[] { "Si tu operador muere o no extrae, pierdes todas estas perks.", "If your operator dies or doesn't extract, you lose all these perks." },
 
+            ["pos.title"]       = new[] { "POSICIÓN COPIADA", "POSITION COPIED" },
+
             // sinergias
             ["syn.kicker"]      = new[] { "PERKS", "PERKS" },
             ["syn.title"]       = new[] { "SINERGIAS", "SYNERGIES" },

@@ -1,0 +1,21 @@
+[
+  {
+    "map": "bigmap",
+    "quest": "6a1c00000000000000000e01",
+    "statuses": [
+      2
+    ],
+    "role": "pmcBEAR",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "radius": 6.0,
+    "ready": false,
+    "source": "Los 4 guardias de la mision de Skier. Coordenadas con la tecla F10 en raid (mapa y posicion); pon ready a true cuando sean de verdad."
+  }
+]

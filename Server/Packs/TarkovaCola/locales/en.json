@@ -1,0 +1,15 @@
+{
+  "6a1c00000000000000000e01 name": "Cold Cargo",
+  "6a1c00000000000000000e01 description": "Some people have dug in with crates of that cola you all keep asking me about. They are guarding a spot and one of them carries an envelope that belongs to me. Get it back and bring it to me, and I will see that you get something fizzier to drink.",
+  "6a1c00000000000000000e01 note": "",
+  "6a1c00000000000000000e01 successMessageText": "Good, this is what I wanted. Ask Therapist about the new bottle; I put in a word.",
+  "6a1c00000000000000000e01 startedMessageText": "Find the guards, take the envelope and bring it back to Skier.",
+  "6a1c00000000000000000e01 failMessageText": "",
+  "6a1c00000000000000000e01 acceptPlayerMessage": "I will take care of it.",
+  "6a1c00000000000000000e01 declinePlayerMessage": "Not now.",
+  "6a1c00000000000000000e01 completePlayerMessage": "I have the envelope.",
+  "6a1c00000000000000000e01 changeQuestMessageText": "",
+  "6a1c00000000000000000e11": "Reach level 12",
+  "6a1c00000000000000000e12": "Find the sealed envelope in raid",
+  "6a1c00000000000000000e13": "Hand over the sealed envelope"
+}

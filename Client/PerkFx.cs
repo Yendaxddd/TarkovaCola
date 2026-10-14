@@ -398,13 +398,14 @@ namespace TarkovaCola.Client
         [HarmonyPrefix]
         private static void Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, DamageInfo damageInfo)
         {
-            if (damage <= 0f || !Perks.AnyActive) return;
+            if (damage <= 0f || (!Perks.AnyActive && !QuestGuards.Any)) return;
             try
             {
                 var victim = __instance.Player;
                 if (victim == null) return;
                 if (Util.IsMe(victim))
                 {
+                    if (!Perks.AnyActive) return;
                     if (Perks.IsActive(PhdFlopper.Id)) damage = PhdFlopper.OnDamage(bodyPart, damage, damageInfo);
                     if (damage <= 0f) return;
                     if (Perks.IsActive(Juggernog.Id)) damage = Juggernog.OnDamage(__instance, bodyPart, damage, damageInfo);
@@ -413,6 +414,7 @@ namespace TarkovaCola.Client
                     ClassicChallenge.OnDamageTaken(damageInfo);                 // desafio "ghost": solo cuenta el dano que de verdad recibes
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
                 }
+                else if (QuestGuards.IsGuard(victim) && (damageInfo.DamageType & PerkFx.Blast) != 0) damage = 0f;      // los guardias de la mision llevan PHD Flopper
                 else if (Perks.IsActive(PhdFlopper.Id))
                 {
                     var me = Plugin.Me;

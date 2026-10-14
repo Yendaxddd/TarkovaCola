@@ -1,0 +1,15 @@
+{
+  "6a1c00000000000000000e01 name": "Carga fría",
+  "6a1c00000000000000000e01 description": "Unos tipos se han atrincherado con cajas de esa cola de la que todos me preguntan. Vigilan un punto y uno de ellos lleva un sobre que es mío. Recupéralo y tráemelo, y me aseguraré de que tengas algo con más burbujas para beber.",
+  "6a1c00000000000000000e01 note": "",
+  "6a1c00000000000000000e01 successMessageText": "Bien, esto es lo que quería. Pregunta a Therapist por la botella nueva; he hablado con ella.",
+  "6a1c00000000000000000e01 startedMessageText": "Encuentra a los guardias, quítales el sobre y llévaselo a Skier.",
+  "6a1c00000000000000000e01 failMessageText": "",
+  "6a1c00000000000000000e01 acceptPlayerMessage": "Yo me encargo.",
+  "6a1c00000000000000000e01 declinePlayerMessage": "Ahora no.",
+  "6a1c00000000000000000e01 completePlayerMessage": "Tengo el sobre.",
+  "6a1c00000000000000000e01 changeQuestMessageText": "",
+  "6a1c00000000000000000e11": "Alcanza el nivel 12",
+  "6a1c00000000000000000e12": "Encuentra el sobre sellado en raid",
+  "6a1c00000000000000000e13": "Entrega el sobre sellado"
+}
