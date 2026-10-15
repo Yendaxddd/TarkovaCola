@@ -106,7 +106,9 @@ namespace TarkovaCola.Client
         internal static Camera Cam()
         {
             if (_cam != null && _cam.enabled && _cam.gameObject.activeInHierarchy) return _cam;
-            var c = Camera.allCameras.FirstOrDefault(x => x.enabled && x.targetTexture == null && x.name.IndexOf("FPS", System.StringComparison.OrdinalIgnoreCase) >= 0);
+            Camera c = null;
+            try { if (EFT.CameraControl.CameraManager.Exist) c = EFT.CameraControl.CameraManager.Instance.Camera; } catch { }      // la camara del jugador ("FPS Camera")
+            if (c == null) c = Camera.allCameras.FirstOrDefault(x => x.enabled && x.name.IndexOf("FPS", System.StringComparison.OrdinalIgnoreCase) >= 0);
             if (c == null) c = Camera.main;
             if (c != null) Dbg.Log("POWERUP", "camara: " + c.name + " (fov " + c.fieldOfView.ToString("0") + ")");
             _cam = c;
@@ -127,8 +129,10 @@ namespace TarkovaCola.Client
                 _marker = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = false };
                 _markerSmall = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = false };
             }
-            var sp = cam.WorldToScreenPoint(_fx.Position + Vector3.up * 1.0f);
-            float x = sp.x, y = Screen.height - sp.y;
+            // Coordenadas de "viewport" (0..1) y no de pixeles: EFT renderiza la camara a otra resolucion (DLSS/FSR/supermuestreo), y los
+            // pixeles de la camara no son los de la pantalla. Asi el marcador cae encima de la botella a cualquier escala de render.
+            var vp = cam.WorldToViewportPoint(_fx.Position + Vector3.up * 1.0f);
+            float x = vp.x * Screen.width, y = (1f - vp.y) * Screen.height;
             bool behind = Vector3.Dot(cam.transform.forward, _fx.Position - cam.transform.position) < 0f;       // (el signo de sp.z no es fiable en EFT)
             if (behind) { x = Screen.width - x; y = Screen.height - y; }         // detras: se pega al borde contrario
             float m = 54f * scale;

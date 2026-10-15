@@ -393,7 +393,7 @@ namespace TarkovaCola.Client
 
             float rate = me.HealthController.HydrationRate;       // negativo mientras la sed baja
             if (rate >= 0f || mult <= 1f) return;
-            float extra = -rate * (mult - 1f) * dt;
+            float extra = PerkFx.BaseHydrationRate * (mult - 1f) * dt;     // sobre el gasto base (no el ritmo actual, que sube al correr)
             me.ActiveHealthController.ChangeHydration(-extra);
             Dbg.Throttled("thirst", 30f, "EFECTO", "sed extra: x" + mult.ToString("0.00") + " (-" + extra.ToString("0.000") + " hidratacion/s)");
         }

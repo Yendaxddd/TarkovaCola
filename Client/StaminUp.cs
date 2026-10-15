@@ -159,8 +159,8 @@ namespace TarkovaCola.Client
                     float step = now - _nextDrain + 1f;
                     _nextDrain = now + 1f;
                     var hc = me.HealthController;
-                    if (Perk.Has("dt_hungry") && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(hc.EnergyRate * HungryExtra * step);
-                    if (Perk.Has("dt_sweaty") && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(hc.HydrationRate * HungryExtra * step);
+                    if (Perk.Has("dt_hungry") && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(-PerkFx.BaseEnergyRate * HungryExtra * step);
+                    if (Perk.Has("dt_sweaty") && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(-PerkFx.BaseHydrationRate * HungryExtra * step);
                 }
             }
             else _nextDrain = now + 1f;

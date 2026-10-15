@@ -45,6 +45,10 @@ namespace TarkovaCola.Client
         internal const float SluggishDraw = 0.80f;        // Sluggish Reflexes / Greasy Fingers: sacar arma un 20% mas lento
         internal const float GreasyDraw = 0.80f;
         internal const float Metabolism = 0.20f;          // Slow Metabolism / Hungry Spider / Dry Throat: +20%
+        // Gasto base de energia / hidratacion por segundo (el metabolismo normal del juego, aprox.). Los extras de las desventajas se calculan
+        // sobre esto y NO sobre el ritmo actual del juego, que incluye la fatiga al correr y otros efectos: si no, cuantas mas perks, mas se
+        // multiplicaba el gasto mientras sprintabas.
+        internal const float BaseEnergyRate = 1f / 60f, BaseHydrationRate = 1f / 45f;
         internal const float ChewTime = 1.30f;            // Slow Chewer: comer y beber tarda un 30% mas
         internal const float PatchSpeed = 2.0f;           // Quick Patch: animaciones de curacion x2
         internal const float PitStopBonus = 1.0f;         // Pit Stop: quieto, la estamina se recupera el doble (+100%)
@@ -221,8 +225,8 @@ namespace TarkovaCola.Client
             bool m = Perk.Has("dj_metab");
             float e = (m ? Metabolism : 0f) + (Perk.Has("dw_hungry") ? Metabolism : 0f);
             float h = (m ? Metabolism : 0f) + (Perk.Has("dw_dry") ? Metabolism : 0f);
-            if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(hc.EnergyRate * e * step);
-            if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(hc.HydrationRate * h * step);
+            if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(-BaseEnergyRate * e * step);
+            if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(-BaseHydrationRate * h * step);
 
             // salud en rojo con Juggernog: logro de extraer con vida en rojo, y vigilancia de curaciones para los desafios
             if (Perks.IsActive(Juggernog.Id))
