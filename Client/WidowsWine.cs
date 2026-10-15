@@ -97,7 +97,10 @@ namespace TarkovaCola.Client
                 int key = g.GetInstanceID();
                 int n = Web(g.transform.position, key);
                 if (n > 0 && _announced.Add(key))
+                {
                     Hud.Notify(L.T("perk.widowswine").ToUpperInvariant(), L.F("notice.web.sub", n), Id);
+                    WebVfx.Burst(key, g.transform.position, WebRadius(), WebSeconds());          // la telarana se ve en el suelo
+                }
             }
         }
 
@@ -106,10 +109,19 @@ namespace TarkovaCola.Client
         {
             int key = g != null ? g.GetInstanceID() : 0;
             int n = Web(pos, key);
+            if (n > 0) WebVfx.Burst(key, pos, WebRadius(), WebSeconds());
             Dbg.Log("EFECTO", "Widow's Wine: explosion en " + pos.ToString("F1") + ", " + n + " enemigo(s) atrapado(s)");
             if (key != 0) { _perGrenade.Remove(key); _fuseDone.Remove(key); _announced.Remove(key); }
             if (item != null) { _lastTpl = item.StringTemplateId; _lastTime = Time.time; _lastRefunded = false; }
         }
+
+        // radio y duracion de la telarana con lo que lleves equipado (para el efecto visual)
+        private static float WebRadius()
+        {
+            bool mod = Perks.IsModifier(Id);
+            return (mod ? ModRadius : Radius * (Perk.Has("ww_spin") ? SpinRadius : 1f)) * Synergy.WebMult;
+        }
+        private static float WebSeconds() { return Perks.IsModifier(Id) ? ModSeconds : Seconds + (Perk.Has("ww_spin") ? SpinExtra : 0f); }
 
         // Atrapa a todos los enemigos vivos cerca de 'center'. Devuelve cuantos hay dentro ahora.
         //   key = id de la granada (para contar enemigos distintos por granada); 0 = sin seguimiento. burst = Web Burst (aturde a todos).
@@ -155,6 +167,7 @@ namespace TarkovaCola.Client
                     Synergy.OnWebbed();
                     if (PerkService.Stat("widow_webbed") >= WebbedNeeded) Achievements.Unlock("ww_webbed");
                     if (venom || burst) Stun(p, StunSeconds);
+                    WebVfx.OnVictim(p.Position, secs);
                 }
                 if (seen != null) seen.Add(p.ProfileId);
             }

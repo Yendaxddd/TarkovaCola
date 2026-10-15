@@ -36,6 +36,7 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgJingle;
         internal static ConfigEntry<float> CfgJingleVolume;
         internal static ConfigEntry<bool> CfgPhdVfx;
+        internal static ConfigEntry<bool> CfgWebVfx;
         internal static ConfigEntry<bool> CfgClassicBlock;
         internal static ConfigEntry<KeyCode> CfgPosKey;
         internal static ConfigEntry<bool> CfgVoice;
@@ -65,6 +66,7 @@ namespace TarkovaCola.Client
             CfgJingle = Config.Bind("Audio", "Cancion al beber", true, "Reproduce la cancion de Speed Cola al beberla / Play the jingle when drinking");
             CfgJingleVolume = Config.Bind("Audio", "Volumen de la cancion", 0.6f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
             CfgPhdVfx = Config.Bind("HUD", "Efecto visual de PHD Flopper", true, "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion / Energy ring and sparks when PHD Flopper saves you from a fall or blast");
+            CfgWebVfx = Config.Bind("HUD", "Efecto visual de Widow's Wine", true, "Telarana en el suelo donde tu granada atrapa enemigos / Web on the ground where your grenade catches enemies");
             CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
                 "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
             CfgPosKey = Config.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones) / In raid, copies the map and your coordinates to the clipboard (to place quests)");

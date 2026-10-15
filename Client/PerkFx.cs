@@ -78,6 +78,7 @@ namespace TarkovaCola.Client
             PhdFlopper.OnRaidStart();
             WidowsWine.OnRaidStart();
             Deadshot.OnRaidStart();
+            WebVfx.OnRaidStart();
             Speed = 0f; _wasBreathD = false;
         }
 
