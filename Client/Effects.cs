@@ -31,7 +31,13 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(SkillManager __instance, SkillManager.WeaponBuffsInfo __result)
         {
-            if (__result == null || !Perks.AnyActive) return;
+            if (__result == null) return;
+            if (QuestGuards.Any)                                                  // Embotelladores: Speed Cola y Deadshot tambien en ellos
+            {
+                if (QuestGuards.HasObj(__instance, Perks.SpeedCola.Id)) __result.ReloadSpeed *= QuestGuards.ReloadMult;
+                if (QuestGuards.HasObj(__instance, Deadshot.Id)) __result.AimSpeed += Deadshot.BaseAim;
+            }
+            if (!Perks.AnyActive) return;
             var me = Plugin.Me;
             if (me == null || me.Skills != __instance) return;
             if (Plugin.SpeedColaActive) __result.ReloadSpeed *= Perk.ReloadMult;

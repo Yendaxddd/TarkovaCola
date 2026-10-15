@@ -164,7 +164,9 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(string player, int fragmentIndex, Shot __result)
         {
-            if (__result == null || !Deadshot.Active) return;
+            if (__result == null) return;
+            if (QuestGuards.Any && QuestGuards.Has(player, Deadshot.Id)) { __result.PenetrationPower *= QuestGuards.Penetration; return; }   // Embotellador con Deadshot
+            if (!Deadshot.Active) return;
             var me = Plugin.Me;
             if (me == null || player != me.ProfileId) return;
             if (Perk.Has("dd_pen")) __result.PenetrationPower *= Deadshot.Penetration;

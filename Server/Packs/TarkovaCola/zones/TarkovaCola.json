@@ -1,0 +1,242 @@
+[
+  {
+    "id": "tarkovacola_m01_post",
+    "type": "visit",
+    "locations": [
+      "RezervBase"
+    ],
+    "position": {
+      "x": 59.51,
+      "y": -5.7,
+      "z": 65.68
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 1)"
+  },
+  {
+    "id": "tarkovacola_m02_post",
+    "type": "visit",
+    "locations": [
+      "Shoreline"
+    ],
+    "position": {
+      "x": -170.96,
+      "y": -4.13,
+      "z": -129.35
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 2)"
+  },
+  {
+    "id": "tarkovacola_m03_post",
+    "type": "visit",
+    "locations": [
+      "bigmap"
+    ],
+    "position": {
+      "x": 391.86,
+      "y": 2.51,
+      "z": -86.19
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 3)"
+  },
+  {
+    "id": "tarkovacola_m04_post",
+    "type": "visit",
+    "locations": [
+      "Interchange"
+    ],
+    "position": {
+      "x": -76.8,
+      "y": 28.12,
+      "z": 83.48
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 4)"
+  },
+  {
+    "id": "tarkovacola_m05_post",
+    "type": "visit",
+    "locations": [
+      "Woods"
+    ],
+    "position": {
+      "x": 102.62,
+      "y": 8.21,
+      "z": -152.19
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 5)"
+  },
+  {
+    "id": "tarkovacola_m06_post",
+    "type": "visit",
+    "locations": [
+      "TarkovStreets"
+    ],
+    "position": {
+      "x": 201.18,
+      "y": 4.54,
+      "z": 401.78
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 6)"
+  },
+  {
+    "id": "tarkovacola_m07_post",
+    "type": "visit",
+    "locations": [
+      "Lighthouse"
+    ],
+    "position": {
+      "x": -84.91,
+      "y": 17.96,
+      "z": 20.15
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 7)"
+  },
+  {
+    "id": "tarkovacola_m08_post",
+    "type": "visit",
+    "locations": [
+      "Shoreline"
+    ],
+    "position": {
+      "x": -248.73,
+      "y": -40.0,
+      "z": 158.86
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 8)"
+  },
+  {
+    "id": "tarkovacola_m09_post",
+    "type": "visit",
+    "locations": [
+      "bigmap"
+    ],
+    "position": {
+      "x": 181.1,
+      "y": 0.89,
+      "z": 178.05
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 9)"
+  },
+  {
+    "id": "tarkovacola_m10_post",
+    "type": "visit",
+    "locations": [
+      "RezervBase"
+    ],
+    "position": {
+      "x": -104.22,
+      "y": -13.5,
+      "z": 33.83
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "size": {
+      "x": 40,
+      "y": 14,
+      "z": 40
+    },
+    "source": "Tarkova-Cola: puesto de los Embotelladores (mision 10)"
+  }
+]

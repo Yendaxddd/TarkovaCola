@@ -359,6 +359,7 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(Physical __instance, ref float __result)
         {
+            if (QuestGuards.Any && QuestGuards.HasObj(__instance, StaminUp.Id)) { __result *= QuestGuards.StaminaMult; return; }     // Embotellador con Stamin-Up
             if (!Perks.AnyActive) return;
             var me = Plugin.Me;
             if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
@@ -433,6 +434,7 @@ namespace TarkovaCola.Client
                 if (victim == null) return;
                 if (Util.IsMe(victim))
                 {
+                    if (QuestGuards.Any) QuestGuards.OnHitMe(victim, damageInfo);         // un Embotellador con Widow's Wine te frena
                     if (!Perks.AnyActive) return;
                     if (Perks.IsActive(PhdFlopper.Id)) damage = PhdFlopper.OnDamage(bodyPart, damage, damageInfo);
                     if (damage <= 0f) return;
@@ -442,9 +444,16 @@ namespace TarkovaCola.Client
                     ClassicChallenge.OnDamageTaken(damageInfo);                 // desafio "ghost": solo cuenta el dano que de verdad recibes
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
                 }
-                else if (QuestGuards.IsGuard(victim) && (damageInfo.DamageType & PerkFx.Blast) != 0) damage = 0f;      // los guardias de la mision llevan PHD Flopper
-                else if (Perks.AnyActive)
+                else
                 {
+                    // los Embotelladores (guardias de las misiones) llevan perks de verdad
+                    if (QuestGuards.Any && QuestGuards.IsGuard(victim))
+                    {
+                        var t = damageInfo.DamageType;
+                        if (QuestGuards.Has(victim, PhdFlopper.Id) && (t & (PerkFx.Blast | EDamageType.Fall)) != 0) { damage = 0f; return; }
+                        if (QuestGuards.Has(victim, Juggernog.Id) && Juggernog.Reduces(t)) damage *= QuestGuards.JugMult;
+                    }
+                    if (!Perks.AnyActive) return;
                     var me = Plugin.Me;
                     var by = damageInfo.Player != null ? damageInfo.Player.iPlayer : null;
                     if (me != null && by != null && by.ProfileId == me.ProfileId)

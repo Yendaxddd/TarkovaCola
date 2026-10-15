@@ -1,0 +1,279 @@
+[
+  {
+    "map": "RezervBase",
+    "quest": "6a1c00000000000000000e01",
+    "statuses": [
+      2
+    ],
+    "role": "pmcBEAR",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": 59.51,
+      "y": -6.7,
+      "z": 65.68
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 1,
+      "perks": "random",
+      "item": "6a1c00000000000000000f01"
+    },
+    "source": "Tarkova-Cola mision 1: guardias de los Embotelladores"
+  },
+  {
+    "map": "Shoreline",
+    "quest": "6a1c00000000000000510200",
+    "statuses": [
+      2
+    ],
+    "role": "pmcUSEC",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": -170.96,
+      "y": -5.13,
+      "z": -129.35
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 2,
+      "perks": "random",
+      "item": "6a1c00000000000000000f02"
+    },
+    "source": "Tarkova-Cola mision 2: guardias de los Embotelladores"
+  },
+  {
+    "map": "bigmap",
+    "quest": "6a1c00000000000000510300",
+    "statuses": [
+      2
+    ],
+    "role": "pmcBEAR",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": 391.86,
+      "y": 1.51,
+      "z": -86.19
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 3,
+      "perks": "random",
+      "item": "6a1c00000000000000000f03"
+    },
+    "source": "Tarkova-Cola mision 3: guardias de los Embotelladores"
+  },
+  {
+    "map": "Interchange",
+    "quest": "6a1c00000000000000510400",
+    "statuses": [
+      2
+    ],
+    "role": "pmcUSEC",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": -76.8,
+      "y": 27.12,
+      "z": 83.48
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 4,
+      "perks": [
+        "speedcola"
+      ],
+      "item": "6a1c00000000000000000f04"
+    },
+    "source": "Tarkova-Cola mision 4: guardias de los Embotelladores"
+  },
+  {
+    "map": "Woods",
+    "quest": "6a1c00000000000000510500",
+    "statuses": [
+      2
+    ],
+    "role": "pmcBEAR",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": 102.62,
+      "y": 7.21,
+      "z": -152.19
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 5,
+      "perks": [
+        "staminup"
+      ],
+      "item": "6a1c00000000000000000f05"
+    },
+    "source": "Tarkova-Cola mision 5: guardias de los Embotelladores"
+  },
+  {
+    "map": "TarkovStreets",
+    "quest": "6a1c00000000000000510600",
+    "statuses": [
+      2
+    ],
+    "role": "pmcUSEC",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": 201.18,
+      "y": 3.54,
+      "z": 401.78
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 6,
+      "perks": [
+        "juggernog"
+      ],
+      "item": "6a1c00000000000000000f06"
+    },
+    "source": "Tarkova-Cola mision 6: guardias de los Embotelladores"
+  },
+  {
+    "map": "Lighthouse",
+    "quest": "6a1c00000000000000510700",
+    "statuses": [
+      2
+    ],
+    "role": "pmcBEAR",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": -84.91,
+      "y": 16.96,
+      "z": 20.15
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 7,
+      "perks": [
+        "phdflopper"
+      ],
+      "item": "6a1c00000000000000000f07"
+    },
+    "source": "Tarkova-Cola mision 7: guardias de los Embotelladores"
+  },
+  {
+    "map": "Shoreline",
+    "quest": "6a1c00000000000000510800",
+    "statuses": [
+      2
+    ],
+    "role": "pmcUSEC",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": -248.73,
+      "y": -41.0,
+      "z": 158.86
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 8,
+      "perks": [
+        "widowswine"
+      ],
+      "item": "6a1c00000000000000000f08"
+    },
+    "source": "Tarkova-Cola mision 8: guardias de los Embotelladores"
+  },
+  {
+    "map": "bigmap",
+    "quest": "6a1c00000000000000510900",
+    "statuses": [
+      2
+    ],
+    "role": "pmcBEAR",
+    "min": 4,
+    "max": 4,
+    "difficulty": "normal",
+    "at": {
+      "x": 181.1,
+      "y": -0.11,
+      "z": 178.05
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 9,
+      "perks": [
+        "deadshot"
+      ],
+      "item": "6a1c00000000000000000f09"
+    },
+    "source": "Tarkova-Cola mision 9: guardias de los Embotelladores"
+  },
+  {
+    "map": "RezervBase",
+    "quest": "6a1c00000000000000510a00",
+    "statuses": [
+      2
+    ],
+    "role": "pmcUSEC",
+    "min": 3,
+    "max": 3,
+    "difficulty": "normal",
+    "at": {
+      "x": -104.22,
+      "y": -14.5,
+      "z": 33.83
+    },
+    "radius": 7.0,
+    "ready": true,
+    "tc": {
+      "mission": 10,
+      "perks": "random",
+      "item": null
+    },
+    "source": "Tarkova-Cola mision 10: guardias de los Embotelladores"
+  },
+  {
+    "map": "RezervBase",
+    "quest": "6a1c00000000000000510a00",
+    "statuses": [
+      2
+    ],
+    "role": "pmcUSEC",
+    "min": 1,
+    "max": 1,
+    "difficulty": "hard",
+    "at": {
+      "x": -104.22,
+      "y": -14.5,
+      "z": 33.83
+    },
+    "radius": 3.0,
+    "ready": true,
+    "tc": {
+      "mission": 10,
+      "perks": "all",
+      "item": "6a1c00000000000000000f0a",
+      "boss": true
+    },
+    "source": "Tarkova-Cola mision 10: el Barman"
+  }
+]

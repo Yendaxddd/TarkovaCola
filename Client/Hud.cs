@@ -164,7 +164,7 @@ namespace TarkovaCola.Client
             float scale = Screen.height / 1080f;
             EnsureStyles(scale);
 
-            if (!_escOpen && !_menuOpen) { DrawPermanentIcons(scale); Powerup.DrawMarker(scale, _white); }
+            if (!_escOpen && !_menuOpen) { QuestGuards.DrawIcons(scale); DrawPermanentIcons(scale); Powerup.DrawMarker(scale, _white); }
             if (Event.current != null && Event.current.type == EventType.Repaint) ShowPending();      // (OnGUI se llama varias veces por frame)
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
         }

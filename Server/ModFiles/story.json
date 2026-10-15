@@ -1,0 +1,248 @@
+{
+  "items": [
+    {
+      "id": "6a1c00000000000000000f01",
+      "nameEn": "Sealed envelope",
+      "shortEn": "Envelope",
+      "descEn": "A sealed envelope with no sender. It smells faintly of cola, and something inside rattles like a bottle cap.",
+      "nameEs": "Sobre sellado",
+      "shortEs": "Sobre",
+      "descEs": "Un sobre sellado y sin remitente. Huele un poco a cola, y dentro algo suena como una chapa de botella."
+    },
+    {
+      "id": "6a1c00000000000000000f02",
+      "nameEn": "Laboratory notebook",
+      "shortEn": "Notebook",
+      "descEn": "A water-stained notebook full of formulas, dosages and a coffee ring shaped like a bottle cap.",
+      "nameEs": "Cuaderno de laboratorio",
+      "shortEs": "Cuaderno",
+      "descEs": "Un cuaderno manchado de agua, lleno de fórmulas, dosis y un cerco de café con forma de chapa."
+    },
+    {
+      "id": "6a1c00000000000000000f03",
+      "nameEn": "Bottling schematics",
+      "shortEn": "Schematics",
+      "descEn": "Folded blueprints of a small bottling line. Someone drew a skull with a straw in the corner.",
+      "nameEs": "Esquemas de embotellado",
+      "shortEs": "Esquemas",
+      "descEs": "Planos doblados de una pequeña línea de embotellado. Alguien dibujó una calavera con pajita en una esquina."
+    },
+    {
+      "id": "6a1c00000000000000000f04",
+      "nameEn": "Speed Cola shipment manifest",
+      "shortEn": "Manifest",
+      "descEn": "Property of the Bottlers. Contents: everything needed to make Speed Cola.",
+      "nameEs": "Manifiesto de envío de Speed Cola",
+      "shortEs": "Manifiesto",
+      "descEs": "Propiedad de los Embotelladores. Contiene todo lo necesario para preparar Speed Cola."
+    },
+    {
+      "id": "6a1c00000000000000000f05",
+      "nameEn": "Stamin-Up route map",
+      "shortEn": "Route map",
+      "descEn": "Property of the Bottlers. Contents: everything needed to make Stamin-Up.",
+      "nameEs": "Mapa de rutas de Stamin-Up",
+      "shortEs": "Mapa de rutas",
+      "descEs": "Propiedad de los Embotelladores. Contiene todo lo necesario para preparar Stamin-Up."
+    },
+    {
+      "id": "6a1c00000000000000000f06",
+      "nameEn": "Juggernog lab sample",
+      "shortEn": "Sample",
+      "descEn": "Property of the Bottlers. Contents: everything needed to make Juggernog.",
+      "nameEs": "Muestra de laboratorio de Juggernog",
+      "shortEs": "Muestra",
+      "descEs": "Propiedad de los Embotelladores. Contiene todo lo necesario para preparar Juggernog."
+    },
+    {
+      "id": "6a1c00000000000000000f07",
+      "nameEn": "PHD Flopper test log",
+      "shortEn": "Test log",
+      "descEn": "Property of the Bottlers. Contents: everything needed to make PHD Flopper.",
+      "nameEs": "Registro de pruebas de PHD Flopper",
+      "shortEs": "Registro",
+      "descEs": "Propiedad de los Embotelladores. Contiene todo lo necesario para preparar PHD Flopper."
+    },
+    {
+      "id": "6a1c00000000000000000f08",
+      "nameEn": "Widow's Wine web canister",
+      "shortEn": "Canister",
+      "descEn": "Property of the Bottlers. Contents: everything needed to make Widow's Wine.",
+      "nameEs": "Bote de telaraña de Widow's Wine",
+      "shortEs": "Bote",
+      "descEs": "Propiedad de los Embotelladores. Contiene todo lo necesario para preparar Widow's Wine."
+    },
+    {
+      "id": "6a1c00000000000000000f09",
+      "nameEn": "Deadshot Daiquiri scope log",
+      "shortEn": "Scope log",
+      "descEn": "Property of the Bottlers. Contents: everything needed to make Deadshot Daiquiri.",
+      "nameEs": "Registro de mira de Deadshot Daiquiri",
+      "shortEs": "Registro de mira",
+      "descEs": "Propiedad de los Embotelladores. Contiene todo lo necesario para preparar Deadshot Daiquiri."
+    },
+    {
+      "id": "6a1c00000000000000000f0a",
+      "nameEn": "Master formula",
+      "shortEn": "Formula",
+      "descEn": "The original perk-a-cola formula, signed by a doctor whose name has been scratched out. It is still sticky.",
+      "nameEs": "Fórmula maestra",
+      "shortEs": "Fórmula",
+      "descEs": "La fórmula original de las perk-a-colas, firmada por un doctor cuyo nombre está tachado. Todavía está pegajosa."
+    }
+  ],
+  "recipes": [
+    {
+      "id": "6a1c00000000000000560001",
+      "perk": "speedcola",
+      "product": "6a1c00000000000000000c01",
+      "area": 8,
+      "time": 2700,
+      "quest": "6a1c00000000000000000e01",
+      "items": [
+        {
+          "tpl": "57514643245977207f2c2d09",
+          "count": 1
+        },
+        {
+          "tpl": "5751496424597720a27126da",
+          "count": 1
+        },
+        {
+          "tpl": "59e3577886f774176a362503",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "6a1c00000000000000560002",
+      "perk": "staminup",
+      "product": "6a1c00000000000000000c02",
+      "area": 8,
+      "time": 2700,
+      "quest": "6a1c00000000000000000e01",
+      "items": [
+        {
+          "tpl": "57514643245977207f2c2d09",
+          "count": 1
+        },
+        {
+          "tpl": "5751435d24597720a27126d1",
+          "count": 1
+        },
+        {
+          "tpl": "57513f07245977207e26a311",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "6a1c00000000000000560003",
+      "perk": "juggernog",
+      "product": "6a1c00000000000000000c03",
+      "area": 8,
+      "time": 3600,
+      "quest": "6a1c00000000000000510200",
+      "items": [
+        {
+          "tpl": "57514643245977207f2c2d09",
+          "count": 1
+        },
+        {
+          "tpl": "57513f9324597720a7128161",
+          "count": 1
+        },
+        {
+          "tpl": "5e831507ea0a7c419c2f9bd9",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "6a1c00000000000000560004",
+      "perk": "phdflopper",
+      "product": "6a1c00000000000000000c04",
+      "area": 8,
+      "time": 3600,
+      "quest": "6a1c00000000000000510200",
+      "items": [
+        {
+          "tpl": "57514643245977207f2c2d09",
+          "count": 1
+        },
+        {
+          "tpl": "57513fcc24597720a31c09a6",
+          "count": 1
+        },
+        {
+          "tpl": "590c5a7286f7747884343aea",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "6a1c00000000000000560005",
+      "perk": "widowswine",
+      "product": "6a1c00000000000000000c05",
+      "area": 8,
+      "time": 3600,
+      "quest": "6a1c00000000000000510300",
+      "items": [
+        {
+          "tpl": "57514643245977207f2c2d09",
+          "count": 1
+        },
+        {
+          "tpl": "5d40407c86f774318526545a",
+          "count": 1
+        },
+        {
+          "tpl": "5e2af2bc86f7746d3f3c33fc",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "6a1c00000000000000560006",
+      "perk": "deadshot",
+      "product": "6a1c00000000000000000c06",
+      "area": 8,
+      "time": 3600,
+      "quest": "6a1c00000000000000510300",
+      "items": [
+        {
+          "tpl": "57514643245977207f2c2d09",
+          "count": 1
+        },
+        {
+          "tpl": "5d403f9186f7743cac3f229b",
+          "count": 1
+        },
+        {
+          "tpl": "59e3577886f774176a362503",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "sales": {
+    "6a1c00000000000000000d01": "6a1c00000000000000510400",
+    "6a1c00000000000000000d02": "6a1c00000000000000510500",
+    "6a1c00000000000000000d03": "6a1c00000000000000510600",
+    "6a1c00000000000000000d04": "6a1c00000000000000510700",
+    "6a1c00000000000000000d05": "6a1c00000000000000510800",
+    "6a1c00000000000000000d06": "6a1c00000000000000510900"
+  },
+  "quests": {
+    "1": "6a1c00000000000000000e01",
+    "2": "6a1c00000000000000510200",
+    "3": "6a1c00000000000000510300",
+    "4": "6a1c00000000000000510400",
+    "5": "6a1c00000000000000510500",
+    "6": "6a1c00000000000000510600",
+    "7": "6a1c00000000000000510700",
+    "8": "6a1c00000000000000510800",
+    "9": "6a1c00000000000000510900",
+    "10": "6a1c00000000000000510a00"
+  }
+}
