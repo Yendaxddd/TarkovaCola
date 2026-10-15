@@ -395,13 +395,14 @@ for m in M:
                    "difficulty": "normal", "at": m["at"], "radius": 7.0, "ready": True, "tc": tc,
                    "source": "Tarkova-Cola mision %d: guardias de los Embotelladores" % n})
     if "boss" in m:
+        # el jefe va en el MISMO grupo que su escolta (si fueran dos grupos de PMC, se dispararian entre ellos): el primero es el
+        # jefe, lleva todas las perks y el objeto de la mision
         b = m["boss"]
-        at2 = {"x": m["at"]["x"], "y": m["at"]["y"], "z": m["at"]["z"]}
-        spawns[-1]["tc"]["item"] = None                       # el objeto lo lleva el jefe
-        spawns.append({"map": m["map"], "quest": q, "statuses": [2], "role": b["role"], "min": 1, "max": 1,
-                       "difficulty": b["difficulty"], "at": at2, "radius": 3.0, "ready": True,
-                       "tc": {"mission": n, "perks": b["perks"], "item": item_id, "boss": True},
-                       "source": "Tarkova-Cola mision %d: el Barman" % n})
+        s = spawns[-1]
+        s["min"] = s["max"] = m["guards"] + 1
+        s["difficulty"] = b["difficulty"]
+        s["tc"].update({"boss": True, "bossPerks": b["perks"]})
+        s["source"] = "Tarkova-Cola mision %d: el Barman (el primero del grupo) y su escolta" % n
 
     story_items.append({"id": item_id, "nameEn": m["en"]["item"][1], "shortEn": m["en"]["item"][0], "descEn": m["en"]["item"][2],
                         "nameEs": m["es"]["item"][1], "shortEs": m["es"]["item"][0], "descEs": m["es"]["item"][2]})
@@ -430,7 +431,7 @@ write(OUT / "quests" / "TarkovaCola.json", quests)
 write(OUT / "locales" / "en.json", locales["en"])
 write(OUT / "locales" / "es.json", locales["es"])
 write(OUT / "zones" / "TarkovaCola.json", zones)
-write(OUT / "spawns" / "TarkovaCola.json", spawns)
+write(ROOT / "Server" / "ModFiles" / "guards.json", spawns)          # los hace aparecer el cliente del mod (VisitAPI pedia el bando equivocado)
 write(STORY, story)
 for m in M: print("mision %2d %-22s %-14s %s" % (m["n"], m["es"]["name"], m["map"], m["at"]))
 print("ok ->", OUT, "y", STORY)

@@ -31,7 +31,6 @@ namespace TarkovaCola.Client
         private static readonly Dictionary<string, string[]> _perks = new Dictionary<string, string[]>();    // perfil -> perks
         private static readonly Dictionary<string, Player> _players = new Dictionary<string, Player>();
         private static readonly Dictionary<object, string[]> _byObj = new Dictionary<object, string[]>();     // SkillManager / Physical -> perks
-        private static readonly HashSet<BotCreationData> _done = new HashSet<BotCreationData>();
         private static readonly HashSet<string> _bosses = new HashSet<string>();
         private static float _nextWeb;
 
@@ -56,27 +55,23 @@ namespace TarkovaCola.Client
 
         internal static void OnRaidStart()
         {
-            _perks.Clear(); _players.Clear(); _byObj.Clear(); _done.Clear(); _bosses.Clear(); _posts = null; _nextWeb = 0f;
+            _perks.Clear(); _players.Clear(); _byObj.Clear(); _bosses.Clear(); _posts = null; _nextWeb = 0f;
             try
             {
                 var resp = JObject.Parse(RequestHandler.PostJson("/tarkovacola/quest/posts", "{}"));
                 var json = (string)resp["json"];
                 if (!string.IsNullOrEmpty(json)) _posts = JArray.Parse(json);
-                Dbg.Log("MISION", _posts != null ? _posts.Count + " punto(s) de guardias en el pack" : "no hay misiones de guardias");
+                GuardSpawner.Log(_posts != null ? _posts.Count + " punto(s) de guardias recibidos del servidor" : "el servidor no tiene puntos de guardias");
             }
-            catch (Exception e) { Dbg.Log("MISION", "no se pudieron leer los puntos de los guardias: " + e.Message); }
+            catch (Exception e) { GuardSpawner.Log("ERROR leyendo los puntos de los guardias: " + e.Message); }
         }
 
         // ---------------------------------------------------------------- aparicion
-        // Antes de activar un bot de VisitAPI: si es de nuestro pack, se equipa a todo su grupo
-        internal static void OnSpawn(BotCreationData data, Action<BotOwner> callback)
-        {
-            if (_posts == null || data == null || callback == null || !Singleton<GameWorld>.Instantiated) return;
-            if (callback.Method.DeclaringType == null || callback.Method.DeclaringType.Name != "StorySpawns") return;     // no es una aparicion de VisitAPI
-            if (!_done.Add(data)) return;                                                                                // el grupo ya se equipo
-            var post = Match(data);
-            if (post == null) return;                                                                                    // otro pack: no tocar
+        internal static JArray Posts { get { return _posts; } }
 
+        // Se equipa a todo un grupo recien generado (GuardSpawner): perks, botellas y el objeto de la mision
+        internal static void Equip(BotCreationData data, JObject post)
+        {
             var tc = post["tc"] as JObject;
             var profiles = data.Profiles.ToList();
             if (profiles.Count == 0) return;
@@ -86,47 +81,16 @@ namespace TarkovaCola.Client
             for (int i = 0; i < profiles.Count; i++)
             {
                 var p = profiles[i];
-                var perks = PerksFor(tc != null ? tc["perks"] : null);
+                bool isBoss = boss && i == 0;                                   // en la mision final, el primero del grupo es el Barman
+                var perks = PerksFor(tc != null ? tc[isBoss ? "bossPerks" : "perks"] : null);
                 _perks[p.Id] = perks;
-                if (boss) _bosses.Add(p.Id);
+                if (isBoss) _bosses.Add(p.Id);
                 int given = 0;
                 foreach (var id in perks) if (Give(p, Perks.Get(id).ItemTpl)) given++;
                 bool carry = item != null && i == carrier && Give(p, item);
-                Dbg.Log("MISION", (boss ? "JEFE " : "guardia ") + (i + 1) + "/" + profiles.Count + " (" + p.Info.Nickname + "): " + string.Join("+", perks) +
-                                  " (" + given + " botella(s))" + (item != null && i == carrier ? ", objeto de mision " + (carry ? "si" : "NO") : ""));
+                GuardSpawner.Log((isBoss ? "JEFE " : "guardia ") + (i + 1) + "/" + profiles.Count + " (" + p.Info.Nickname + ", " + p.Info.Settings.Role + "): perks " + string.Join("+", perks) +
+                                 ", " + given + "/" + perks.Length + " botella(s)" + (item != null && i == carrier ? ", objeto de mision " + (carry ? "SI" : "NO (no cabia)") : ""));
             }
-        }
-
-        // el punto del pack al que pertenece este grupo (mismo mapa y al lado de donde van a aparecer)
-        private static JObject Match(BotCreationData data)
-        {
-            string map = Singleton<GameWorld>.Instance.LocationId;
-            JObject best = null; float bestD = float.MaxValue;
-            foreach (var t in _posts.OfType<JObject>())
-            {
-                if (!string.Equals((string)t["map"], map, StringComparison.OrdinalIgnoreCase)) continue;
-                var at = t["at"];
-                if (at == null) continue;
-                var c = new Vector3((float)at["x"], (float)at["y"], (float)at["z"]);
-                float r = (float?)t["radius"] ?? 6f;
-                foreach (var p in data._positions)
-                {
-                    float d = Vector3.Distance(p.position, c);
-                    if (d <= r + 12f && d < bestD) { bestD = d; best = t; }
-                }
-            }
-            // el jefe y su escolta comparten punto: el jefe es el grupo de 1
-            if (best != null && data.Profiles.Count == 1)
-            {
-                var b = _posts.OfType<JObject>().FirstOrDefault(t => (string)t["quest"] == (string)best["quest"] && t["tc"] is JObject && (bool?)t["tc"]["boss"] == true);
-                if (b != null) best = b;
-            }
-            else if (best != null && best["tc"] is JObject && (bool?)best["tc"]["boss"] == true && data.Profiles.Count > 1)
-            {
-                var g = _posts.OfType<JObject>().FirstOrDefault(t => (string)t["quest"] == (string)best["quest"] && !(t["tc"] is JObject && (bool?)t["tc"]["boss"] == true));
-                if (g != null) best = g;
-            }
-            return best;
         }
 
         private static string[] PerksFor(JToken spec)
@@ -229,17 +193,6 @@ namespace TarkovaCola.Client
                 }
             }
             GUI.color = Color.white;
-        }
-    }
-
-    [HarmonyPatch(typeof(BotSpawner), "method_10")]
-    internal static class GuardSpawnPatch
-    {
-        [HarmonyPrefix]
-        private static void Prefix(BotCreationData data, Action<BotOwner> callback)
-        {
-            try { QuestGuards.OnSpawn(data, callback); }
-            catch (Exception e) { Plugin.Log.LogError("Mision (guardias): " + e); }
         }
     }
 

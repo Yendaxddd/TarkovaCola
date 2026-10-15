@@ -40,6 +40,8 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgClassicBlock;
         internal static ConfigEntry<KeyCode> CfgPosKey;
         internal static ConfigEntry<bool> CfgVoice;
+        internal static ConfigEntry<bool> CfgGuardsAlways;
+        internal static ConfigEntry<bool> CfgSalesUnlocked;
         internal static ConfigEntry<float> CfgVoiceVolume;
         internal static ConfigEntry<bool> CfgPowerup;
         internal static ConfigEntry<float> CfgPowerupChance;
@@ -70,6 +72,9 @@ namespace TarkovaCola.Client
             CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
                 "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
             CfgPosKey = Config.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones) / In raid, copies the map and your coordinates to the clipboard (to place quests)");
+            CfgGuardsAlways = Config.Bind("Debug", "Guardias siempre", false, "Hace aparecer a los Embotelladores de las misiones de este mapa aunque la mision no este en marcha (para probar) / Spawns the quest Bottlers on this map even if the quest is not started (for testing)");
+            CfgSalesUnlocked = Config.Bind("Debug", "Perks a la venta sin misiones", false, "Therapist vende todas las perks aunque no hayas hecho sus misiones / Therapist sells every perk even without their quests");
+            CfgSalesUnlocked.SettingChanged += (s, e) => Story.SyncSales();
             CfgVoice = Config.Bind("Audio", "Voz del locutor", true, "Voz de 'Random Perk' y 'Eternal Perk' / Announcer voice for 'Random Perk' and 'Eternal Perk'");
             CfgVoiceVolume = Config.Bind("Audio", "Volumen de la voz", 0.9f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
             CfgPowerup = Config.Bind("Powerup", "Perk aleatoria al matar", true, "Al matar puede caer una botella flotante que da una perk al azar (como mucho una por raid) / Kills can drop a floating bottle that gives a random perk (at most one per raid)");
@@ -206,6 +211,8 @@ namespace TarkovaCola.Client
                 _crashSteps = 0;
                 _initTime = _nextInv = Time.time;
                 _colaCount = 0; _drinkCount = 0;
+                try { GuardSpawner.OnPlayerReady(me); }
+                catch (Exception e) { Plugin.Log.LogError("Guardias (inicio): " + e); }
                 try { AchTrack.OnPlayerReady(); }
                 catch (Exception e) { Plugin.Log.LogError("Logros (inicio): " + e); }
                 try { Eternal.OnPlayerReady(me); }

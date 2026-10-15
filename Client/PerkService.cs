@@ -40,6 +40,7 @@ namespace TarkovaCola.Client
                 _state = string.IsNullOrEmpty(json) ? Default() : JObject.Parse(json);
                 Plugin.Log.LogInfo("Progreso de perks cargado (" + (string.IsNullOrEmpty(json) ? "nuevo" : "existente") + ")");
                 Migrate();
+                Story.SyncSales();                               // opcion de depuracion de ventas (F12)
             }
             catch (Exception e)
             {

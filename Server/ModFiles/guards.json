@@ -234,9 +234,9 @@
       2
     ],
     "role": "pmcUSEC",
-    "min": 3,
-    "max": 3,
-    "difficulty": "normal",
+    "min": 4,
+    "max": 4,
+    "difficulty": "hard",
     "at": {
       "x": -104.22,
       "y": -14.5,
@@ -247,33 +247,10 @@
     "tc": {
       "mission": 10,
       "perks": "random",
-      "item": null
-    },
-    "source": "Tarkova-Cola mision 10: guardias de los Embotelladores"
-  },
-  {
-    "map": "RezervBase",
-    "quest": "6a1c00000000000000510a00",
-    "statuses": [
-      2
-    ],
-    "role": "pmcUSEC",
-    "min": 1,
-    "max": 1,
-    "difficulty": "hard",
-    "at": {
-      "x": -104.22,
-      "y": -14.5,
-      "z": 33.83
-    },
-    "radius": 3.0,
-    "ready": true,
-    "tc": {
-      "mission": 10,
-      "perks": "all",
       "item": "6a1c00000000000000000f0a",
-      "boss": true
+      "boss": true,
+      "bossPerks": "all"
     },
-    "source": "Tarkova-Cola mision 10: el Barman"
+    "source": "Tarkova-Cola mision 10: el Barman (el primero del grupo) y su escolta"
   }
 ]

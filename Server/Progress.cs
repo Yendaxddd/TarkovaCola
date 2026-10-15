@@ -54,6 +54,11 @@ namespace TarkovaCola.Server
         [JsonPropertyName("json")] public string Json { get; set; }
     }
 
+    public class SalesRequest : IRequestData
+    {
+        [JsonPropertyName("unlock")] public bool Unlock { get; set; }
+    }
+
     public class PerkResponse
     {
         [JsonPropertyName("json")] public string Json { get; set; }
@@ -87,6 +92,14 @@ namespace TarkovaCola.Server
                 new RouteAction<PerkRequest>("/tarkovacola/quest/posts",
                     async (url, info, sessionId, output, ct) =>
                         http.NoBody(new PerkResponse { Json = QuestIds.ReadPosts() })),
+
+                // opcion de depuracion del cliente: perks a la venta sin haber hecho sus misiones
+                new RouteAction<SalesRequest>("/tarkovacola/debug/sales",
+                    async (url, info, sessionId, output, ct) =>
+                    {
+                        SalesLock.Set(info != null && info.Unlock);
+                        return http.NoBody(new PerkResponse { Json = "ok" });
+                    }),
 
                 new RouteAction<AchRequest>("/tarkovacola/ach/claim",
                     async (url, info, sessionId, output, ct) =>

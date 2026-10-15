@@ -40,7 +40,8 @@ namespace TarkovaCola.Server
             get { return Path.Combine(Path.GetFullPath(Path.Combine(ModDir, "..")), "VisitAPI-Server", "packs", PackName); }
         }
 
-        internal static string SpawnsFile { get { return Path.Combine(PackDir, "spawns", "TarkovaCola.json"); } }
+        // puntos de los guardias (los genera make_quest_pack.py; los hace aparecer el cliente del mod, no VisitAPI)
+        internal static string SpawnsFile { get { return Path.Combine(ModDir, "guards.json"); } }
         internal static bool PackInstalled { get { return File.Exists(Path.Combine(PackDir, "pack.json")); } }
 
         // Todos los puntos de guardias del pack (JSON de un array), o "" si no hay
@@ -51,6 +52,54 @@ namespace TarkovaCola.Server
         }
     }
 
+    // Bloqueo de las ventas de perks en Therapist (se puede quitar con la opcion de depuracion del cliente)
+    internal static class SalesLock
+    {
+        private static TradersTable _traders;
+        private static object _assortHelper;                 // TraderAssortHelper: guarda en cache los bloqueos de todas las tiendas
+        private static readonly Dictionary<MongoId, MongoId> _locks = new Dictionary<MongoId, MongoId>();
+        private static readonly object _gate = new object();
+
+        internal static void Init(TradersTable traders, object assortHelper, Dictionary<MongoId, MongoId> locks)
+        {
+            _traders = traders;
+            _assortHelper = assortHelper;
+            foreach (var kv in locks) _locks[kv.Key] = kv.Value;
+            Set(false);
+        }
+
+        // El servidor junta los bloqueos de todas las tiendas la primera vez y los guarda: se borra esa copia para que se rehaga
+        private static void ResetCache()
+        {
+            try
+            {
+                var f = _assortHelper?.GetType().GetField("<MergedQuestAssorts>k__BackingField",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (f != null) f.SetValue(_assortHelper, null);
+                else Console.WriteLine("[Tarkova-Cola] Aviso: no se encontro la cache de bloqueos de tiendas (el cambio se vera al reiniciar el servidor)");
+            }
+            catch (Exception e) { Console.WriteLine("[Tarkova-Cola] No se pudo rehacer la cache de bloqueos: " + e.Message); }
+        }
+
+        internal static void Set(bool unlocked)
+        {
+            lock (_gate)
+            {
+                if (_traders == null || _locks.Count == 0) return;
+                var qa = _traders[Traders.THERAPIST].QuestAssort;
+                if (qa == null) return;
+                if (!qa.TryGetValue("success", out var success) || success == null) qa["success"] = success = new Dictionary<MongoId, MongoId>();
+                foreach (var kv in _locks)
+                {
+                    if (unlocked) success.Remove(kv.Key);
+                    else success[kv.Key] = kv.Value;
+                }
+                ResetCache();
+                Console.WriteLine("[Tarkova-Cola] Ventas de perks en Therapist: " + (unlocked ? "DESBLOQUEADAS (opcion de depuracion)" : "bloqueadas hasta completar su mision"));
+            }
+        }
+    }
+
     [Injectable(TypePriority = OnLoadOrder.Preload + 10)]
     public class TarkovaColaQuests : IOnLoad
     {
@@ -58,13 +107,15 @@ namespace TarkovaCola.Server
         private readonly TemplateTable _templates;
         private readonly TradersTable _traders;
         private readonly HideoutTable _hideout;
+        private readonly SPTarkov.Server.Core.Helpers.Traders.TraderAssortHelper _assortHelper;
 
-        public TarkovaColaQuests(CustomItemService items, TemplateTable templates, TradersTable traders, HideoutTable hideout)
+        public TarkovaColaQuests(CustomItemService items, TemplateTable templates, TradersTable traders, HideoutTable hideout, SPTarkov.Server.Core.Helpers.Traders.TraderAssortHelper assortHelper)
         {
             _items = items;
             _templates = templates;
             _traders = traders;
             _hideout = hideout;
+            _assortHelper = assortHelper;
         }
 
         public Task OnLoadAsync(CancellationToken cancellationToken)
@@ -167,16 +218,10 @@ namespace TarkovaCola.Server
         // Cada perk deja de venderse en Therapist hasta completar su mision
         private void LockSales(JsonElement sales)
         {
-            var qa = _traders[Traders.THERAPIST].QuestAssort;
-            if (qa == null) return;
-            if (!qa.TryGetValue("success", out var success) || success == null) qa["success"] = success = new Dictionary<MongoId, MongoId>();
-            int n = 0;
-            foreach (var s in sales.EnumerateObject())
-            {
-                success[new MongoId(s.Name)] = new MongoId(s.Value.GetString());
-                n++;
-            }
-            Console.WriteLine("[Tarkova-Cola] " + n + " perks bloqueadas en Therapist hasta completar su mision");
+            var locks = new Dictionary<MongoId, MongoId>();
+            foreach (var s in sales.EnumerateObject()) locks[new MongoId(s.Name)] = new MongoId(s.Value.GetString());
+            SalesLock.Init(_traders, _assortHelper, locks);
+            Console.WriteLine("[Tarkova-Cola] " + locks.Count + " perks bloqueadas en Therapist hasta completar su mision");
         }
     }
 }
