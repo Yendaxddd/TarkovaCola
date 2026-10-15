@@ -129,7 +129,7 @@ namespace TarkovaCola.Client
             }
             var sp = cam.WorldToScreenPoint(_fx.Position + Vector3.up * 1.0f);
             float x = sp.x, y = Screen.height - sp.y;
-            bool behind = sp.z < 0f;
+            bool behind = Vector3.Dot(cam.transform.forward, _fx.Position - cam.transform.position) < 0f;       // (el signo de sp.z no es fiable en EFT)
             if (behind) { x = Screen.width - x; y = Screen.height - y; }         // detras: se pega al borde contrario
             float m = 54f * scale;
             x = Mathf.Clamp(x, m, Screen.width - m);

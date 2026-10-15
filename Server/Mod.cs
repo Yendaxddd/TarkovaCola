@@ -213,7 +213,7 @@ namespace TarkovaCola.Server
                 {
                     Width = 1,
                     Height = 2,      // ocupa 1x2 casillas en el inventario (la TarCola original es 1x1)
-                    EffectsHealth = BuildEffects(baseItem.Properties.EffectsHealth, hydration: 50, energy: -15),
+                    EffectsHealth = BuildEffects(baseItem.Properties.EffectsHealth, hydration: 50, energy: 0),
                     // Modelo 3D propio (ground/inventario/icono). UsePrefab (en mano) sigue siendo el de la TarCola.
                     Prefab = new Prefab { Path = perk.Bundle, Rcid = "" },
                 },

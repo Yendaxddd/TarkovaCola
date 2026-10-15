@@ -9,10 +9,10 @@ ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "Server" / "Packs" / "TarkovaCola"
 
 # ---------------------------------------------------------------- punto de los guardias (se rellena con la herramienta F10)
-POST_MAP = "bigmap"                      # id de mapa del juego (bigmap = Customs, shoreline, woods, ...)
-POST_AT = {"x": 0.0, "y": 0.0, "z": 0.0}
-POST_RADIUS = 6.0
-POST_READY = False                       # True cuando las coordenadas son de verdad
+POST_MAP = "RezervBase"                      # id de mapa del juego (bigmap = Customs, shoreline, woods, ...)
+POST_AT = {"x": 59.51, "y": -6.70, "z": 65.68}
+POST_RADIUS = 7.0
+POST_READY = True                        # True cuando las coordenadas son de verdad
 
 SKIER, THERAPIST = "58330581ace78e27b8b10cee", "54cb57776803fa99248b456e"
 ROUBLES = "5449016a4bdc2d6f028b456f"

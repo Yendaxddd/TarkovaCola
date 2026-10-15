@@ -51,7 +51,7 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- estado
-        private string _view = "progress";      // progress | equip | syn
+        private string _view = "progress";      // progress | equip | syn | eternal
         private PerkDef _perk = Perks.UiPerks.First();   // perk que se esta viendo
         private string _sel;                     // nodo seleccionado en Progreso
         private bool _animate = true;
@@ -117,7 +117,8 @@ namespace TarkovaCola.Client
             foreach (var r in new[] { _header, _left, _stage })
                 for (int i = r.childCount - 1; i >= 0; i--) Destroy(r.GetChild(i).gameObject);
 
-            if (_view == "syn") { BuildSynergy(); return; }              // sinergias (Modern y Classic)
+            if (_view == "syn") { BuildSynergy(); return; }
+            if (_view == "eternal" && !ClassicMode.Enabled) { BuildEternal(); return; }              // sinergias (Modern y Classic)
             if (ClassicMode.Enabled) { BuildClassic(); return; }       // en modo Classic no hay Research: se muestra el resumen de perks
 
             BuildHeader();
@@ -209,11 +210,12 @@ namespace TarkovaCola.Client
         private void BuildHeader()
         {
             T(_header, L.T("augments"), 60, 26, 400, 20, 14, UiKit.Dim);
-            T(_header, L.T(_view == "progress" ? "title.progress" : "title.equip"), 60, 42, 520, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_header, L.T(_view == "progress" ? "title.progress" : "title.equip"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
 
-            Tab("progress", L.T("nav.progress"), 600);
-            Tab("equip", L.T("nav.equip"), 780);
-            Tab("syn", L.T("nav.syn"), 960);
+            Tab("progress", L.T("nav.progress"), 560, 140);
+            Tab("equip", L.T("nav.equip"), 700, 140);
+            Tab("syn", L.T("nav.syn"), 840, 140);
+            Tab("eternal", L.T("nav.eternal"), 980, 140);
             ModeToggle(1190, 46);
 
             int lv = PerkService.Level(_perk.Id);
@@ -362,12 +364,80 @@ namespace TarkovaCola.Client
         }
 
 
+
+        // ---------------------------------------------------------------- pestana ETERNAS (solo Modern)
+        // Las perks eternas guardadas (se quedan entre raids hasta que mueres), con la desventaja que pierden.
+        private void BuildEternal()
+        {
+            T(_header, L.T("syn.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
+            T(_header, L.T("eternal.page"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            Tab("progress", L.T("nav.progress"), 560, 140);
+            Tab("equip", L.T("nav.equip"), 700, 140);
+            Tab("syn", L.T("nav.syn"), 840, 140);
+            Tab("eternal", L.T("nav.eternal"), 980, 140);
+            ModeToggle(1190, 46);
+            var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
+            var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
+            UiKit.Stretch(x.rectTransform);
+
+            var rt = T(_left, L.T("eternal.rules"), 80, 210, 280, 700, 15, UiKit.Text, TextAlignmentOptions.TopLeft, true);
+            rt.lineSpacing = 8f; rt.paragraphSpacing = 12f;
+            float textH = rt.GetPreferredValues(rt.text, 280f, 0f).y + 6f;
+            var rules = UiKit.Panel(_left, 60, 150, 320, Mathf.Min(780f, 60f + textH + 24f), UiKit.PanelBg, UiKit.Line);
+            Enter(rules.rectTransform);
+            rt.transform.SetParent(rules.transform, false);
+            UiKit.Place(rt.rectTransform, 20, 60, 280, textH);
+            T(rules.transform, L.T("eternal.rules.title"), 20, 18, 280, 22, 16, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            UiKit.Place(UiKit.Img(rules.transform, "Underline", UiKit.Gold).rectTransform, 20, 44, 280, 1);
+
+            var stored = Eternal.Stored();
+            T(_stage, L.T("eternal.active"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_stage, stored.Count + " / " + Perks.All.Length, 640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
+            const float cw = 270f, gap = 22f;
+            for (int i = 0; i < Perks.All.Length; i++)
+                EternalCard(i * (cw + gap), 60, cw, 560, i < stored.Count ? Perks.Get(stored[i]) : null);
+        }
+
+        private void EternalCard(float x, float y, float w, float h, PerkDef def)
+        {
+            Color accent = UiKit.C(64, 166, 255);
+            if (def == null)
+            {
+                var empty = UiKit.Panel(_stage, x, y, w, h, UiKit.C(255, 255, 255, 0.03f), UiKit.Line);
+                Enter(empty.rectTransform);
+                UiKit.Badge(empty.transform, w / 2f, 90, 96, true, UiKit.C(80, 92, 104), null, Color.white, "+");
+                T(empty.transform, L.T("eternal.slot.empty"), 10, 160, w - 20, 26, 18, UiKit.Dim, TextAlignmentOptions.Top, false, true);
+                var hint = T(empty.transform, L.T("eternal.slot.hint"), 20, 198, w - 40, 64, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
+                Fit(hint, 11, 14);
+                return;
+            }
+            var card = UiKit.Panel(_stage, x, y, w, h, UiKit.Panel2, new Color(accent.r, accent.g, accent.b, 0.8f), 2f);
+            Enter(card.rectTransform);
+            UiKit.Badge(card.transform, w / 2f, 84, 108, true, accent, Hud.IconSprite(def.Id), Color.white);
+            Fit(T(card.transform, def.Name.ToUpperInvariant(), 10, 148, w - 20, 32, 24, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 24);
+            T(card.transform, L.T("eternal.tag"), 10, 182, w - 20, 18, 13, accent, TextAlignmentOptions.Top, false, true);
+            var eff = T(card.transform, def.EffectText != null ? def.EffectText(1f) : "", 14, 206, w - 28, 44, 14, UiKit.Text, TextAlignmentOptions.Top, true);
+            Fit(eff, 11, 14);
+            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 14, 258, w - 28, 1);
+
+            T(card.transform, L.T("eternal.removed"), 14, 274, w - 28, 16, 12, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
+            string drb = Eternal.PreviewDrawback(def);
+            if (drb != null)
+            {
+                Fit(T(card.transform, Data.Name(drb), 14, 296, w - 28, 24, 16, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 10, 16);
+                Fit(T(card.transform, Data.Desc(drb), 14, 326, w - 28, 120, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+            }
+            else
+                Fit(T(card.transform, L.T("eternal.removed.none"), 14, 296, w - 28, 120, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+            Fit(T(card.transform, L.T("eternal.promise"), 14, h - 60, w - 28, 44, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+        }
+
         // ---------------------------------------------------------------- pestana SINERGIA
         // Tres tarjetas (una por sinergia): las dos perks, el bono, el desafio para desbloquearla y el boton de equipar (maximo 2).
         private void BuildSynergy()
         {
             T(_header, L.T("syn.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
-            T(_header, L.T("syn.title"), 60, 42, 520, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_header, L.T("syn.title"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             if (ClassicMode.Enabled)
             {
                 Tab("progress", L.T("nav.summary"), 600);
@@ -375,9 +445,10 @@ namespace TarkovaCola.Client
             }
             else
             {
-                Tab("progress", L.T("nav.progress"), 600);
-                Tab("equip", L.T("nav.equip"), 780);
-                Tab("syn", L.T("nav.syn"), 960);
+                Tab("progress", L.T("nav.progress"), 560, 140);
+                Tab("equip", L.T("nav.equip"), 700, 140);
+                Tab("syn", L.T("nav.syn"), 840, 140);
+                Tab("eternal", L.T("nav.eternal"), 980, 140);
             }
             ModeToggle(1190, 46);
             var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
@@ -460,14 +531,14 @@ namespace TarkovaCola.Client
             Rebuild(false);
         }
 
-        private void Tab(string view, string label, float x)
+        private void Tab(string view, string label, float x, float w = 170f)
         {
             bool on = _view == view;
-            var b = UiButton.Make(_header, x, 40, 170, 50, () => { if (_view != view) { _view = view; Rebuild(true); } },
+            var b = UiButton.Make(_header, x, 40, w, 50, () => { if (_view != view) { _view = view; Rebuild(true); } },
                                   UiKit.C(255, 255, 255, 0f), UiKit.C(255, 255, 255, 0.06f));
             var t = UiKit.Txt(b.transform, label, 22, on ? UiKit.White : UiKit.Dim, TextAlignmentOptions.Center, false, on);
             UiKit.Stretch(t.rectTransform);
-            if (on) UiKit.Place(UiKit.Img(b.transform, "Underline", UiKit.Cyan).rectTransform, 15, 46, 140, 3);
+            if (on) UiKit.Place(UiKit.Img(b.transform, "Underline", UiKit.Cyan).rectTransform, 15, 46, w - 30f, 3);
         }
 
         private void BuildLeft()

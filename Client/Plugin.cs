@@ -204,6 +204,8 @@ namespace TarkovaCola.Client
                 _crashSteps = 0;
                 _initTime = _nextInv = Time.time;
                 _colaCount = 0; _drinkCount = 0;
+                try { Eternal.OnPlayerReady(me); }
+                catch (Exception e) { Plugin.Log.LogError("Eternal (inicio): " + e); }
                 try { ClassicMode.OnPlayerReady(me); }          // modo Classic: aplica las perks persistentes y sortea el desafio de la raid
                 catch (Exception e) { Plugin.Log.LogError("Classic (inicio): " + e); }
                 return;
@@ -421,6 +423,7 @@ namespace TarkovaCola.Client
             ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
             PerkService.Sanitize();                   // sin su desventaja, una mejora no puede estar equipada
             Perk.Refresh();
+            Eternal.Restore();                        // perks eternas guardadas
             Achievements.CheckState();
             Achievements.ClaimPending();
             Dbg.Log("RAID", "empieza la raid (Speed Cola: nivel " + PerkService.Level("speedcola") + ", " + PerkService.Xp("speedcola") + " XP | Stamin-Up: nivel " + PerkService.Level("staminup") + ", " + PerkService.Xp("staminup") + " XP)");

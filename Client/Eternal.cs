@@ -12,7 +12,10 @@ namespace TarkovaCola.Client
     //   - Si bebes (o te cae del powerup) una perk que YA llevas activa, se vuelve ETERNA: su icono lleva un contorno azul.
     //   - Una perk eterna pierde una desventaja: la mayor que lleve equipada y, si no tiene, una menor. Si no lleva ninguna se queda como esta.
     //   - Si mueres en la raid, la botella de cada perk eterna vuelve por correo (si extraes con vida no hace falta: sigues teniendola).
-    //  Dura la raid (como las perks). En Classic no existe: alli no se puede beber una perk que ya llevas.
+    //  Es PERSISTENTE: la perk eterna se queda contigo en las siguientes raids (activa desde el primer segundo) hasta que mueres
+    //  (o no extraes): entonces vuelve la botella por correo y deja de ser eterna. Se ve en la pestana ETERNAS de Research.
+    //  En Classic no existe: alli no se puede beber una perk que ya llevas.
+    //  Estado guardado:  eternal: [perkId, ...]
     // ============================================================================================
     internal static class Eternal
     {
@@ -26,6 +29,58 @@ namespace TarkovaCola.Client
         internal static IEnumerable<PerkDef> List { get { return Perks.All.Where(p => _set.Contains(p.Id)); } }
 
         internal static void OnRaidStart() { _set.Clear(); _removed.Clear(); _paid = false; }
+
+        // ---------------------------------------------------------------- lo guardado entre raids
+        internal static List<string> Stored()
+        {
+            var list = new List<string>();
+            var arr = PerkService.State["eternal"] as Newtonsoft.Json.Linq.JArray;
+            if (arr != null) foreach (var t in arr) if (t.Type == Newtonsoft.Json.Linq.JTokenType.String && Perks.Get((string)t) != null && !list.Contains((string)t)) list.Add((string)t);
+            return list;
+        }
+
+        private static void Store(List<string> list)
+        {
+            PerkService.State["eternal"] = new Newtonsoft.Json.Linq.JArray(list);
+            PerkService.Save();
+            PerkService.Flush();                                     // lo importante se guarda ya
+        }
+
+        // La desventaja que se quitaria / se quito a una perk eterna (para mostrarla en Research): la mayor equipada, si no una menor
+        internal static string PreviewDrawback(PerkDef def)
+        {
+            var major = PerkService.EquippedMajor(def.Id, true);
+            if (major != null) return major;
+            var minors = PerkService.EquippedMinors(def.Id, true);
+            return minors.Count > 0 ? minors[0] : null;
+        }
+
+        // Al empezar la raid (Modern): las perks eternas guardadas vuelven a estar activas. Se llama despues de Perk.Refresh().
+        internal static void Restore()
+        {
+            if (ClassicMode.Enabled) return;
+            var stored = Stored();
+            if (stored.Count == 0) return;
+            foreach (var id in stored)
+            {
+                var def = Perks.Get(id);
+                Perks.Activate(id);
+                _set.Add(id);
+                string drb = PickDrawback(def);
+                if (drb != null) _removed[id] = drb;
+            }
+            Perk.Refresh();                                          // las desventajas quitadas salen del equipamiento activo
+            Dbg.Log("ETERNAL", "perks eternas activas: " + string.Join(", ", stored.ToArray()));
+        }
+
+        // El jugador ya existe: se recalculan estamina, aire y peso, y se avisa
+        internal static void OnPlayerReady(Player me)
+        {
+            if (_set.Count == 0) return;
+            PerkFx.RefreshPhysical(me);
+            (me.HandsController as Player.FirearmController)?.SyncWithCharacterSkills();
+            Hud.Notify(L.T("eternal.title"), L.F("eternal.start", _set.Count), List.First().Id);
+        }
 
         // Modern: no se puede beber una perk que ya es eterna (no ganaria nada)
         internal static string BlockReason(PerkDef def)
@@ -62,6 +117,7 @@ namespace TarkovaCola.Client
             if (viaPowerup) Hud.Enqueue(L.T("eternal.title"), sub, def.Id);
             else Hud.Notify(L.T("eternal.title"), sub, def.Id);
             Hud.Enqueue(L.T("eternal.title"), L.T("eternal.promise"), def.Id);
+            var stored = Stored(); if (!stored.Contains(def.Id)) { stored.Add(def.Id); Store(stored); }
         }
 
         // El operador murio (o no extrajo): vuelve la botella de cada perk eterna
@@ -76,6 +132,7 @@ namespace TarkovaCola.Client
                 names.Add(def.Name);
             }
             Dbg.Log("ETERNAL", "botellas devueltas por correo (" + why + "): " + string.Join(", ", names.ToArray()));
+            Store(new List<string>());                                // ya no son eternas
             try { NotificationManager.DisplayMessageNotification(L.F("eternal.returned", string.Join(", ", names.ToArray()))); }
             catch (Exception e) { Dbg.Log("ETERNAL", "no se pudo mostrar el aviso: " + e.Message); }
         }
