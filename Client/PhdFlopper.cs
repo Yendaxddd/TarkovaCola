@@ -67,6 +67,7 @@ namespace TarkovaCola.Client
                     return damage * (1f - p);
                 }
                 Dbg.Throttled("phd", 5f, "EFECTO", "PHD Flopper: " + damage.ToString("0.0") + " de dano por " + t + " anulado");
+                AchTrack.OnAbsorbed(damage);
                 var me = Plugin.Me;
                 bool fall = (t & EDamageType.Fall) != 0;
                 if (me != null && (!fall || damage >= VfxMinDamage)) PhdVfx.Play(me.Position, fall ? Mathf.Clamp01(damage / 40f) : 1f);   // efecto visual (caidas pequenas = efecto pequeno)

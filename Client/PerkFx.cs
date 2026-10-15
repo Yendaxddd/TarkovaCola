@@ -144,7 +144,7 @@ namespace TarkovaCola.Client
             Speed = Mathf.Lerp(Speed, speed, Mathf.Clamp01(dt * 5f));
             bool still = speed < 0.15f;
             ClassicChallenge.OnMove(moved, sprinting, dt);                // desafio de raid (modo Classic): correr, recorrer, sobrevivir
-            if (sprinting) Synergy.OnRun(moved);                          // desafio de la sinergia Speed Cola + Stamin-Up
+            if (sprinting) { Synergy.OnRun(moved); AchTrack.OnRun(moved); }                          // desafio de la sinergia Speed Cola + Stamin-Up
 
             if (Perks.IsActive(PhdFlopper.Id))
             {
@@ -306,6 +306,7 @@ namespace TarkovaCola.Client
                 StaminUp.OnPlayerDead(victim, aggressor, info, part);
                 if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
                 ClassicChallenge.OnKill(me, victim, info, part);                          // desafio de la raid (modo Classic)
+                AchTrack.OnKillAny(me, victim, part);                                     // logros de bajas
                 Powerup.OnKill(me, victim);                                               // puede caer una perk aleatoria
                 if (!Perks.AnyActive) return;
 
@@ -341,6 +342,7 @@ namespace TarkovaCola.Client
                 bool alive = status == ExitStatus.Survived || status == ExitStatus.Runner;
                 Dbg.Log("RAID", "fin de raid: " + status + " (con vida=" + alive + ")");
                 Juggernog.OnRaidEnd(alive);
+                AchTrack.OnRaidEnd(alive);
                 ClassicMode.OnRaidEnd(status);
                 Eternal.OnRaidEnd(status);
             }

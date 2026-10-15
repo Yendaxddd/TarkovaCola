@@ -27,7 +27,7 @@ namespace TarkovaCola.Server
     // texto, rareza y recompensas). El cliente los desbloquea con la funcion del propio juego cuando se cumple la condicion
     // (las condiciones estandar del juego no pueden expresar "con Speed Cola activa"); aqui se guarda el logro en el perfil y
     // se entregan las recompensas una sola vez por correo, igual que hace SPT con los logros normales.
-    internal static class AchievementData
+    internal static partial class AchievementData
     {
         internal const string Roubles = "5449016a4bdc2d6f028b456f";
 
@@ -39,7 +39,11 @@ namespace TarkovaCola.Server
             public (string Tpl, int Count)[] Rewards;
         }
 
-        internal static readonly Def[] All =
+        // todos: los de la 1.x (Base) y los de la 2.0 (Extra, generados en AchievementsExtra.cs)
+        private static Def[] _all;
+        internal static Def[] All { get { return _all ?? (_all = Base.Concat(Extra).ToArray()); } }
+
+        internal static readonly Def[] Base =
         {
             new Def { Id = "6a1c00000000000000000a01", Key = "first", Rarity = "Common",
                 NameEn = "Tastes...sweet?", NameEs = "Sabe...¿dulce?",

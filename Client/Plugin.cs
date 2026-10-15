@@ -206,6 +206,8 @@ namespace TarkovaCola.Client
                 _crashSteps = 0;
                 _initTime = _nextInv = Time.time;
                 _colaCount = 0; _drinkCount = 0;
+                try { AchTrack.OnPlayerReady(); }
+                catch (Exception e) { Plugin.Log.LogError("Logros (inicio): " + e); }
                 try { Eternal.OnPlayerReady(me); }
                 catch (Exception e) { Plugin.Log.LogError("Eternal (inicio): " + e); }
                 try { ClassicMode.OnPlayerReady(me); }          // modo Classic: aplica las perks persistentes y sortea el desafio de la raid
@@ -421,7 +423,8 @@ namespace TarkovaCola.Client
             Perk.OnRaidStart();
             PerkService.EnsureLoaded(force: true);
             Synergy.OnRaidStart();                    // sinergias equipadas
-            QuestGuards.OnRaidStart();                // punto de los guardias de la mision de Skier
+            QuestGuards.OnRaidStart();                // puntos de los guardias de las misiones
+            AchTrack.OnRaidStart();
             ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
             PerkService.Sanitize();                   // sin su desventaja, una mejora no puede estar equipada
             Perk.Refresh();

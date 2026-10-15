@@ -222,7 +222,7 @@ namespace TarkovaCola.Client
             if (!_latched) return;
             bool alive = status == ExitStatus.Survived || status == ExitStatus.Runner;
             if (!alive && status != ExitStatus.Transit) { ClearPerks(); return; }
-            if (alive && ClassicChallenge.CompletedAtEnd()) GrantSecondAugment();
+            if (alive && ClassicChallenge.CompletedAtEnd()) { AchTrack.OnClassicChallenge(); GrantSecondAugment(); }
         }
 
         private static void ClearPerks()
@@ -246,6 +246,7 @@ namespace TarkovaCola.Client
             var aug = Roll(def, e2.Minors);
             if (aug == null) return;
             e2.Minors.Add(aug);
+            AchTrack.OnClassicSecondAugment();
             Store(list);
             Root["reward"] = new JObject { ["perk"] = e2.Perk, ["aug"] = aug };
             PerkService.Flush();

@@ -76,6 +76,7 @@ namespace TarkovaCola.Client
 
         private static void Collect(Player me)
         {
+            AchTrack.OnPowerupPicked(_fx.TimeLeft);
             _fx.Burst();
             _fx = null;
             Jingle.Voice(Jingle.RandomVoice);

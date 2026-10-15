@@ -1,0 +1,336 @@
+{
+ "ddfresh": [
+  "common",
+  "deadshot"
+ ],
+ "ddheads": [
+  "rare",
+  "deadshot"
+ ],
+ "ddfar": [
+  "rare",
+  "deadshot"
+ ],
+ "ddlvl5": [
+  "rare",
+  "deadshot"
+ ],
+ "ddall": [
+  "legendary",
+  "deadshot"
+ ],
+ "ddsecret": [
+  "legendary",
+  "deadshot"
+ ],
+ "syncardio": [
+  "common",
+  [
+   "speedcola",
+   "staminup"
+  ]
+ ],
+ "synmedic": [
+  "common",
+  [
+   "speedcola",
+   "juggernog"
+  ]
+ ],
+ "synblast": [
+  "common",
+  [
+   "speedcola",
+   "phdflopper"
+  ]
+ ],
+ "synpin": [
+  "common",
+  [
+   "speedcola",
+   "widowswine"
+  ]
+ ],
+ "syntrigger": [
+  "common",
+  [
+   "speedcola",
+   "deadshot"
+  ]
+ ],
+ "syntank": [
+  "common",
+  [
+   "staminup",
+   "juggernog"
+  ]
+ ],
+ "synbounce": [
+  "common",
+  [
+   "staminup",
+   "phdflopper"
+  ]
+ ],
+ "syngetaway": [
+  "common",
+  [
+   "staminup",
+   "widowswine"
+  ]
+ ],
+ "synbreath": [
+  "common",
+  [
+   "staminup",
+   "deadshot"
+  ]
+ ],
+ "synshock": [
+  "common",
+  [
+   "juggernog",
+   "phdflopper"
+  ]
+ ],
+ "syniron": [
+  "common",
+  [
+   "juggernog",
+   "widowswine"
+  ]
+ ],
+ "synsights": [
+  "common",
+  [
+   "juggernog",
+   "deadshot"
+  ]
+ ],
+ "synwebblast": [
+  "common",
+  [
+   "phdflopper",
+   "widowswine"
+  ]
+ ],
+ "synabove": [
+  "common",
+  [
+   "phdflopper",
+   "deadshot"
+  ]
+ ],
+ "synspider": [
+  "common",
+  [
+   "widowswine",
+   "deadshot"
+  ]
+ ],
+ "synfive": [
+  "rare",
+  [
+   "speedcola",
+   "juggernog"
+  ]
+ ],
+ "synall": [
+  "legendary",
+  [
+   "widowswine",
+   "deadshot"
+  ]
+ ],
+ "synextract": [
+  "common",
+  [
+   "staminup",
+   "phdflopper"
+  ]
+ ],
+ "q01": [
+  "common",
+  "research"
+ ],
+ "q02": [
+  "common",
+  "research"
+ ],
+ "q03": [
+  "common",
+  "research"
+ ],
+ "q04": [
+  "rare",
+  "research"
+ ],
+ "q05": [
+  "rare",
+  "research"
+ ],
+ "q06": [
+  "rare",
+  "research"
+ ],
+ "q07": [
+  "rare",
+  "research"
+ ],
+ "q08": [
+  "rare",
+  "research"
+ ],
+ "q09": [
+  "rare",
+  "research"
+ ],
+ "q10": [
+  "legendary",
+  "research"
+ ],
+ "qguards": [
+  "rare",
+  "research"
+ ],
+ "qboss": [
+  "legendary",
+  "research"
+ ],
+ "qsober": [
+  "legendary",
+  "research"
+ ],
+ "gsix": [
+  "rare",
+  "research"
+ ],
+ "gfive": [
+  "common",
+  "research"
+ ],
+ "gdrinks50": [
+  "common",
+  "research"
+ ],
+ "gdrinks150": [
+  "rare",
+  "research"
+ ],
+ "glvl5all": [
+  "legendary",
+  "research"
+ ],
+ "gaugall": [
+  "legendary",
+  "research"
+ ],
+ "gaug20": [
+  "rare",
+  "research"
+ ],
+ "grush": [
+  "rare",
+  "research"
+ ],
+ "gcombo": [
+  "rare",
+  "research"
+ ],
+ "gbossall": [
+  "legendary",
+  "research"
+ ],
+ "efirst": [
+  "common",
+  "research"
+ ],
+ "ethree": [
+  "rare",
+  "research"
+ ],
+ "eall": [
+  "legendary",
+  "research"
+ ],
+ "eback": [
+  "common",
+  "research"
+ ],
+ "eraids": [
+  "rare",
+  "research"
+ ],
+ "pfirst": [
+  "common",
+  "research"
+ ],
+ "peternal": [
+  "rare",
+  "research"
+ ],
+ "plate": [
+  "legendary",
+  "research"
+ ],
+ "cfull": [
+  "rare",
+  "research"
+ ],
+ "cchal": [
+  "common",
+  "research"
+ ],
+ "csecond": [
+  "rare",
+  "research"
+ ],
+ "cstreak": [
+  "legendary",
+  "research"
+ ],
+ "mloaded": [
+  "common",
+  "research"
+ ],
+ "mspread": [
+  "rare",
+  "research"
+ ],
+ "skills100": [
+  "common",
+  "speedcola"
+ ],
+ "skills500": [
+  "rare",
+  "juggernog"
+ ],
+ "skills1500": [
+  "legendary",
+  "research"
+ ],
+ "srun": [
+  "rare",
+  "staminup"
+ ],
+ "sabsorb": [
+  "rare",
+  "phdflopper"
+ ],
+ "sheads": [
+  "rare",
+  "deadshot"
+ ],
+ "swebbed": [
+  "rare",
+  "widowswine"
+ ],
+ "xmirror": [
+  "rare",
+  "research"
+ ],
+ "xextract6": [
+  "legendary",
+  "research"
+ ]
+}

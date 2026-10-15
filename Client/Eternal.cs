@@ -118,6 +118,7 @@ namespace TarkovaCola.Client
             else Hud.Notify(L.T("eternal.title"), sub, def.Id);
             Hud.Enqueue(L.T("eternal.title"), L.T("eternal.promise"), def.Id);
             var stored = Stored(); if (!stored.Contains(def.Id)) { stored.Add(def.Id); Store(stored); }
+            AchTrack.OnEternal(viaPowerup);
         }
 
         // El operador murio (o no extrajo): vuelve la botella de cada perk eterna
@@ -133,6 +134,7 @@ namespace TarkovaCola.Client
             }
             Dbg.Log("ETERNAL", "botellas devueltas por correo (" + why + "): " + string.Join(", ", names.ToArray()));
             Store(new List<string>());                                // ya no son eternas
+            AchTrack.OnEternalReturned();
             try { NotificationManager.DisplayMessageNotification(L.F("eternal.returned", string.Join(", ", names.ToArray()))); }
             catch (Exception e) { Dbg.Log("ETERNAL", "no se pudo mostrar el aviso: " + e.Message); }
         }

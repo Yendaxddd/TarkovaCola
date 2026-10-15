@@ -13,11 +13,14 @@ namespace TarkovaCola.Client
     // Logros NATIVOS de EFT (Perfil > Logros). El servidor los registra (Server/Achievements.cs); aqui se detecta cuando se cumplen
     // y se desbloquean con la funcion del propio juego, que muestra su aviso y sonido. El estado propio ("ach" en el progreso)
     // evita repetirlos; el servidor guarda el logro en el perfil y entrega la recompensa una sola vez.
-    internal static class Achievements
+    internal static partial class Achievements
     {
         internal class Def { public string Key, ServerId; public bool Secret; }
 
-        internal static readonly Def[] All =
+        private static Def[] _all;
+        internal static Def[] All { get { return _all ?? (_all = Base.Concat(Extra).ToArray()); } }
+
+        internal static readonly Def[] Base =
         {
             new Def { Key = "a_first", ServerId = "6a1c00000000000000000a01" },
             new Def { Key = "a_lvl5",  ServerId = "6a1c00000000000000000a02" },
@@ -61,7 +64,8 @@ namespace TarkovaCola.Client
         internal static void Unlock(string key)
         {
             if (IsDone(key)) return;
-            var def = All.First(a => a.Key == key);
+            var def = All.FirstOrDefault(a => a.Key == key);
+            if (def == null) { Plugin.Log.LogWarning("Logro desconocido: " + key); return; }
             Store[key] = true;
             Dbg.Log("LOGRO", "desbloqueado: " + key);
 
@@ -101,10 +105,11 @@ namespace TarkovaCola.Client
             if (Perks.PhdFlopper.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("pf_all");
             if (PerkService.IsMax("widowswine")) Unlock("ww_lvl5");
             if (Perks.WidowsWine.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("ww_all");
+            AchTrack.CheckState();                                  // logros de la 2.0
         }
 
         // Una sinergia se acaba de desbloquear (logros de sinergias)
-        internal static void OnSynergyUnlocked() { }
+        internal static void OnSynergyUnlocked() { AchTrack.OnSynergyUnlocked(); }
 
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).
         internal static void ClaimPending() { Claim(All.Where(a => IsDone(a.Key)).Select(a => a.ServerId).ToArray()); }

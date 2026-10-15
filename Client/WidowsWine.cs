@@ -165,6 +165,7 @@ namespace TarkovaCola.Client
                     Achievements.Unlock("ww_first");                                 // logros: primer enemigo atrapado y 50 en total
                     PerkService.AddStat("widow_webbed", 1);
                     Synergy.OnWebbed();
+                    AchTrack.OnWebbed();
                     if (PerkService.Stat("widow_webbed") >= WebbedNeeded) Achievements.Unlock("ww_webbed");
                     if (venom || burst) Stun(p, StunSeconds);
                     WebVfx.OnVictim(p.Position, secs);

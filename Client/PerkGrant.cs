@@ -19,7 +19,7 @@ namespace TarkovaCola.Client
             }
             else if (Perks.IsActive(def.Id))
             {
-                if (!Eternal.Is(def.Id)) { Eternal.Grant(def, me, powerup); return; }
+                if (!Eternal.Is(def.Id)) { Eternal.Grant(def, me, powerup); AchTrack.OnDrink(def, powerup); return; }
                 if (!powerup)                                              // (no deberia pasar: se bloquea antes de beber)
                 {
                     Dbg.Log("ETERNAL", "botella de " + def.Id + " devuelta por correo (ya es eterna)");
@@ -39,6 +39,7 @@ namespace TarkovaCola.Client
             Dbg.Log("BEBIDA", def.Id + " activada" + (powerup ? " (powerup)" : "") + (entry != null ? (entry.Modifier ? " (modificador)" : " (Classic)") : ""));
             if (entry != null) ClassicMode.AfterDrink(def, entry);       // avisa de la mejora al azar
             if (def.OnDrink != null) def.OnDrink(me.ActiveHealthController);
+            AchTrack.OnDrink(def, powerup);
         }
     }
 }
