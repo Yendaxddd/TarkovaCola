@@ -180,7 +180,33 @@ namespace TarkovaCola.Client
             EffectText = TarkovaCola.Client.WidowsWine.Effect,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine };
+        internal static readonly PerkDef Deadshot = new PerkDef
+        {
+            Id = TarkovaCola.Client.Deadshot.Id,
+            ItemTpl = TarkovaCola.Client.Deadshot.ItemTpl,
+            IconFile = "deadshot_icon.png",
+            JingleFile = "deadshot_jingle.wav",
+            HandBundle = "deadshot_hand.bundle",
+            HandRefHeight = 0.17f,
+            Augs = new[]
+            {
+                new AugDef { Id = "dd_aim",     Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 20 },     // Dead Aim: el arma no se balancea al moverte
+                new AugDef { Id = "dd_pen",     Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 15 },     // Incredible: +30% de penetracion
+                new AugDef { Id = "dd_sky",     Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 1500 },   // To the Skies: retroceso -50%
+                new AugDef { Id = "dd_quick",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 10 },     // apuntar +20%
+                new AugDef { Id = "dd_steady",  Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 25 },     // aguantar la respiracion +40%
+                new AugDef { Id = "dd_head",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 15 },     // tiro a la cabeza: +20% de estamina
+                new AugDef { Id = "dd_still",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 10 },     // agachado/tumbado: balanceo -25%
+                new AugDef { Id = "dd_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "dd_d_tunnel", "dd_d_breath", "dd_d_shaky" },
+            DrbMinor = new[] { "dd_d_strain", "dd_d_lime", "dd_d_sugar", "dd_d_squeak" },
+            DrinkNotice = TarkovaCola.Client.Deadshot.Notice,
+            EffectText = TarkovaCola.Client.Deadshot.Effect,
+            OnDrink = TarkovaCola.Client.Deadshot.OnDrink,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };
 
         // perks con arbol de mejoras (las que se muestran en Research y en el panel del ESC)
         internal static IEnumerable<PerkDef> UiPerks { get { return All.Where(p => p.HasTree); } }

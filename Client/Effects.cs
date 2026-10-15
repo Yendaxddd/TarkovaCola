@@ -31,10 +31,15 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(SkillManager __instance, SkillManager.WeaponBuffsInfo __result)
         {
-            if (!Plugin.SpeedColaActive || __result == null) return;
+            if (__result == null || !Perks.AnyActive) return;
             var me = Plugin.Me;
             if (me == null || me.Skills != __instance) return;
-            __result.ReloadSpeed *= Perk.ReloadMult;
+            if (Plugin.SpeedColaActive) __result.ReloadSpeed *= Perk.ReloadMult;
+            if (Deadshot.Active)                                                  // Deadshot: apuntar mas rapido y menos retroceso
+            {
+                __result.AimSpeed += Deadshot.AimBonus;
+                __result.RecoilSupression = Deadshot.Recoil(__result.RecoilSupression);
+            }
             Dbg.Throttled("reloadspeed", 10f, "RELOAD", "velocidad de recarga x" + __result.ReloadSpeed.ToString("0.00") + " (perk x" + Perk.ReloadMult.ToString("0.0") + ")");
         }
     }

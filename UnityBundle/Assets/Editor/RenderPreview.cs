@@ -12,7 +12,8 @@ namespace TarkovaCola
         public static void Run()
         {
             Directory.CreateDirectory("Preview");
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/speedcola.prefab");
+            string id = System.Environment.GetEnvironmentVariable("PREVIEW_PREFAB") ?? "speedcola";      // prefab a renderizar
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/" + id + ".prefab");
 
             var camGo = new GameObject("cam");
             var cam = camGo.AddComponent<Camera>();
@@ -48,7 +49,7 @@ namespace TarkovaCola
                 tex.ReadPixels(new Rect(0, 0, 256, 512), 0, 0);
                 tex.Apply();
                 RenderTexture.active = prev;
-                File.WriteAllBytes("Preview/yaw_" + yaw.ToString("000") + ".png", tex.EncodeToPNG());
+                File.WriteAllBytes("Preview/" + id + "_yaw_" + yaw.ToString("000") + ".png", tex.EncodeToPNG());
                 Object.DestroyImmediate(tex);
                 Object.DestroyImmediate(inst);
             }

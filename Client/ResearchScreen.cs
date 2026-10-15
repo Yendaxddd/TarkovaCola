@@ -393,7 +393,7 @@ namespace TarkovaCola.Client
             var stored = Eternal.Stored();
             T(_stage, L.T("eternal.active"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             T(_stage, stored.Count + " / " + Perks.All.Length, 640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
-            const float cw = 270f, gap = 22f;
+            float gap = 18f, cw = (1440f - gap * (Perks.All.Length - 1)) / Perks.All.Length;      // una ranura por perk
             for (int i = 0; i < Perks.All.Length; i++)
                 EternalCard(i * (cw + gap), 60, cw, 560, i < stored.Count ? Perks.Get(stored[i]) : null);
         }

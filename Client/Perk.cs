@@ -104,6 +104,7 @@ namespace TarkovaCola.Client
                 float m = Has("a_quick") ? QuickHandsDraw : 1f;
                 if (Has("dj_sluggish")) m *= PerkFx.SluggishDraw;
                 if (Has("dw_greasy")) m *= PerkFx.GreasyDraw;
+                if (Has("dd_d_tunnel")) m *= Deadshot.TunnelDraw;
                 return m * Synergy.DrawMult;
             }
         }

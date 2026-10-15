@@ -57,6 +57,7 @@ namespace TarkovaCola.Server
         internal const string JuggernogId = "6a1c00000000000000000c03";
         internal const string PhdFlopperId = "6a1c00000000000000000c04";
         internal const string WidowsWineId = "6a1c00000000000000000c05";
+        internal const string DeadshotId = "6a1c00000000000000000c06";
 
         internal static readonly PerkDef SpeedCola = new PerkDef
         {
@@ -170,7 +171,29 @@ namespace TarkovaCola.Server
             AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine };
+        internal static readonly PerkDef Deadshot = new PerkDef
+        {
+            Id = "deadshot",
+            ItemId = DeadshotId,
+            TraderItemId = "6a1c00000000000000000d06",
+            ItemName = "tarkovacola_deadshot",
+            NameEn = "Deadshot Daiquiri", NameEs = "Deadshot Daiquiri", ShortName = "Deadshot",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/deadshot.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like lime, sugar and a very steady trigger finger. Your crosshair suddenly has opinions, and they all point at heads. " +
+                "Side effects may include: squinting at everything, counting breaths out loud, and an irresistible urge to call your shots. " +
+                "Drink it! Aim small, miss small!\n\n" +
+                "You aim 15% faster and weapon sway drops by 25% for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a lima, azúcar y a un dedo muy firme en el gatillo. Tu punto de mira de repente tiene opiniones, y todas apuntan a cabezas. " +
+                "Efectos secundarios: entrecerrar los ojos ante todo, contar las respiraciones en voz alta y unas ganas irresistibles de cantar tus disparos. " +
+                "¡Bébela! ¡Apunta pequeño, falla pequeño!\n\n" +
+                "Apuntas un 15% más rápido y el balanceo del arma baja un 25% el resto de la raid.",
+            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };
     }
 
     // Fase 1: crea el item Speed Cola (clon de TarCola) y lo vende en Therapist (LL1).

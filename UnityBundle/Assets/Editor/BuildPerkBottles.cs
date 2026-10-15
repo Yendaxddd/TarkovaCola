@@ -39,6 +39,9 @@ namespace TarkovaCola
             new Bottle { Id = "widowswine", Key = "widow",
                 Metal = "i_wardog_t7_perk_bottle_metal_widow_c.png", Water = "i_wardog_t7_perk_bottle_water_widow_c.png", Paper = "i_wardog_t7_perk_bottle_paper_widow_c.png",
                 LiquidTint = new Color(0.42f, 0.05f, 0.10f), LiquidEmission = new Color(0.04f, 0.0f, 0.01f) },
+            new Bottle { Id = "deadshot", Key = "deadshot",
+                Metal = "i_wardog_t7_perk_bottle_metal_deadshot_c.jpg", Water = "i_wardog_t7_perk_bottle_water_deadshot_c.jpg", Paper = "i_wardog_t7_perk_bottle_paper_deadshot_c_u.png",
+                LiquidTint = new Color(0.78f, 0.62f, 0.20f), LiquidEmission = new Color(0.05f, 0.04f, 0.0f) },
         };
 
         // Todas las botellas (o solo la indicada en la variable de entorno BOTTLE).

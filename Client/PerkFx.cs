@@ -60,6 +60,8 @@ namespace TarkovaCola.Client
 
         // --- estado dinamico (por raid) ---
         internal static float SwayMult = 1f;              // balanceo total del arma (lo lee JitterPatch)
+        internal static float Speed;                      // velocidad del jugador (m/s, suavizada): "se esta moviendo"
+        private static bool _wasBreathD;
         internal static float ConcussUntil;
         private static bool _hasPos;
         private static Vector3 _lastPos;
@@ -75,6 +77,8 @@ namespace TarkovaCola.Client
             Juggernog.OnRaidStart();
             PhdFlopper.OnRaidStart();
             WidowsWine.OnRaidStart();
+            Deadshot.OnRaidStart();
+            Speed = 0f; _wasBreathD = false;
         }
 
         internal static bool IsBoss(Player victim)
@@ -136,6 +140,7 @@ namespace TarkovaCola.Client
             }
             _lastPos = pos; _hasPos = true;
             float speed = dt > 0f ? moved / dt : 0f;
+            Speed = Mathf.Lerp(Speed, speed, Mathf.Clamp01(dt * 5f));
             bool still = speed < 0.15f;
             ClassicChallenge.OnMove(moved, sprinting, dt);                // desafio de raid (modo Classic): correr, recorrer, sobrevivir
             if (sprinting) Synergy.OnRun(moved);                          // desafio de la sinergia Speed Cola + Stamin-Up
@@ -164,7 +169,7 @@ namespace TarkovaCola.Client
             }
 
             // ---- Dead Weight / Bitter Wine: correr gasta mas estamina (un extra sobre lo que el juego ya gasto este frame) ----
-            float extra = (Perk.Has("dj_dead") ? DeadWeightDrain : 0f) + (Perk.Has("dw_bitter") ? BitterDrain : 0f);
+            float extra = (Perk.Has("dj_dead") ? DeadWeightDrain : 0f) + (Perk.Has("dw_bitter") ? BitterDrain : 0f) + (Perk.Has("dd_d_breath") ? Deadshot.BreathingDrain : 0f);
             if (extra > 0f && sprinting && _prevStamina >= 0f)
             {
                 float drop = _prevStamina - stamina.Current;
@@ -186,12 +191,21 @@ namespace TarkovaCola.Client
                 _wasBreath = hb;
             }
 
+            // ---- Steady Pulse (desafio de Deadshot): aguantar la respiracion apuntando ----
+            if (Deadshot.Active)
+            {
+                bool hb = phys.HoldingBreath;
+                if (hb && !_wasBreathD && Deadshot.Aiming(me)) PerkService.AddProgress("dd_steady");
+                _wasBreathD = hb;
+            }
+
             // ---- balanceo del arma: todos los factores en un solo numero ----
             float sway = 1f;
             if (Perk.JitterOn || StaminUp.JellyOn) sway *= Perk.JitterSway;
             if (cap > 0f && stamina.Current < cap * ChestLow && Perk.Has("dt_chest")) sway *= ChestSway;
             if (Perk.Has("dj_hands")) sway *= HeavyHandsSway;
             if (now < ConcussUntil) sway *= ConcussSway;
+            if (Deadshot.Active) sway *= Deadshot.SwayFactor(me, Deadshot.Aiming(me));      // Deadshot: menos balanceo (Stillness, Shaky Hands)
             SwayMult = sway;
 
             // ---- ruido de pasos: Clanky Plates (12 m) y Hard Stomp (15 m) mientras te mueves ----
@@ -200,6 +214,7 @@ namespace TarkovaCola.Client
                 float r = 0f;
                 if (Perk.Has("dj_clank")) r = Mathf.Max(r, ClankRadius);
                 if (Perk.Has("dp_stomp")) r = Mathf.Max(r, StompRadius);
+                if (Perk.Has("dd_d_squeak")) r = Mathf.Max(r, Deadshot.SqueakRadius);
                 if (r > 0f)
                 {
                     _nextStep = now + StepInterval;
@@ -223,8 +238,8 @@ namespace TarkovaCola.Client
         {
             // hambre y sed extra: Slow Metabolism (ambas), Hungry Spider (energia), Dry Throat (hidratacion)
             bool m = Perk.Has("dj_metab");
-            float e = (m ? Metabolism : 0f) + (Perk.Has("dw_hungry") ? Metabolism : 0f);
-            float h = (m ? Metabolism : 0f) + (Perk.Has("dw_dry") ? Metabolism : 0f);
+            float e = (m ? Metabolism : 0f) + (Perk.Has("dw_hungry") ? Metabolism : 0f) + (Perk.Has("dd_d_sugar") ? Metabolism : 0f);
+            float h = (m ? Metabolism : 0f) + (Perk.Has("dw_dry") ? Metabolism : 0f) + (Perk.Has("dd_d_lime") ? Metabolism : 0f);
             if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(-BaseEnergyRate * e * step);
             if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(-BaseHydrationRate * h * step);
 
@@ -308,6 +323,7 @@ namespace TarkovaCola.Client
                     if (wid) WidowsWine.OnGrenadeKill();
                 }
                 if (wid && WidowsWine.IsWebbed(victim)) { PerkService.AddProgress("ww_venom"); Synergy.OnWebbedKill(); }
+                if (Deadshot.Active) Deadshot.OnKill(me, victim, info, part);
             }
             catch (Exception e) { Plugin.Log.LogError("baja (perks): " + e); }
         }
@@ -355,10 +371,11 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(Physical __instance, ref float __result)
         {
-            if (!Perks.IsActive(StaminUp.Id)) return;
+            if (!Perks.AnyActive) return;
             var me = Plugin.Me;
-            if (me == null || !ReferenceEquals(me.Physical, __instance) || !Perk.Has("st_lungs")) return;
-            __result *= PerkFx.LungsTime;
+            if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
+            if (Perk.Has("st_lungs")) __result *= PerkFx.LungsTime;
+            if (Perk.Has("dd_steady")) __result *= Deadshot.PulseBreath;     // Steady Pulse (Deadshot)
         }
     }
 

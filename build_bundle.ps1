@@ -28,7 +28,7 @@ Copy-Item $handSrc (Join-Path $root 'Client\assets\speedcola_hand.bundle') -Forc
 # UnityBundle/Assets/Models/perks/ (perks.fbx) y UnityBundle/Assets/Models/perks/tex/ (texturas). Ver README.
 $p2 = Start-Process $unity -ArgumentList '-batchmode','-nographics','-quit','-projectPath',"`"$proj`"",'-executeMethod','TarkovaCola.BuildPerkBottles.Run','-logFile',"`"$log`"" -PassThru -Wait
 if ($p2.ExitCode -ne 0) { throw "Unity fallo con las botellas (codigo $($p2.ExitCode)); revisa $log" }
-foreach ($id in @('staminup', 'juggernog', 'phdflopper', 'widowswine')) {
+foreach ($id in @('staminup', 'juggernog', 'phdflopper', 'widowswine', 'deadshot')) {
     $world = Join-Path $proj "Build\$id\$id.bundle"
     $hand  = Join-Path $proj "Build\${id}_hand\${id}_hand.bundle"
     if (-not (Test-Path $world) -or -not (Test-Path $hand)) { throw "Unity no genero los bundles de $id; revisa $log" }

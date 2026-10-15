@@ -231,9 +231,10 @@ namespace TarkovaCola.Client
         // Una pestana por perk: icono (apagado si no esta activa en esta raid), punto verde si esta activa y cuantos desafios tiene pendientes.
         private float Tabs(Transform root, List<PerkDef> perks, PerkDef sel, float y, float Pad, float Inner)
         {
-            const float Tile = 56f;
             int n = perks.Count;
+            float Tile = Mathf.Min(56f, (Inner - (n - 1) * 6f) / n);         // con 6 perks las pestanas se estrechan para caber
             float gap = n > 1 ? Mathf.Min(10f, (Inner - n * Tile) / (n - 1)) : 0f;
+            float pad = Mathf.Round(Tile / 7f), icSize = Tile - pad * 2f;
             for (int i = 0; i < n; i++)
             {
                 var def = perks[i];
@@ -255,7 +256,7 @@ namespace TarkovaCola.Client
                 if (icon != null)
                 {
                     var ic = UiKit.Img(b.transform, "Icon", active ? Color.white : UiKit.C(255, 255, 255, 0.45f), icon);
-                    UiKit.Place(ic.rectTransform, 8, 8, 40, 40);
+                    UiKit.Place(ic.rectTransform, pad, pad, icSize, icSize);
                     ic.preserveAspect = true;
                 }
                 if (active) UiKit.Place(UiKit.Img(b.transform, "Dot", UiKit.Green, UiKit.Circle).rectTransform, Tile - 15, 5, 10, 10);
