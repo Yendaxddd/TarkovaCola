@@ -103,6 +103,9 @@ namespace TarkovaCola.Client
             if (Perks.WidowsWine.Augs.All(a => PerkService.IsDone(a.Id))) Unlock("ww_all");
         }
 
+        // Una sinergia se acaba de desbloquear (logros de sinergias)
+        internal static void OnSynergyUnlocked() { }
+
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).
         internal static void ClaimPending() { Claim(All.Where(a => IsDone(a.Key)).Select(a => a.ServerId).ToArray()); }
 

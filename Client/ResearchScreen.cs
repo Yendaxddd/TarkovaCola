@@ -54,6 +54,7 @@ namespace TarkovaCola.Client
         private string _view = "progress";      // progress | equip | syn | eternal
         private PerkDef _perk = Perks.UiPerks.First();   // perk que se esta viendo
         private string _sel;                     // nodo seleccionado en Progreso
+        private string _synSel;                  // sinergia seleccionada en la pestana Sinergia
         private bool _animate = true;
         private bool _closing;
         private float _fade;                     // 0..1 (aparicion / desaparicion de toda la pantalla)
@@ -470,8 +471,44 @@ namespace TarkovaCola.Client
             int n = Synergy.Equipped().Count;
             T(_stage, L.T("syn.equipped"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             T(_stage, n + " / " + Synergy.MaxEquipped, 640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
-            const float cw = 450f, gap = 45f;
-            for (int i = 0; i < Synergy.All.Length; i++) SynCard(i * (cw + gap), 60, cw, 690, Synergy.All[i]);
+            // rejilla con las 15 sinergias (3 columnas) y, a la derecha, el detalle de la elegida
+            if (Synergy.Get(_synSel ?? "") == null) _synSel = Synergy.Equipped().FirstOrDefault() ?? Synergy.All[0].Id;
+            const float tw = 300f, th = 154f, gx = 14f, gy = 12f;
+            for (int i = 0; i < Synergy.All.Length; i++)
+                SynTile((i % 3) * (tw + gx), 60 + (i / 3) * (th + gy), tw, th, Synergy.All[i]);
+            SynCard(950, 60, 490, 818, Synergy.Get(_synSel));
+        }
+
+        private void SynTile(float x, float y, float w, float h, SynDef s)
+        {
+            bool unlocked = Synergy.IsUnlocked(s.Id), eq = Synergy.IsEquipped(s.Id), on = s.Id == _synSel;
+            Color accent = eq ? UiKit.Green : unlocked ? UiKit.Gold : UiKit.C(110, 126, 142);
+            string id = s.Id;
+            var b = UiButton.Make(_stage, x, y, w, h, () => { if (_synSel != id) { _synSel = id; Rebuild(false); } },
+                                  on ? UiKit.C(240, 193, 75, 0.14f) : UiKit.Panel2, on ? UiKit.C(240, 193, 75, 0.22f) : UiKit.C(42, 68, 94, 0.97f));
+            Enter(b.GetComponent<RectTransform>());
+            Color border = on ? UiKit.Gold : new Color(accent.r, accent.g, accent.b, 0.6f);
+            float bw = on ? 2f : 1f;
+            UiKit.Place(UiKit.Img(b.transform, "bt", border).rectTransform, 0, 0, w, bw);
+            UiKit.Place(UiKit.Img(b.transform, "bb", border).rectTransform, 0, h - bw, w, bw);
+            UiKit.Place(UiKit.Img(b.transform, "bl", border).rectTransform, 0, 0, bw, h);
+            UiKit.Place(UiKit.Img(b.transform, "br", border).rectTransform, w - bw, 0, bw, h);
+
+            var a = Perks.Get(s.A); var c = Perks.Get(s.B);
+            Color tint = unlocked ? Color.white : UiKit.C(255, 255, 255, 0.55f);
+            var ia = UiKit.Img(b.transform, "IconA", tint, Hud.IconSprite(a.Id)); UiKit.Place(ia.rectTransform, 12, 12, 44, 44); ia.preserveAspect = true;
+            T(b.transform, "+", 56, 18, 20, 30, 22, accent, TextAlignmentOptions.Center, false, true);
+            var ib = UiKit.Img(b.transform, "IconB", tint, Hud.IconSprite(c.Id)); UiKit.Place(ib.rectTransform, 76, 12, 44, 44); ib.preserveAspect = true;
+            Fit(T(b.transform, Synergy.Name(s).ToUpperInvariant(), 130, 12, w - 142, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 11, 18);
+            T(b.transform, L.T(eq ? "syn.tag.eq" : unlocked ? "syn.tag.un" : "syn.tag.lock"), 130, 40, w - 142, 16, 12, accent, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(b.transform, Synergy.Desc(s), 12, 66, w - 24, 44, 12, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 9, 12);
+            if (!unlocked)
+            {
+                int p = Synergy.Progress(s.Id);
+                var tmp = new AugDef { Unit = s.Unit };
+                T(b.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, s.Goal), 12, 114, w - 24, 16, 12, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+                Bar(b.transform, 12, 134, w - 24, 6, p / (float)s.Goal, UiKit.Gold);
+            }
         }
 
         private void SynCard(float x, float y, float w, float h, SynDef s)

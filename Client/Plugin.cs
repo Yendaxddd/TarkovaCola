@@ -488,6 +488,7 @@ namespace TarkovaCola.Client
             {
                 Juggernog.OnConsumed(item);
                 ClassicChallenge.OnConsumed(item);
+                Synergy.OnConsumed(item);
                 return;
             }
 

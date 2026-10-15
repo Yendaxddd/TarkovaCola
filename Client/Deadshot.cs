@@ -61,6 +61,7 @@ namespace TarkovaCola.Client
                 float b = BaseAim * p;
                 if (Perk.Has("dd_quick")) b += QuickAim;
                 if (Perk.Has("dd_d_strain")) b -= StrainAim;
+                b += Synergy.AimBonus;                      // sinergia Speed Cola + Deadshot
                 return b;
             }
         }
@@ -140,7 +141,7 @@ namespace TarkovaCola.Client
             if (dist >= 100f) PerkService.AddStat("dd_far", 1);
         }
 
-        private static bool Armored(Player victim)
+        internal static bool Armored(Player victim)
         {
             try
             {

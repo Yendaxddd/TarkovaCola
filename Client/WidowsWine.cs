@@ -70,6 +70,7 @@ namespace TarkovaCola.Client
             if (g == null) return;
             PerkService.AddProgress("ww_quick");                                    // desafio de Quick Spinner: granadas lanzadas
             var me = Plugin.Me;
+            Synergy.OnThrown(me);                                                   // sinergias con Speed Cola y Stamin-Up
             if (me != null && Perk.Has("dw_loud"))
             {
                 Singleton<GlobalEventDispatcher>.Instance.PlaySound(me, me.Position, LoudRadius, AISoundType.step);
@@ -118,7 +119,7 @@ namespace TarkovaCola.Client
             var me = Plugin.Me;
             if (world == null || me == null) return 0;
             bool spin = Perk.Has("ww_spin"), venom = Perk.Has("ww_venom"), mod = Perks.IsModifier(Id);
-            float radius = mod ? ModRadius : Radius * (spin ? SpinRadius : 1f);
+            float radius = (mod ? ModRadius : Radius * (spin ? SpinRadius : 1f)) * Synergy.WebMult;      // sinergia PHD Flopper + Widow's Wine
             float secs = mod ? ModSeconds : Seconds + (spin ? SpinExtra : 0f);
             float speedLeft = mod ? ModSpeedLeft : SpeedLeft;
             float r2 = radius * radius, now = Time.time;
@@ -151,6 +152,7 @@ namespace TarkovaCola.Client
                     PerkService.AddProgress("ww_sticky");
                     Achievements.Unlock("ww_first");                                 // logros: primer enemigo atrapado y 50 en total
                     PerkService.AddStat("widow_webbed", 1);
+                    Synergy.OnWebbed();
                     if (PerkService.Stat("widow_webbed") >= WebbedNeeded) Achievements.Unlock("ww_webbed");
                     if (venom || burst) Stun(p, StunSeconds);
                 }

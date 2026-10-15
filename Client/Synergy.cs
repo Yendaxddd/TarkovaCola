@@ -26,20 +26,51 @@ namespace TarkovaCola.Client
     {
         internal const int MaxEquipped = 1;
 
+        // ids (una por pareja de perks: 15 con 6 perks)
         internal const string Cardio = "syn_cardio", Iron = "syn_iron", Blast = "syn_blast";
+        internal const string Medic = "syn_medic", Pin = "syn_pin", Trigger = "syn_trigger", Tank = "syn_tank", Bounce = "syn_bounce";
+        internal const string Getaway = "syn_getaway", Breath = "syn_breath", Shock = "syn_shock", Sights = "syn_sights";
+        internal const string WebBlast = "syn_webblast", Above = "syn_above", Spider = "syn_spider";
 
-        // --- balance ---
+        // --- balance (bonos pequenos: solo se lleva una) ---
         internal const float CardioDraw = 0.12f;       // Speed Cola + Stamin-Up: sacar el arma +12%
         internal const float CardioStamina = 0.05f;    //   y correr gasta un 5% menos de estamina
         internal const float IronDamage = 0.03f;       // Juggernog + Widow's Wine: -3% de dano recibido
         internal const float BlastReload = 0.20f;      // Speed Cola + PHD Flopper: tras absorber una explosion o caida, recarga +20%...
         internal const float BlastSeconds = 6f;        //   ...durante 6 s
+        internal const float MedicAnim = 1.15f;        // Speed Cola + Juggernog: curarse +15% rapido
+        internal const float PinAnim = 1.15f;          // Speed Cola + Widow's Wine: lanzar granadas +15% rapido
+        internal const float TriggerAim = 0.08f;       // Speed Cola + Deadshot: apuntar +8%
+        internal const float TankWeight = 0.95f;       // Stamin-Up + Juggernog: peso -5%
+        internal const float BounceStamina = 0.15f;    // Stamin-Up + PHD Flopper: al absorber, +15% de estamina
+        internal const float GetawayStamina = 0.10f;   // Stamin-Up + Widow's Wine: al lanzar una granada, +10% de estamina
+        internal const float BreathMult = 1.15f;       // Stamin-Up + Deadshot: aguantar la respiracion +15%
+        internal const float ShockDamage = 0.10f;      // Juggernog + PHD Flopper: tras absorber, -10% de dano...
+        internal const float ShockSeconds = 5f;        //   ...durante 5 s
+        internal const float SightsDamage = 0.05f;     // Juggernog + Deadshot: apuntando, -5% de dano recibido
+        internal const float WebRadius = 1.20f;        // PHD Flopper + Widow's Wine: telarana +20% de radio
+        internal const float AboveSway = 0.60f;        // PHD Flopper + Deadshot: tras absorber, balanceo -40%...
+        internal const float AboveSeconds = 5f;        //   ...durante 5 s (desafio: matar en los 10 s siguientes)
+        internal const float AboveWindow = 10f;
+        internal const float SpiderDamage = 1.10f;     // Widow's Wine + Deadshot: +10% de dano a enemigos atrapados
 
         internal static readonly SynDef[] All =
         {
-            new SynDef { Id = Cardio, A = "speedcola", B = "staminup",   Goal = 3000, Unit = ProgUnit.Meters },   // correr 3 km
-            new SynDef { Id = Iron,   A = "juggernog", B = "widowswine", Goal = 5 },                              // 5 bajas de enemigos atrapados en tu telarana
-            new SynDef { Id = Blast,  A = "speedcola", B = "phdflopper", Goal = 5 },                              // absorber 5 explosiones o caidas
+            new SynDef { Id = Cardio,   A = "speedcola",  B = "staminup",   Goal = 3000, Unit = ProgUnit.Meters },   // correr 3 km
+            new SynDef { Id = Medic,    A = "speedcola",  B = "juggernog",  Goal = 10 },                              // usar 10 objetos medicos
+            new SynDef { Id = Blast,    A = "speedcola",  B = "phdflopper", Goal = 5 },                               // absorber 5 explosiones o caidas
+            new SynDef { Id = Pin,      A = "speedcola",  B = "widowswine", Goal = 10 },                              // lanzar 10 granadas
+            new SynDef { Id = Trigger,  A = "speedcola",  B = "deadshot",   Goal = 15 },                              // 15 bajas apuntando
+            new SynDef { Id = Tank,     A = "staminup",   B = "juggernog",  Goal = 2000, Unit = ProgUnit.Meters },   // correr 2 km
+            new SynDef { Id = Bounce,   A = "staminup",   B = "phdflopper", Goal = 8 },                               // absorber 8 explosiones o caidas
+            new SynDef { Id = Getaway,  A = "staminup",   B = "widowswine", Goal = 10 },                              // lanzar 10 granadas
+            new SynDef { Id = Breath,   A = "staminup",   B = "deadshot",   Goal = 20 },                              // aguantar la respiracion apuntando 20 veces
+            new SynDef { Id = Shock,    A = "juggernog",  B = "phdflopper", Goal = 5 },                               // absorber 5 explosiones o caidas
+            new SynDef { Id = Iron,     A = "juggernog",  B = "widowswine", Goal = 5 },                               // 5 bajas de enemigos atrapados
+            new SynDef { Id = Sights,   A = "juggernog",  B = "deadshot",   Goal = 10 },                              // 10 bajas de enemigos con armadura
+            new SynDef { Id = WebBlast, A = "phdflopper", B = "widowswine", Goal = 15 },                              // atrapar a 15 enemigos
+            new SynDef { Id = Above,    A = "phdflopper", B = "deadshot",   Goal = 3 },                               // 3 bajas en los 10 s tras absorber
+            new SynDef { Id = Spider,   A = "widowswine", B = "deadshot",   Goal = 8 },                               // 8 bajas de enemigos atrapados
         };
 
         internal static SynDef Get(string id) { return All.FirstOrDefault(s => s.Id == id); }
@@ -115,15 +146,38 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- bonos
-        private static float _blastUntil;
+        private static float _blastUntil, _shockUntil, _aboveUntil, _absorbAt = -99f;
         private static bool _blastWas;
 
-        internal static float DrawMult { get { float p = Power(Cardio); return p > 0f ? 1f + CardioDraw * p : 1f; } }
-        internal static float StaminaSave { get { return Power(Cardio) * CardioStamina; } }
-        internal static float DamageMult { get { float p = Power(Iron); return p > 0f ? 1f - IronDamage * p : 1f; } }
+        private static float P(string id) { return _eq.Count == 0 ? 0f : Power(id); }
+
+        internal static float DrawMult { get { float p = P(Cardio); return p > 0f ? 1f + CardioDraw * p : 1f; } }
+        internal static float StaminaSave { get { return P(Cardio) * CardioStamina; } }
         internal static float ReloadBoost
         {
-            get { float p = Power(Blast); return p > 0f && Time.time < _blastUntil ? 1f + BlastReload * p : 1f; }
+            get { float p = P(Blast); return p > 0f && Time.time < _blastUntil ? 1f + BlastReload * p : 1f; }
+        }
+        internal static float MedicMult { get { float p = P(Medic); return p > 0f ? 1f + (MedicAnim - 1f) * p : 1f; } }
+        internal static float PinMult { get { float p = P(Pin); return p > 0f ? 1f + (PinAnim - 1f) * p : 1f; } }
+        internal static float AimBonus { get { return TriggerAim * P(Trigger); } }
+        internal static float WeightMult { get { float p = P(Tank); return p > 0f ? 1f - (1f - TankWeight) * p : 1f; } }
+        internal static float OxygenMult { get { float p = P(Breath); return p > 0f ? 1f + (BreathMult - 1f) * p : 1f; } }
+        internal static float WebMult { get { float p = P(WebBlast); return p > 0f ? 1f + (WebRadius - 1f) * p : 1f; } }
+        internal static float SwayFactor { get { float p = P(Above); return p > 0f && Time.time < _aboveUntil ? 1f - (1f - AboveSway) * p : 1f; } }
+        internal static float OutgoingMult { get { float p = P(Spider); return p > 0f ? 1f + (SpiderDamage - 1f) * p : 1f; } }
+
+        // dano que recibes: Telarana de acero siempre, Escudo de choque tras absorber, Mira de hierro apuntando
+        internal static float DamageMult
+        {
+            get
+            {
+                if (_eq.Count == 0) return 1f;
+                float m = 1f - IronDamage * P(Iron);
+                if (Time.time < _shockUntil) m *= 1f - ShockDamage * P(Shock);
+                float ps = P(Sights);
+                if (ps > 0f) { var me = Plugin.Me; if (me != null && Deadshot.Aiming(me)) m *= 1f - SightsDamage * ps; }
+                return m;
+            }
         }
 
         internal static bool AnyEquipped { get { return _eq.Count > 0; } }
@@ -147,37 +201,86 @@ namespace TarkovaCola.Client
                 PerkService.Flush();
                 Dbg.Log("SINERGIA", id + " desbloqueada");
                 Hud.Enqueue(L.T("syn.unlocked"), Name(s), s.A);
+                Achievements.OnSynergyUnlocked();
             }
         }
 
-        private static float _meters;
+        private static readonly Dictionary<string, float> _meters = new Dictionary<string, float>();
 
-        // Distancia corriendo con las dos perks de Cardio activas (desde PerkFx.Tick)
+        // Distancia corriendo (desde PerkFx.Tick): Cardio y Tanque
         internal static void OnRun(float meters)
         {
-            if (IsUnlocked(Cardio) || !Both(Get(Cardio))) return;
-            _meters += meters;
-            if (_meters < 10f) return;
-            int whole = (int)_meters; _meters -= whole;
-            AddProgress(Cardio, whole);
+            foreach (var id in new[] { Cardio, Tank })
+            {
+                var s = Get(id);
+                if (IsUnlocked(id) || !Both(s)) continue;
+                float acc;
+                _meters.TryGetValue(id, out acc);
+                acc += meters;
+                if (acc >= 10f) { int whole = (int)acc; acc -= whole; AddProgress(id, whole); }
+                _meters[id] = acc;
+            }
         }
 
         // PHD Flopper anulo una explosion o una caida
         internal static void OnAbsorb(Player me)
         {
-            AddProgress(Blast, 1);
-            if (Power(Blast) <= 0f) return;
-            _blastUntil = Time.time + BlastSeconds;
-            (me.HandsController as Player.FirearmController)?.SyncWithCharacterSkills();       // la recarga del arma en mano usa el nuevo multiplicador
-            Hud.Notify(Name(Get(Blast)), L.F("syn.blast.sub", Mathf.RoundToInt(BlastReload * 100f), Mathf.RoundToInt(BlastSeconds)), "speedcola");
+            float now = Time.time;
+            _absorbAt = now;
+            AddProgress(Blast, 1); AddProgress(Bounce, 1); AddProgress(Shock, 1);
+            if (P(Blast) > 0f)
+            {
+                _blastUntil = now + BlastSeconds;
+                (me.HandsController as Player.FirearmController)?.SyncWithCharacterSkills();       // la recarga del arma en mano usa el nuevo multiplicador
+                Hud.Notify(Name(Get(Blast)), L.F("syn.blast.sub", Mathf.RoundToInt(BlastReload * 100f), Mathf.RoundToInt(BlastSeconds)), "speedcola");
+            }
+            float pb = P(Bounce);
+            if (pb > 0f && me.Physical != null && me.Physical.Stamina != null)
+            {
+                var st = me.Physical.Stamina;
+                st.Current = Mathf.Min(st.TotalCapacity, st.Current + st.TotalCapacity * BounceStamina * pb);
+            }
+            if (P(Shock) > 0f) _shockUntil = now + ShockSeconds;
+            if (P(Above) > 0f) _aboveUntil = now + AboveSeconds;
         }
 
-        // Baja de un enemigo atrapado en tu telarana (Widow's Wine) con Juggernog tambien activa
-        internal static void OnWebbedKill() { AddProgress(Iron, 1); }
+        // Granada lanzada (desde WidowsWine.OnThrown: Widow's Wine activa)
+        internal static void OnThrown(Player me)
+        {
+            AddProgress(Pin, 1); AddProgress(Getaway, 1);
+            float pg = P(Getaway);
+            if (pg > 0f && me != null && me.Physical != null && me.Physical.Stamina != null)
+            {
+                var st = me.Physical.Stamina;
+                st.Current = Mathf.Min(st.TotalCapacity, st.Current + st.TotalCapacity * GetawayStamina * pg);
+            }
+        }
+
+        // Objeto medico usado
+        internal static void OnConsumed(EFT.InventoryLogic.Item item)
+        {
+            if (item is EFT.InventoryLogic.Meds) AddProgress(Medic, 1);
+        }
+
+        // Aguantar la respiracion apuntando (desde PerkFx.Tick, con Deadshot activa)
+        internal static void OnBreath() { AddProgress(Breath, 1); }
+
+        // Enemigo atrapado por primera vez en una telarana (desde WidowsWine.Web)
+        internal static void OnWebbed() { AddProgress(WebBlast, 1); }
+
+        // Baja del jugador (desde PerkFx.OnKill)
+        internal static void OnKill(Player me, Player victim, bool webbed, bool armored)
+        {
+            if (webbed) { AddProgress(Iron, 1); AddProgress(Spider, 1); }
+            if (Deadshot.Aiming(me)) AddProgress(Trigger, 1);
+            if (armored) AddProgress(Sights, 1);
+            if (Time.time - _absorbAt <= AboveWindow) AddProgress(Above, 1);
+        }
 
         internal static void OnRaidStart()
         {
-            _blastUntil = 0f; _meters = 0f; _blastWas = false;
+            _blastUntil = 0f; _shockUntil = 0f; _aboveUntil = 0f; _absorbAt = -99f; _blastWas = false;
+            _meters.Clear();
             Refresh();
         }
 

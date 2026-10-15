@@ -195,7 +195,7 @@ namespace TarkovaCola.Client
             if (Deadshot.Active)
             {
                 bool hb = phys.HoldingBreath;
-                if (hb && !_wasBreathD && Deadshot.Aiming(me)) PerkService.AddProgress("dd_steady");
+                if (hb && !_wasBreathD && Deadshot.Aiming(me)) { PerkService.AddProgress("dd_steady"); Synergy.OnBreath(); }
                 _wasBreathD = hb;
             }
 
@@ -206,6 +206,7 @@ namespace TarkovaCola.Client
             if (Perk.Has("dj_hands")) sway *= HeavyHandsSway;
             if (now < ConcussUntil) sway *= ConcussSway;
             if (Deadshot.Active) sway *= Deadshot.SwayFactor(me, Deadshot.Aiming(me));      // Deadshot: menos balanceo (Stillness, Shaky Hands)
+            sway *= Synergy.SwayFactor;                                                       // sinergia PHD Flopper + Deadshot
             SwayMult = sway;
 
             // ---- ruido de pasos: Clanky Plates (12 m) y Hard Stomp (15 m) mientras te mueves ----
@@ -270,11 +271,12 @@ namespace TarkovaCola.Client
                 else if (hc is Player.BaseGrenadeHandsController)
                 {
                     if (Perk.Has("ww_quick")) want = QuickSpinnerAnim;
+                    want *= Synergy.PinMult;
                 }
                 else
                 {
                     var item = (hc as Player.ItemHandsController)?.Item;
-                    if (item is Meds && !(item is Stimulator)) { if (Perk.Has("jg_patch")) want = PatchSpeed; }
+                    if (item is Meds && !(item is Stimulator)) { if (Perk.Has("jg_patch")) want = PatchSpeed; want *= Synergy.MedicMult; }
                     else if (item is FoodDrink && Perks.ByItem(item.StringTemplateId) == null) { if (Perk.Has("dj_chew")) want = 1f / ChewTime; }
                 }
             }
@@ -322,7 +324,9 @@ namespace TarkovaCola.Client
                     if (phd) { PerkService.AddProgress("pf_shock"); PhdFlopper.OnGrenadeKill(); }
                     if (wid) WidowsWine.OnGrenadeKill();
                 }
-                if (wid && WidowsWine.IsWebbed(victim)) { PerkService.AddProgress("ww_venom"); Synergy.OnWebbedKill(); }
+                bool webbed = wid && WidowsWine.IsWebbed(victim);
+                if (webbed) PerkService.AddProgress("ww_venom");
+                Synergy.OnKill(me, victim, webbed, Deadshot.Armored(victim));
                 if (Deadshot.Active) Deadshot.OnKill(me, victim, info, part);
             }
             catch (Exception e) { Plugin.Log.LogError("baja (perks): " + e); }
@@ -376,6 +380,7 @@ namespace TarkovaCola.Client
             if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
             if (Perk.Has("st_lungs")) __result *= PerkFx.LungsTime;
             if (Perk.Has("dd_steady")) __result *= Deadshot.PulseBreath;     // Steady Pulse (Deadshot)
+            __result *= Synergy.OxygenMult;                                  // sinergia Stamin-Up + Deadshot
         }
     }
 
@@ -404,6 +409,7 @@ namespace TarkovaCola.Client
             if (Perk.Has("st_feet")) m *= PerkFx.FeetWeight;
             if (Perk.Has("dj_plates")) m *= PerkFx.PlatesWeight;
             if (Perk.Has("dp_pockets")) m *= PerkFx.PocketsWeight;
+            m *= Synergy.WeightMult;                                     // sinergia Stamin-Up + Juggernog
             if (m != 1f) __result *= m;
         }
     }
@@ -436,11 +442,15 @@ namespace TarkovaCola.Client
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
                 }
                 else if (QuestGuards.IsGuard(victim) && (damageInfo.DamageType & PerkFx.Blast) != 0) damage = 0f;      // los guardias de la mision llevan PHD Flopper
-                else if (Perks.IsActive(PhdFlopper.Id))
+                else if (Perks.AnyActive)
                 {
                     var me = Plugin.Me;
                     var by = damageInfo.Player != null ? damageInfo.Player.iPlayer : null;
-                    if (me != null && by != null && by.ProfileId == me.ProfileId) PhdFlopper.OnDealt(damage, damageInfo);
+                    if (me != null && by != null && by.ProfileId == me.ProfileId)
+                    {
+                        if (Synergy.AnyEquipped && Perks.IsActive(WidowsWine.Id) && WidowsWine.IsWebbed(victim)) damage *= Synergy.OutgoingMult;   // Widow's Wine + Deadshot
+                        if (Perks.IsActive(PhdFlopper.Id)) PhdFlopper.OnDealt(damage, damageInfo);
+                    }
                 }
             }
             catch (Exception e) { Dbg.Throttled("dmghub", 10f, "ERROR", "dano (perks): " + e); }
