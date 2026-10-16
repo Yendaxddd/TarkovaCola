@@ -42,7 +42,11 @@ namespace TarkovaCola.Server
 
         // puntos de los guardias (los genera make_quest_pack.py; los hace aparecer el cliente del mod, no VisitAPI)
         internal static string SpawnsFile { get { return Path.Combine(ModDir, "guards.json"); } }
-        internal static bool PackInstalled { get { return File.Exists(Path.Combine(PackDir, "pack.json")); } }
+        // el pack esta Y VisitAPI esta instalado (el zip trae el pack aunque no tengas VisitAPI: sin el no hay misiones, asi que no se bloquea nada)
+        internal static bool PackInstalled
+        {
+            get { return File.Exists(Path.Combine(PackDir, "pack.json")) && File.Exists(Path.Combine(PackDir, "..", "..", "VisitAPI-Server.dll")); }
+        }
 
         // Todos los puntos de guardias del pack (JSON de un array), o "" si no hay
         internal static string ReadPosts()

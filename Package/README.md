@@ -1,133 +1,137 @@
-# Tarkova-Cola 1.2.0
+# Tarkova-Cola 2.0.0
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
-Compatible con / Compatible with: **SPT 4.1.x** (single player, sin Fika / no Fika)
+Compatible con / Compatible with: **SPT 4.1.x** (single player, sin Fika / no Fika).
+Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for the storyline and quests).
 
 ---
 
 ## Español
 
 ### Qué es
-Bebidas que encuentras (o compras) y que te dan una habilidad durante la raid. Cuanto más las usas, más subes la perk, desbloqueas desafíos y, con ellos, **mejoras** (y sus **desventajas**), que eliges en un menú nativo de EFT.
+Bebidas que encuentras, compras o fabricas y que te dan una habilidad durante la raid. Cuanto más las usas, más sube la perk: se revelan desafíos y, al completarlos, desbloqueas **mejoras** (y sus **desventajas** ligadas) que eliges en la pantalla **Research**.
 
-Perks disponibles: **Speed Cola** y **Stamin-Up**.
+### Las 6 perks
 
-### Speed Cola
-- Se vende en **Therapist** (nivel de lealtad 1, **7 GP Coin**). Ocupa 1×2 casillas.
-- También aparece al azar en raid: **cajas de munición**, **cajas fuertes**, y en **Rogues** y **Killa**.
-- Al beberla en raid: **recargas ×1.5 más rápidas** el resto de la raid.
-- Sube de nivel (1 → 5) con el XP que ganas en raid (+25 % mientras la perk está activa). El nivel máximo es 5.
-- Cada nivel revela desafíos; al completar uno se desbloquea una **mejora** y una **desventaja** ligada.
+| Perk | Efecto base (el resto de la raid) |
+|---|---|
+| **Speed Cola** | Recargas ×1.5 más rápidas |
+| **Stamin-Up** | Estamina de piernas ×1.5 |
+| **Juggernog** | −33 % de daño recibido |
+| **PHD Flopper** | Inmune al daño de caídas y explosiones |
+| **Widow's Wine** | Tus granadas atrapan a los enemigos en telarañas (−60 % de velocidad) |
+| **Deadshot Daiquiri** | Apuntas un 15 % más rápido y el balanceo baja un 25 % |
 
-| Mejora | Efecto | Desventaja ligada | Efecto |
-|---|---|---|---|
-| Quick Hands | sacar/cambiar de arma +50 % | Jittery Hands | +25 % de balanceo con un brazo no sano |
-| Bolt Runner | el arma encasquillada se desencasquilla al guardarla | Overpressure | cada 4.º cargador pierde sus balas (vuelven al inventario) |
-| Sugar Rush | recarga de Speed Cola ×2.0 en vez de ×1.5 | Sugar Crash | +sed cada 2 min sin matar (máx. ×2) |
-| Steady Fingers | −30 % de daño en brazos | Dry Mouth | −20 % de hidratación más rápido |
-| Chamber Check | revisar cargadores en inventario +75 % | Loud Slurp | beber hace ruido (30 m) |
-| Mag Juggler | cargar cargadores del arma principal +50 % | Sticky Mags | +10 % de encasquillamiento |
-| Round Counter | los cargadores muestran su munición exacta | Sweet Tooth | comer/beber otra cosa tarda el doble |
-| Extra Slot | permite llevar 2 mejoras secundarias | — | — |
+Cada perk sube del nivel 1 al 5 con el XP de las raids en las que la llevas (+25 %). Cada nivel revela desafíos; cada desafío desbloquea una mejora y su desventaja. Equipas 1 mejora mayor + 1 menor (2 con la Ranura extra) y **cada mejora necesita su desventaja equipada** (mayor con mayor, menor con menor).
 
-Equipas 1 mejora principal + 1 secundaria (2 con Extra Slot) y **1 desventaja principal + 1 secundaria**. No puedes llevar una mejora principal sin su desventaja principal.
+### Modos (interruptor en Research)
+- **Moderno**: Research completo, todas las perks que quieras.
+  - **Eternal Perk**: si bebes una perk que ya llevas, se vuelve **eterna** (contorno azul): se queda contigo entre raids, pierde una desventaja y, si mueres, su botella vuelve por correo. Pestaña **ETERNAS** en Research.
+- **Clásico**: sin Research ni desventajas. Hasta 4 perks + 1 **modificador** (efecto reducido). Cada perk trae 1 mejora menor al azar y **se quedan contigo hasta que mueras**. Cada raid trae un desafío opcional que da una 2.ª mejora.
 
-### Stamin-Up
-- Se vende en **Therapist** (nivel de lealtad 1, **7 GP Coin**) y aparece en los mismos sitios que Speed Cola. Ocupa 1×2 casillas.
-- Al beberla en raid: **estamina de piernas x1.5** el resto de la raid.
-- Misma progresión que Speed Cola (niveles 1 → 5, +25 % de XP mientras está activa), con sus propias mejoras y desventajas:
+### Perk aleatoria
+Al matar hay un 4 % de que caiga una **botella flotante** (como mucho una por raid, 60 s). Recógela: perk al azar, o eterna si ya la llevabas. Con su voz de locutor.
 
-| Mejora | Efecto | Desafío | Desventaja ligada |
-|---|---|---|---|
-| Rush Hour (mayor) | Tras una baja, la estamina de piernas se llena | 3 bajas en menos de 3 minutos | Loud Boots: correr se oye a 25 m |
-| Sprint Shooter (mayor) | Las animaciones del arma van siempre x1.75 más rápido (no las recargas) | Encontrar 15 Hot Rod / RatCola / Max Energy | Burnout: con menos del 30 % de estamina te recuperas a la mitad |
-| Second Wind (mayor) | Cada vez que la salud esté en rojo: 5 s de estamina infinita e inmunidad al dolor (sin cooldown) | Quedarte sin estamina 5 veces | Jelly Legs: balanceo del arma +25 % tras correr 5 s |
-| Light Feet (menor) | -10 % de peso | Correr 5 km en total | Hungry Legs: +50 % de gasto de energía al correr |
-| Quick Recovery (menor) | La estamina se recupera +25 % más rápido | Correr 10 km en total | Cramps: la recuperación tarda 2 s más tras correr |
-| Soft Landing (menor) | -30 % de daño por caída | Matar a 3 enemigos al menos 2 m por debajo de ti | Sweaty: +50 % de gasto de hidratación al correr |
-| Extra Slot | 2 mejoras menores | Matar a 1 boss | ninguna |
+### Sinergias
+15 sinergias, una por cada pareja de perks: un bono pequeño cuando llevas las dos a la vez. Se desbloquean con su desafío y **solo se lleva una** equipada (pestaña **SINERGIA**).
+
+### Historia: los Embotelladores (requiere VisitAPI)
+10 misiones de **Skier** y **Therapist** (desde el nivel 12):
+- **3 de introducción**: desbloquean las **recetas** de las perks en la **Unidad de nutrición** del refugio.
+- **6, una por perk**: desbloquean la **venta** de esa perk en Therapist. Los guardias llevan la perk de la misión de verdad (y su icono sobre la cabeza).
+- **Final**: el **Barman**, con todas las perks (4 en modo Clásico).
+
+Con VisitAPI instalado, **las perks no se venden en Therapist hasta completar su misión** (se siguen encontrando en raid y fabricando). Sin VisitAPI no hay misiones y todo se vende desde el principio. Opción de depuración en F12: *Perks a la venta sin misiones*.
 
 ### Logros
-Doce logros nativos de EFT (dos secretos), en tu perfil, apartado **Logros**. Cada uno envía su recompensa (rublos, GP Coin o Speed Cola) a tu correo, una sola vez.
+**100 logros nativos** de EFT (Perfil > Logros), con recompensas por correo.
 
 ### Cómo se usa
-1. Compra una Speed Cola a Therapist.
-2. En el menú principal pulsa **RESEARCH** (barra inferior, junto a Handbook) o **F9** para ver el progreso y equipar mejoras.
-3. Bébela dentro de la raid. Abre el menú (ESC) en raid para ver tu nivel y los desafíos pendientes.
+1. Consigue una perk (Therapist, raid, refugio).
+2. Menú principal: botón **RESEARCH** (barra inferior) o **F9** para ver el progreso, equipar mejoras, sinergias y cambiar de modo.
+3. Bébela en raid. Con **ESC** en raid ves tu nivel y tus desafíos.
 
 ### Instalación
 Extrae el zip **encima de la carpeta de SPT** (donde está `EscapeFromTarkov.exe`). Crea:
 - `BepInEx/plugins/TarkovaCola/` (cliente)
 - `SPT_Runtime/user/mods/TarkovaCola/` (servidor)
+- `SPT_Runtime/user/mods/VisitAPI-Server/packs/TarkovaCola/` (misiones; solo hacen algo si tienes VisitAPI)
 
-El progreso se guarda por perfil en `user/mods/TarkovaCola/profiles/` (no lo borres al actualizar).
+El progreso se guarda por perfil en `user/mods/TarkovaCola/profiles/` (no lo borres al actualizar). **Actualizando desde la 1.x:** tu progreso se conserva.
 
-### Configuración (F12, ConfigurationManager)
-Idioma (Auto / Español / English), tecla de Research, posición del icono, tamaño de la lata en la mano, registro de depuración, etc.
+### Configuración (F12)
+Idioma, tecla de Research, HUD (iconos abajo en el centro), volumen de canciones y voces, efectos visuales de PHD y de la telaraña, probabilidad de la perk aleatoria, "abandonar la raid no cuenta como muerte", opciones de depuración (guardias siempre, perks a la venta sin misiones, registro detallado) y tecla F10 para copiar coordenadas.
 
 ### Desinstalación
-Borra las dos carpetas `TarkovaCola`. Si tenías Speed Cola en el alijo, SPT permite eliminar los items rotos del inventario.
+Borra las carpetas `TarkovaCola` (y el pack de VisitAPI). Si te quedan perks en el alijo, SPT permite eliminar los items rotos.
 
 ---
 
 ## English
 
 ### What it is
-Drinks you find or buy that grant an in-raid ability. The more you use them, the more the perk levels up, unlocking challenges and, with them, **augments** (and linked **drawbacks**) that you pick in a native EFT-style menu.
+Drinks you find, buy or craft that grant an in-raid ability. The more you use them, the more the perk levels up: challenges are revealed and completing them unlocks **augments** (and their linked **drawbacks**) that you equip in the **Research** screen.
 
-Perks available: **Speed Cola** and **Stamin-Up**.
+### The 6 perks
 
-### Speed Cola
-- Sold by **Therapist** (loyalty level 1, **7 GP Coin**). Takes 1×2 slots.
-- Also found randomly in raid: **ammo crates**, **safes**, and on **Rogues** and **Killa**.
-- Drink it in raid: **reloads 1.5x faster** for the rest of the raid.
-- Levels 1 → 5 with the XP you earn in raid (+25% while the perk is active). Max level is 5.
-- Each level reveals challenges; completing one unlocks an **augment** and its linked **drawback** (see the table above).
+| Perk | Base effect (rest of the raid) |
+|---|---|
+| **Speed Cola** | Reloads ×1.5 faster |
+| **Stamin-Up** | Leg stamina ×1.5 |
+| **Juggernog** | −33% damage taken |
+| **PHD Flopper** | Immune to fall and explosion damage |
+| **Widow's Wine** | Your grenades web enemies (−60% movement speed) |
+| **Deadshot Daiquiri** | Aim 15% faster and 25% less weapon sway |
 
-You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
+Each perk levels 1 → 5 with the XP of the raids you carry it in (+25%). Each level reveals challenges; each challenge unlocks an augment and its drawback. You equip 1 major + 1 minor augment (2 with Extra Slot) and **every augment needs its drawback equipped** (major with major, minor with minor).
 
-### Stamin-Up
-- Sold by **Therapist** (loyalty level 1, **7 GP Coin**) and found in the same places as Speed Cola. Takes 1×2 slots.
-- Drink it in raid: **leg stamina x1.5** for the rest of the raid.
-- Same progression as Speed Cola (levels 1 → 5, +25% XP while active), with its own augments and drawbacks:
+### Modes (switch in Research)
+- **Modern**: full Research, as many perks as you like.
+  - **Eternal Perk**: drink a perk you already have and it becomes **eternal** (blue outline): it stays with you between raids, loses one drawback and, if you die, its bottle comes back by mail. **ETERNAL** tab in Research.
+- **Classic**: no Research, no drawbacks. Up to 4 perks + 1 **modifier** (reduced effect). Each perk rolls 1 random minor augment and **they stay with you until you die**. Every raid brings an optional challenge that grants a 2nd augment.
 
-| Augment | Effect | Challenge | Linked drawback |
-|---|---|---|---|
-| Rush Hour (major) | After a kill, leg stamina refills completely | 3 kills in under 3 minutes | Loud Boots: sprinting is audible to bots from 25 m |
-| Sprint Shooter (major) | Weapon animations always 1.75x faster (not reloads) | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
-| Second Wind (major) | Every time your health is in the red: 5 s of infinite stamina and pain immunity (no cooldown) | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
-| Light Feet (minor) | -10% carried weight | Sprint 5 km in total | Hungry Legs: +50% energy burn while sprinting |
-| Quick Recovery (minor) | Stamina recovers +25% faster | Sprint 10 km in total | Cramps: stamina recovery waits 2 s more after sprinting |
-| Soft Landing (minor) | -30% fall damage | Kill 3 enemies at least 2 m below you | Sweaty: +50% hydration burn while sprinting |
-| Extra Slot | 2 minor augments | Kill 1 boss | none |
+### Random perk
+Kills have a 4% chance to drop a **floating bottle** (at most one per raid, 60 s). Grab it: a random perk, or an eternal one if you already had it. With announcer voice.
+
+### Synergies
+15 synergies, one per pair of perks: a small bonus when you carry both. Unlocked with their own challenge, **only one equipped** at a time (**SYNERGY** tab).
+
+### Storyline: the Bottlers (requires VisitAPI)
+10 quests from **Skier** and **Therapist** (from level 12):
+- **3 intro quests**: unlock the perk **recipes** in the hideout **Nutrition Unit**.
+- **6, one per perk**: unlock that perk's **sale** at Therapist. The guards really carry the quest's perk (with its icon over their heads).
+- **Final**: **the Bartender**, with every perk (4 in Classic mode).
+
+With VisitAPI installed, **perks are not sold by Therapist until you finish their quest** (they can still be found in raid and crafted). Without VisitAPI there are no quests and everything is sold from the start. Debug option in F12: *Perks for sale without quests*.
 
 ### Achievements
-Twelve native EFT achievements (two are secret), shown in your profile under **Achievements**. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail, once.
+**100 native EFT achievements** (Profile > Achievements), rewards by mail.
 
 ### How to use
-1. Buy Speed Cola from Therapist.
-2. In the main menu press **RESEARCH** (bottom bar, next to Handbook) or **F9** to see progress and equip augments.
-3. Drink it inside a raid. Open the pause menu (ESC) in raid to see your level and pending challenges.
+1. Get a perk (Therapist, raid, hideout).
+2. Main menu: **RESEARCH** button (bottom bar) or **F9** to see progress, equip augments and synergies, and switch modes.
+3. Drink it in raid. Press **ESC** in raid to see your level and challenges.
 
 ### Installation
 Extract the zip **over your SPT folder** (the one with `EscapeFromTarkov.exe`). It creates:
 - `BepInEx/plugins/TarkovaCola/` (client)
 - `SPT_Runtime/user/mods/TarkovaCola/` (server)
+- `SPT_Runtime/user/mods/VisitAPI-Server/packs/TarkovaCola/` (quests; only active with VisitAPI)
 
-Progress is saved per profile in `user/mods/TarkovaCola/profiles/` (keep it when updating).
+Progress is saved per profile in `user/mods/TarkovaCola/profiles/` (keep it when updating). **Updating from 1.x:** your progress is kept.
 
-### Configuration (F12, ConfigurationManager)
-Language (Auto / Español / English), Research hotkey, icon position, hand-model size, debug logging, etc.
+### Configuration (F12)
+Language, Research hotkey, HUD (icons bottom-center), jingle and voice volume, PHD and web visual effects, random perk chance, "leaving the raid does not count as dying", debug options (guards always, perks for sale without quests, verbose log) and F10 to copy coordinates.
 
 ### Uninstall
-Delete both `TarkovaCola` folders. If you still hold Speed Cola in your stash, SPT lets you remove broken items from the inventory.
+Delete the `TarkovaCola` folders (and the VisitAPI pack). If you still hold perks in your stash, SPT lets you remove broken items.
 
 ---
 
 MIT License (código / code)
 
 **Créditos / Credits**
-- Modelo 3D / 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Cambios / Changes: converted to an Unity asset bundle, textures re-prepared (metal/smoothness adjusted), rescaled and rotated for in-game use.
-- Iconos y canciones / Icons and jingles: Call of Duty, property of their owners (not MIT).
-- Botella de Stamin-Up / Stamin-Up bottle: "cod zombies perks" by **Unknown Dev** ([Sketchfab](https://sketchfab.com/3d-models/cod-zombies-perks-77e9cb71adaf44b5a974c584f96cfc6c)), Sketchfab Free Standard license. Only the compiled asset bundle is included, not the original model files.
+- Speed Cola 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Converted to a Unity asset bundle, textures re-prepared, rescaled and rotated.
+- Other bottles (Stamin-Up, Juggernog, PHD Flopper, Widow's Wine, Deadshot Daiquiri): "cod zombies perks" by **Unknown Dev** ([Sketchfab](https://sketchfab.com/3d-models/cod-zombies-perks-77e9cb71adaf44b5a974c584f96cfc6c)), Sketchfab Free Standard license. Only the compiled asset bundles are included, not the original model files.
+- Icons, jingles and announcer voice lines: Call of Duty, property of their owners (not MIT).

@@ -44,6 +44,10 @@ def main():
         add(z, server_dll, "SPT_Runtime/user/mods/TarkovaCola/TarkovaCola.Server.dll")
         for f in modfiles.rglob("*"):
             if f.is_file(): add(z, f, "SPT_Runtime/user/mods/TarkovaCola/" + str(f.relative_to(modfiles)))
+        # pack de misiones para VisitAPI (si no tienes VisitAPI no hace nada: no hay misiones y las perks se venden desde el principio)
+        packs = ROOT / "Server" / "Packs"
+        for f in packs.rglob("*"):
+            if f.is_file(): add(z, f, "SPT_Runtime/user/mods/VisitAPI-Server/packs/" + str(f.relative_to(packs)))
         add(z, ROOT / "Package" / "README.md", "README.md")
     print("->", out, round(out.stat().st_size / 1e6, 1), "MB")
 

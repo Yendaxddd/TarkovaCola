@@ -1,92 +1,101 @@
-# Tarkova-Cola 1.2.0
+# Tarkova-Cola 2.0.0
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
-Compatible con / Compatible with: **SPT 4.1.x** (single player, No Fika)
+Compatible with: **SPT 4.1.x** (single player, no Fika). Optional: **VisitAPI 1.3.5+** for the storyline.
+
+> El README del zip (Package/README.md) está en español e inglés.
 
 ---
 
 ### What it is
-Drinks you find or buy that grant an in-raid ability. All similar to Modern Style Black ops zombies, The more you use them, the more the perk levels up, unlocking challenges and, with them, **augments** (and linked **drawbacks**) that you pick to change your raids!.
+Drinks you find, buy or craft that grant an in-raid ability. The more you use them, the more the perk levels up: challenges are revealed and completing them unlocks **augments** (and their linked **drawbacks**) that you equip in the **Research** screen.
 
-Perks available: **Speed Cola** and **Stamin-Up**.
+### The 6 perks
 
-### Speed Cola
-- Sold by **Therapist** (loyalty level 1, **7 GP Coin**). Takes 1×2 slots.
-- Also found randomly in raid: **ammo crates**, **safes**, and on **Rogues** and **Killa**.
-- Drink it in raid: **reloads 1.5x faster** for the rest of the raid.
-- Levels 1 → 5 with the XP you earn in raid (+25% while the perk is active). Max level is 5.
-- Each level reveals challenges; completing one unlocks an **augment** and its linked **drawback** (see the table above).
+| Perk | Base effect (rest of the raid) |
+|---|---|
+| **Speed Cola** | Reloads ×1.5 faster |
+| **Stamin-Up** | Leg stamina ×1.5 |
+| **Juggernog** | −33% damage taken |
+| **PHD Flopper** | Immune to fall and explosion damage |
+| **Widow's Wine** | Your grenades web enemies (−60% movement speed) |
+| **Deadshot Daiquiri** | Aim 15% faster and 25% less weapon sway |
 
-You equip 1 major + 1 minor augment (2 minors with Extra Slot) and **1 major + 1 minor drawback**. You can't carry a major augment without a major drawback.
+Each perk levels 1 → 5 with the XP of the raids you carry it in (+25%). Each level reveals challenges; each challenge unlocks an augment and its drawback. You equip 1 major + 1 minor augment (2 with Extra Slot) and **every augment needs its drawback equipped** (major with major, minor with minor).
 
-### Stamin-Up
-- Sold by **Therapist** (loyalty level 1, **7 GP Coin**) and found in the same places as Speed Cola. Takes 1×2 slots.
-- Drink it in raid: **leg stamina x1.5** for the rest of the raid.
-- Same progression as Speed Cola (levels 1 → 5, +25% XP while active), with its own augments and drawbacks:
+### Modes (switch in Research)
+- **Modern**: full Research, as many perks as you like.
+  - **Eternal Perk**: drink a perk you already have and it becomes **eternal** (blue outline): it stays with you between raids, loses one drawback and, if you die, its bottle comes back by mail. **ETERNAL** tab in Research.
+- **Classic**: no Research, no drawbacks. Up to 4 perks + 1 **modifier** (reduced effect). Each perk rolls 1 random minor augment and **they stay with you until you die**. Every raid brings an optional challenge that grants a 2nd augment.
 
-| Augment | Effect | Challenge | Linked drawback |
-|---|---|---|---|
-| Rush Hour (major) | After a kill, leg stamina refills completely | 3 kills in under 3 minutes | Loud Boots: sprinting is audible to bots from 25 m |
-| Sprint Shooter (major) | Weapon animations always 1.75x faster (not reloads) | Find 15 Hot Rod / RatCola / Max Energy | Burnout: below 30% stamina you recover at half speed |
-| Second Wind (major) | Every time your health is in the red: 5 s of infinite stamina and pain immunity (no cooldown) | Run out of stamina 5 times | Jelly Legs: weapon sway +25% after sprinting 5 s |
-| Light Feet (minor) | -10% carried weight | Sprint 5 km in total | Hungry Legs: +50% energy burn while sprinting |
-| Quick Recovery (minor) | Stamina recovers +25% faster | Sprint 10 km in total | Cramps: stamina recovery waits 2 s more after sprinting |
-| Soft Landing (minor) | -30% fall damage | Kill 3 enemies at least 2 m below you | Sweaty: +50% hydration burn while sprinting |
-| Extra Slot | 2 minor augments | Kill 1 boss | none |
+### Random perk
+Kills have a 4% chance to drop a **floating bottle** (at most one per raid, 60 s). Grab it: a random perk, or an eternal one if you already had it. With announcer voice.
+
+### Synergies
+15 synergies, one per pair of perks: a small bonus when you carry both. Unlocked with their own challenge, **only one equipped** at a time (**SYNERGY** tab).
+
+### Storyline: the Bottlers (requires VisitAPI)
+10 quests from **Skier** and **Therapist** (from level 12):
+- **3 intro quests**: unlock the perk **recipes** in the hideout **Nutrition Unit**.
+- **6, one per perk**: unlock that perk's **sale** at Therapist. The guards really carry the quest's perk (with its icon over their heads).
+- **Final**: **the Bartender**, with every perk (4 in Classic mode).
+
+With VisitAPI installed, **perks are not sold by Therapist until you finish their quest** (they can still be found in raid and crafted). Without VisitAPI there are no quests and everything is sold from the start. Debug option in F12: *Perks for sale without quests*.
 
 ### Achievements
-Twelve native EFT achievements (two are secret), shown in your profile under **Achievements**. Each one sends its reward (roubles, GP Coin or Speed Cola) to your mail, once.
+**100 native EFT achievements** (Profile > Achievements), rewards by mail.
 
 ### How to use
-1. Buy Speed Cola from Therapist.
-2. In the main menu press **RESEARCH** (bottom bar, next to Handbook) or **F9** to see progress and equip augments.
-3. Drink it inside a raid. Open the pause menu (ESC) in raid to see your level and pending challenges.
-4. Sugar rush.
+1. Get a perk (Therapist, raid, hideout).
+2. Main menu: **RESEARCH** button (bottom bar) or **F9** to see progress, equip augments and synergies, and switch modes.
+3. Drink it in raid. Press **ESC** in raid to see your level and challenges.
 
 ### Installation
 Extract the zip **over your SPT folder** (the one with `EscapeFromTarkov.exe`). It creates:
 - `BepInEx/plugins/TarkovaCola/` (client)
 - `SPT_Runtime/user/mods/TarkovaCola/` (server)
+- `SPT_Runtime/user/mods/VisitAPI-Server/packs/TarkovaCola/` (quests; only active with VisitAPI)
 
-Progress is saved per profile in `user/mods/TarkovaCola/profiles/` (keep it when updating).
+Progress is saved per profile in `user/mods/TarkovaCola/profiles/` (keep it when updating). **Updating from 1.x:** your progress is kept.
 
-### Configuration (F12, ConfigurationManager)
-Language (Auto / Español / English), Research hotkey, icon position, hand-model size, debug logging, etc.
+### Configuration (F12)
+Language, Research hotkey, HUD (icons bottom-center), jingle and voice volume, PHD and web visual effects, random perk chance, "leaving the raid does not count as dying", debug options (guards always, perks for sale without quests, verbose log) and F10 to copy coordinates.
 
 ### Uninstall
-Delete both `TarkovaCola` folders. If you still hold Speed Cola in your stash, SPT lets you remove broken items from the inventory.
+Delete the `TarkovaCola` folders (and the VisitAPI pack). If you still hold perks in your stash, SPT lets you remove broken items.
 
 ---
 
 MIT License (código / code)
 
-**Credits**
-- 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Changes: converted to an Unity asset bundle, textures re-prepared (metal/smoothness adjusted), rescaled and rotated for in-game use.
-- Icons and jingles: Call of Duty, property of their owners (not MIT).
-- Stamin-Up bottle: "cod zombies perks" by **Unknown Dev** ([Sketchfab](https://sketchfab.com/3d-models/cod-zombies-perks-77e9cb71adaf44b5a974c584f96cfc6c)), Sketchfab Free Standard license. Only the compiled, game-ready asset bundle is included; the original model files are **not** redistributed (download them from Sketchfab to rebuild the bundle).
+**Créditos / Credits**
+- Speed Cola 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Converted to a Unity asset bundle, textures re-prepared, rescaled and rotated.
+- Other bottles (Stamin-Up, Juggernog, PHD Flopper, Widow's Wine, Deadshot Daiquiri): "cod zombies perks" by **Unknown Dev** ([Sketchfab](https://sketchfab.com/3d-models/cod-zombies-perks-77e9cb71adaf44b5a974c584f96cfc6c)), Sketchfab Free Standard license. Only the compiled asset bundles are included, not the original model files.
+- Icons, jingles and announcer voice lines: Call of Duty, property of their owners (not MIT).
 
 
 ---
 
 ## Building from source
 
-**Requirements:** .NET SDK 9, SPT 4.1.x, Unity **2022.3.43f1**, Python 3 + Pillow.
+**Requirements:** .NET SDK 9, SPT 4.1.x, Unity **2022.3.43f1**, Python 3 + Pillow (+ `miniaudio` to convert audio).
 
 This folder must live **inside your SPT folder** (`<SPT>/TarkovaCola-src`): the `.csproj` files look for `EscapeFromTarkov_Data`, `BepInEx` and `SPT_Runtime` one level up.
 
 ```
-dotnet build Client -c Release     # plugin de BepInEx -> BepInEx/plugins/TarkovaCola
-dotnet build Server -c Release     # mod de servidor  -> SPT_Runtime/user/mods/TarkovaCola
-python package.py                  # genera dist/TarkovaCola-<version>.zip
+dotnet build Client -c Release     # BepInEx plugin -> BepInEx/plugins/TarkovaCola
+dotnet build Server -c Release     # server mod    -> SPT_Runtime/user/mods/TarkovaCola (+ VisitAPI pack if installed)
+python make_quest_pack.py          # storyline: VisitAPI pack + Server/ModFiles/story.json + guards.json
+python make_achievements.py        # 2.0 achievements (server/client data + badge list)
+python make_achievement_icons.py   # achievement badges
+python package.py                  # dist/TarkovaCola-<version>.zip
 ```
 
-Every build deploys into the game folder.
+Every build deploys into the game folder. `build_bundle.ps1` rebuilds the bottle asset bundles (the original Sketchfab bottle pack must be downloaded separately into `UnityBundle/Assets/Models/perks/`).
 
-### Third-party material included
+### Third-party material
+The repo bundles, for convenience, the compiled bottle models, the Speed Cola model textures and the Call of Duty icons, jingles and voice lines. They are **not** covered by the MIT license and remain the property of their owners; if you are an owner and want them removed, open an issue (see `LICENSE`).
 
-The repo bundles, for convenience, the bottle 3D model (Sketchfab), its textures and the Call of Duty icons. They are **not** covered by the MIT license and remain the property of their owners; if you are an owner and want them removed, open an issue (see `LICENSE`).
-
-###/ Layout
-- `Client/` BepInEx Plugin (UI, HUD, Harmony patches, Native screen, Perk effects on screen.)
-- `Server/` Spt server-side mod (item, Store, Saved in profile progress)
-
+### Layout
+- `Client/` BepInEx plugin (Research screen, HUD, Harmony patches, perk effects, quest guards, achievements).
+- `Server/` SPT server mod (items, Therapist offers, loot, recipes, sale locks, achievements, saved progress, VisitAPI pack).

@@ -102,12 +102,27 @@ namespace TarkovaCola.Client
             Emit(clip, volume);
         }
 
-        // Se reproduce por el sistema de audio del propio juego (BetterAudio), en un grupo no espacial: asi respeta su mezclador
-        // y no interfiere con el resto del sonido de la raid.
+        // Se reproduce en una fuente de audio propia (2D) conectada al mezclador del juego: asi respeta el volumen general y, como se usa
+        // PlayOneShot, varios sonidos pueden sonar a la vez (beber dos perks seguidas ya no corta la cancion anterior en seco).
+        private static AudioSource _src;
+
+        private static AudioSource Source()
+        {
+            if (_src != null) return _src;
+            var go = new GameObject("TarkovaCola_Audio");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            _src = go.AddComponent<AudioSource>();
+            _src.spatialBlend = 0f; _src.playOnAwake = false; _src.loop = false; _src.priority = 32;
+            try { if (Singleton<BetterAudio>.Instantiated) _src.outputAudioMixerGroup = Singleton<BetterAudio>.Instance.MasterMixerGroup; }
+            catch (Exception e) { Dbg.Log("AUDIO", "sin mezclador del juego: " + e.Message); }
+            return _src;
+        }
+
         private static void Emit(AudioClip clip, float volume)
         {
-            if (!Singleton<BetterAudio>.Instantiated) { Dbg.Log("AUDIO", "BetterAudio no disponible"); return; }
-            Singleton<BetterAudio>.Instance.PlayNonspatial(clip, BetterAudio.AudioSourceGroupType.NonspatialBypass, 0f, Mathf.Clamp01(volume));
+            var src = Source();
+            if (src.outputAudioMixerGroup == null && Singleton<BetterAudio>.Instantiated) src.outputAudioMixerGroup = Singleton<BetterAudio>.Instance.MasterMixerGroup;
+            src.PlayOneShot(clip, Mathf.Clamp01(volume));
             Dbg.Log("AUDIO", clip.name + " (" + clip.length.ToString("0.0") + " s)");
         }
     }

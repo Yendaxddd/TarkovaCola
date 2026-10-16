@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "1.2.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.0.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -94,7 +94,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v1.2.0) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v2.0.0) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
