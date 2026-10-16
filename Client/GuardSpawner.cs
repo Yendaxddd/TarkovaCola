@@ -113,35 +113,62 @@ namespace TarkovaCola.Client
             if (anchor.zone == null) { Log(tag + "ERROR: este mapa no tiene zonas de bots"); yield break; }
             Log(tag + "zona de bots mas cercana: " + anchor.zone.name + " (punto " + anchor.core + ")");
 
-            // 4) perfiles (el servidor los genera): hasta 3 intentos para completar el grupo
+            // 4) perfiles: se piden DIRECTAMENTE al servidor (sin pasar por la cola de bots del juego, que en algunas partidas no
+            //    respondia) y se cargan sus modelos. Cada paso con su tiempo en el log. Hasta 3 intentos para completar el grupo.
+            var session = Session(spawner);
+            if (session == null) { Log(tag + "ERROR: no hay sesion con el servidor para pedir bots"); yield break; }
             var profiles = new List<Profile>();
-            BotCreationData data = null;
             for (int attempt = 1; attempt <= 3 && profiles.Count < points.Count; attempt++)
             {
                 int need = points.Count - profiles.Count;
-                var param = new GuardProfileData(new GetProfileDataParams(side, role, dif, 0f,
-                                new BotSpawnParams { ShallBeGroup = new ShallBeGroupParams(true, false, points.Count) }, true));
-                Task<BotCreationData> task = null;
-                try { task = BotCreationData.Create(param, spawner._botCreator, need, spawner); }
-                catch (Exception e) { Log(tag + "ERROR al pedir perfiles (intento " + attempt + "): " + e.Message); }
+                Task<Profile[]> load = null;
                 float tStart = Time.realtimeSinceStartup;
-                while (task != null && !task.IsCompleted && Time.realtimeSinceStartup - tStart < ProfilesTimeout)
+                try { load = session.LoadBots(new List<CountTypeBotWave> { new CountTypeBotWave(need, role, dif) }); }
+                catch (Exception e) { Log(tag + "intento " + attempt + ": ERROR al pedir los bots: " + e.Message); }
+                while (load != null && !load.IsCompleted && Time.realtimeSinceStartup - tStart < ProfilesTimeout)
                 {
                     if (raid != _raid || !Plugin.InRaidWorld) yield break;
                     yield return null;
                 }
-                if (task == null || !task.IsCompleted) { Log(tag + "intento " + attempt + ": el servidor no respondio a tiempo"); continue; }
-                if (task.IsFaulted) { Log(tag + "intento " + attempt + ": error al generar: " + task.Exception?.GetBaseException()); continue; }
-                var got = task.Result;
-                int n = got != null ? got.Profiles.Count : 0;
-                Log(tag + "intento " + attempt + ": " + n + "/" + need + " perfiles generados (" + param.Picked + " elegidos, " + param.Relaxed + " con dificultad distinta)");
-                if (got == null || n == 0) continue;
-                if (data == null) data = got;
-                else { data.AddProfiles(got.Profiles.ToList()); }
-                profiles = data.Profiles.ToList();
+                if (load == null) continue;
+                if (!load.IsCompleted) { Log(tag + "intento " + attempt + ": el servidor no devolvio los bots en " + ProfilesTimeout + " s"); continue; }
+                if (load.IsFaulted) { Log(tag + "intento " + attempt + ": error del servidor: " + load.Exception?.GetBaseException().Message); continue; }
+                var arr = load.Result ?? new Profile[0];
+                Log(tag + "intento " + attempt + ": el servidor devolvio " + arr.Length + "/" + need + " perfiles en " + (Time.realtimeSinceStartup - tStart).ToString("0.0") + " s: " +
+                    string.Join(", ", arr.Where(x => x != null).Select(x => x.Info.Nickname + " (" + x.Info.Side + "/" + x.Info.Settings.Role + "/" + x.Info.Settings.BotDifficulty + ")").ToArray()));
+                foreach (var prof in arr)
+                {
+                    if (prof == null || profiles.Count >= points.Count) continue;
+                    // modelos (ropa, armas...) del bot; sin esto no se puede crear en el mundo
+                    Task bundles = null;
+                    float tb = Time.realtimeSinceStartup;
+                    try
+                    {
+                        bundles = Singleton<ObjectsFactory>.Instance.LoadBundlesAndCreatePools(ObjectsFactory.PoolsCategory.Raid, ObjectsFactory.AssemblyType.Local,
+                            prof.GetAllPrefabPaths(false).ToArray(), Diz.Jobs.JobYieldPriority.General, null, ObjectsFactory.DefaultCancellationToken);
+                    }
+                    catch (Exception e) { Log(tag + "ERROR cargando los modelos de " + prof.Info.Nickname + ": " + e.Message); }
+                    while (bundles != null && !bundles.IsCompleted && Time.realtimeSinceStartup - tb < ProfilesTimeout)
+                    {
+                        if (raid != _raid || !Plugin.InRaidWorld) yield break;
+                        yield return null;
+                    }
+                    if (bundles == null || !bundles.IsCompleted || bundles.IsFaulted)
+                    {
+                        Log(tag + "modelos de " + prof.Info.Nickname + ": " + (bundles == null ? "no se pudieron pedir" : !bundles.IsCompleted ? "no cargaron en " + ProfilesTimeout + " s" : "error " + bundles.Exception?.GetBaseException().Message));
+                        continue;
+                    }
+                    profiles.Add(prof);
+                }
+                Log(tag + "intento " + attempt + ": " + profiles.Count + "/" + points.Count + " guardias listos (perfil y modelos)");
             }
-            if (data == null || data.Profiles.Count == 0) { Log(tag + "ERROR: no se pudo generar ningun perfil de " + role); yield break; }
+            if (profiles.Count == 0) { Log(tag + "ERROR: no se pudo preparar ningun guardia de " + role); yield break; }
             if (raid != _raid || !Plugin.InRaidWorld) yield break;
+
+            var param = new GuardProfileData(new GetProfileDataParams(side, role, dif, 0f,
+                            new BotSpawnParams { ShallBeGroup = new ShallBeGroupParams(true, false, profiles.Count) }, true));
+            var data = BotCreationData.CreateWithoutProfile(param);
+            data.AddProfiles(profiles);
 
             // 5) equipar (perks, botellas, objeto de mision) y activar. Como hace el propio juego: una sola activacion para todo el
             //    grupo (el juego crea un bot por cada perfil mientras queden posiciones) y el contador de "apareciendo" sube antes.
@@ -156,6 +183,20 @@ namespace TarkovaCola.Client
                 Log(tag + toSpawn + "/" + want + " guardias enviados a aparecer (cada uno avisara al llegar a su puesto)");
             }
             catch (Exception e) { Log(tag + "ERROR al activar los guardias: " + e); }
+        }
+
+        // la sesion con el servidor que usa el propio juego para pedir bots (o la de la aplicacion, si no)
+        private static IEftSession Session(BotSpawner spawner)
+        {
+            try
+            {
+                var creator = spawner._botCreator as BotCreatorClient;
+                var client = creator != null ? creator._creatorProfile as BotProfileClient : null;
+                if (client != null && client._backEndSession != null) return client._backEndSession;
+            }
+            catch (Exception e) { Log("sesion del creador de bots no disponible: " + e.Message); }
+            var app = Singleton<ClientApplication<IEftSession>>.Instance;
+            return app != null ? app.GetClientBackEndSession() : null;
         }
 
         // los guardias se quedan en su puesto (no patrullan)

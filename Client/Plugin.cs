@@ -41,6 +41,7 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<KeyCode> CfgPosKey;
         internal static ConfigEntry<bool> CfgVoice;
         internal static ConfigEntry<bool> CfgGuardsAlways;
+        internal static ConfigEntry<bool> CfgLeftKeeps;
         internal static ConfigEntry<bool> CfgSalesUnlocked;
         internal static ConfigEntry<float> CfgVoiceVolume;
         internal static ConfigEntry<bool> CfgPowerup;
@@ -72,6 +73,7 @@ namespace TarkovaCola.Client
             CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
                 "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
             CfgPosKey = Config.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones) / In raid, copies the map and your coordinates to the clipboard (to place quests)");
+            CfgLeftKeeps = Config.Bind("Perks", "Abandonar la raid no cuenta como muerte", true, "Si sales de la raid o te desconectas (p. ej. con mods que deshacen la raid al desconectarse), no pierdes tus perks de Clasico ni las Eternas / Leaving or disconnecting does not count as dying: you keep your Classic and Eternal perks");
             CfgGuardsAlways = Config.Bind("Debug", "Guardias siempre", false, "Hace aparecer a los Embotelladores de las misiones de este mapa aunque la mision no este en marcha (para probar) / Spawns the quest Bottlers on this map even if the quest is not started (for testing)");
             CfgSalesUnlocked = Config.Bind("Debug", "Perks a la venta sin misiones", false, "Therapist vende todas las perks aunque no hayas hecho sus misiones / Therapist sells every perk even without their quests");
             CfgSalesUnlocked.SettingChanged += (s, e) => Story.SyncSales();

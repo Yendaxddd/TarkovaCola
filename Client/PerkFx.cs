@@ -302,7 +302,7 @@ namespace TarkovaCola.Client
             try
             {
                 var me = Plugin.Me;
-                if (me != null && victim == me) { ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
+                if (me != null && victim == me) { ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }      // (morir de verdad si cuenta)       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
                 StaminUp.OnPlayerDead(victim, aggressor, info, part);
                 if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
                 ClassicChallenge.OnKill(me, victim, info, part);                          // desafio de la raid (modo Classic)
@@ -341,6 +341,12 @@ namespace TarkovaCola.Client
             {
                 bool alive = status == ExitStatus.Survived || status == ExitStatus.Runner;
                 Dbg.Log("RAID", "fin de raid: " + status + " (con vida=" + alive + ")");
+                if (status == ExitStatus.Left && Plugin.CfgLeftKeeps.Value)
+                {
+                    // abandonar / desconectarse: como si la raid no hubiera pasado (mods que deshacen la raid): no se pierde nada
+                    Plugin.Log.LogInfo("Fin de raid por abandono/desconexion: se conservan las perks de Clasico y las Eternas");
+                    return;
+                }
                 Juggernog.OnRaidEnd(alive);
                 AchTrack.OnRaidEnd(alive);
                 ClassicMode.OnRaidEnd(status);
