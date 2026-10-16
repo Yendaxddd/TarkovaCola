@@ -2,7 +2,7 @@
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
-Compatible con / Compatible with: **SPT 4.1.x** (single player, sin Fika / no Fika).
+Compatible con / Compatible with: **SPT 4.1.x** (single player; no se garantiza que funcione con Fika / not guaranteed to work with Fika, report issues on the SPT page or GitHub).
 Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for the storyline and quests).
 
 ---

@@ -1,7 +1,7 @@
 # Tarkova-Cola 2.0.0
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
-Compatible with: **SPT 4.1.x** (single player, no Fika). Optional: **VisitAPI 1.3.5+** for the storyline.
+Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika, Report issues on SPT Page/Here). Optional: **VisitAPI 1.3.5+** for the storyline.
 
 > El README del zip (Package/README.md) está en español e inglés.
 
