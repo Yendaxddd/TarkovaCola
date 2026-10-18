@@ -164,10 +164,13 @@ namespace TarkovaCola.Server
             {
                 var id = it.GetProperty("id").GetString();
                 if (_templates.Items.ContainsKey(new MongoId(id))) continue;
+                // cada objeto copia el aspecto de uno parecido del juego (cuaderno, sobre, muestra...); si no existe, la memoria USB de siempre
+                var src = info;
+                if (it.TryGetProperty("clone", out var cl) && _templates.Items.TryGetValue(new MongoId(cl.GetString()), out var look) && look?.Properties != null) src = look;
                 _items.CreateItemFromClone(new NewItemFromCloneDetails
                 {
-                    ItemTplToClone = info.Id,
-                    ParentId = info.Parent,
+                    ItemTplToClone = src.Id,
+                    ParentId = src.Parent,
                     NewId = new MongoId(id),
                     NewItemName = "tarkovacola_story_" + id.Substring(18),
                     OverrideProperties = new TemplateItemProperties { QuestItem = true, ExaminedByDefault = true, CanSellOnRagfair = false },

@@ -1,4 +1,4 @@
-# Tarkova-Cola 2.0.0
+# Tarkova-Cola 2.1.0
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -8,6 +8,14 @@ Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for 
 ---
 
 ## Español
+
+### Novedades de la 2.1
+- **Menú F12 en inglés** (o español): los nombres de las opciones siguen el idioma del mod (Auto = idioma del juego). Tu configuración se conserva.
+- **Opción para ocultar los iconos de perks** de abajo de la pantalla (F12 > HUD > Mostrar iconos de perks).
+- **Aviso de enemigos con perks:** un aviso cuando te acercas a un enemigo que lleva perks (distancia en F12).
+- **Las perks aparecen en más sitios:** cajas de madera, cajas de munición, cajas de granadas (Widow's Wine / PHD Flopper), cajas de raciones (Juggernog), cuerpos de PMC y cajas fuertes (casi siempre). **Los jefes siempre llevan 2 perks**; algunos PMC, Rogues y (rara vez) Scavs llevan una. Las probabilidades están en `user/mods/TarkovaCola/loot.json`.
+- **Arreglo:** las perks se añadían a contenedores equivocados (Scavs muertos y chaquetas en vez de cajas de munición y cajas fuertes).
+- Los objetos de misión ahora tienen su aspecto (cuaderno, sobre, muestra...).
 
 ### Qué es
 Bebidas que encuentras, compras o fabricas y que te dan una habilidad durante la raid. Cuanto más las usas, más sube la perk: se revelan desafíos y, al completarlos, desbloqueas **mejoras** (y sus **desventajas** ligadas) que eliges en la pantalla **Research**.
@@ -69,6 +77,14 @@ Borra las carpetas `TarkovaCola` (y el pack de VisitAPI). Si te quedan perks en 
 ---
 
 ## English
+
+### What's new in 2.1
+- **F12 menu in English** (or Spanish): option names follow the mod language (Auto = game language). Your saved settings are kept.
+- **Option to hide the perk icons** at the bottom of the screen (F12 > HUD > Show perk icons).
+- **Perk carrier alert:** a notice when you get close to an enemy carrying perks (range in F12).
+- **Perks show up in more places:** wooden crates, ammo boxes, grenade boxes (Widow's Wine / PHD Flopper), ration crates (Juggernog), PMC bodies and safes (almost always). **Bosses always carry 2 perks**; some PMCs, Rogues and (rarely) Scavs carry one. Chances are in `user/mods/TarkovaCola/loot.json`.
+- **Fix:** perks were added to the wrong containers (dead Scavs and jackets instead of ammo boxes and safes).
+- Quest items now look like what they are (notebook, envelope, sample...).
 
 ### What it is
 Drinks you find, buy or craft that grant an in-raid ability. The more you use them, the more the perk levels up: challenges are revealed and completing them unlocks **augments** (and their linked **drawbacks**) that you equip in the **Research** screen.

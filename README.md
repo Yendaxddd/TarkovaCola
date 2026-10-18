@@ -1,4 +1,4 @@
-# Tarkova-Cola 2.0.0
+# Tarkova-Cola 2.1.0
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
 Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika, Report issues on SPT Page/Here). Optional: **VisitAPI 1.3.5+** for the storyline.
@@ -6,6 +6,14 @@ Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika,
 > El README del zip (Package/README.md) está en español e inglés.
 
 ---
+
+### What's new in 2.1
+- **F12 menu in English** (or Spanish): option names follow the mod language (Auto = game language). Your saved settings are kept.
+- **Option to hide the perk icons** at the bottom of the screen (F12 > HUD > Show perk icons).
+- **Perk carrier alert:** a notice when you get close to an enemy carrying perks (range in F12).
+- **Perks show up in more places:** wooden crates, ammo boxes, grenade boxes (Widow's Wine / PHD Flopper), ration crates (Juggernog), PMC bodies and safes (almost always). **Bosses always carry 2 perks**; some PMCs, Rogues and (rarely) Scavs carry one. Chances are in `user/mods/TarkovaCola/loot.json`.
+- **Fix:** perks were added to the wrong containers (dead Scavs and jackets instead of ammo boxes and safes).
+- Quest items now look like what they are (notebook, envelope, sample...).
 
 ### What it is
 Drinks you find, buy or craft that grant an in-raid ability. The more you use them, the more the perk levels up: challenges are revealed and completing them unlocks **augments** (and their linked **drawbacks**) that you equip in the **Research** screen.

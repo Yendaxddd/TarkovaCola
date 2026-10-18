@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.0.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -43,6 +43,9 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgGuardsAlways;
         internal static ConfigEntry<bool> CfgLeftKeeps;
         internal static ConfigEntry<bool> CfgSalesUnlocked;
+        internal static ConfigEntry<bool> CfgShowIcons;
+        internal static ConfigEntry<bool> CfgSense;
+        internal static ConfigEntry<float> CfgSenseRadius;
         internal static ConfigEntry<float> CfgVoiceVolume;
         internal static ConfigEntry<bool> CfgPowerup;
         internal static ConfigEntry<float> CfgPowerupChance;
@@ -52,37 +55,68 @@ namespace TarkovaCola.Client
         {
             Log = Logger;
             L.Init(Config);
-            CfgDebug = Config.Bind("Debug", "Registro detallado", false,
-                "Escribe en el log cada evento (bebida, bajas, desafios, efectos activados...). Solo escribe cuando pasa algo, no afecta a los FPS");
+            Cfg.Init(Config);
+            CfgDebug = Cfg.Bind("Debug", "Registro detallado", false, "Detailed log",
+                "Escribe en el log cada evento (bebida, bajas, desafios, efectos activados...). Solo escribe cuando pasa algo, no afecta a los FPS",
+                "Writes every event to the log (drinks, kills, challenges, effects...). Only writes when something happens, no FPS cost");
             Dbg.Bind(CfgDebug);
-            CfgShowNotice = Config.Bind("HUD", "Mostrar aviso", true, "Muestra el aviso al consumir una perk o completar un desafío");
-            CfgNoticeSeconds = Config.Bind("HUD", "Duracion del aviso (s)", 4f, "Segundos que se queda el aviso en pantalla");
-            CfgIconSize = Config.Bind("HUD", "Tamano del icono (v2)", 72f, "Tamano del icono permanente (px a 1080p)");
-            CfgIconX = Config.Bind("HUD", "Icono X (desde el centro)", 0f, "Desplazamiento horizontal de la fila de iconos respecto al centro de la pantalla (px a 1080p)");
-            CfgIconY = Config.Bind("HUD", "Icono Y (desde abajo, v2)", 24f, "Distancia al borde inferior (px a 1080p)");
-            CfgRaidPanel = Config.Bind("HUD", "Panel de progreso en raid", true, "Muestra nivel, XP y desafíos pendientes al abrir el menú (ESC) en raid");
-            CfgIgnoreArmPenalty = Config.Bind("Perks", "Ignorar penalizacion de brazos", true,
-                "Con un brazo danado el juego anula el buff de recarga; con esto Speed Cola se mantiene");
-            CfgOpenKey = Config.Bind("Menu", "Tecla para abrir Research", KeyCode.F9, "Atajo alternativo al botón Research del menú principal / Alternative shortcut to the Research button");
+            CfgShowIcons = Cfg.Bind("HUD", "Mostrar iconos de perks", true, "Show perk icons",
+                "Muestra la fila de iconos de tus perks activas abajo en el centro de la pantalla durante la raid",
+                "Shows the row of your active perk icons at the bottom center of the screen during the raid");
+            CfgShowNotice = Cfg.Bind("HUD", "Mostrar aviso", true, "Show notices",
+                "Muestra el aviso al consumir una perk o completar un desafio", "Shows a notice when you drink a perk or complete a challenge");
+            CfgNoticeSeconds = Cfg.Bind("HUD", "Duracion del aviso (s)", 4f, "Notice duration (s)",
+                "Segundos que se queda el aviso en pantalla", "Seconds the notice stays on screen");
+            CfgIconSize = Cfg.Bind("HUD", "Tamano del icono (v2)", 72f, "Icon size",
+                "Tamano de los iconos de perks (px a 1080p)", "Size of the perk icons (px at 1080p)");
+            CfgIconX = Cfg.Bind("HUD", "Icono X (desde el centro)", 0f, "Icons X (from center)",
+                "Desplazamiento horizontal de la fila de iconos respecto al centro de la pantalla (px a 1080p)", "Horizontal offset of the icon row from the screen center (px at 1080p)");
+            CfgIconY = Cfg.Bind("HUD", "Icono Y (desde abajo, v2)", 24f, "Icons Y (from bottom)",
+                "Distancia al borde inferior (px a 1080p)", "Distance from the bottom edge (px at 1080p)");
+            CfgRaidPanel = Cfg.Bind("HUD", "Panel de progreso en raid", true, "In-raid progress panel",
+                "Muestra nivel, XP y desafios pendientes al abrir el menu (ESC) en raid", "Shows level, XP and pending challenges when you open the menu (ESC) in raid");
+            CfgSense = Cfg.Bind("HUD", "Aviso de enemigos con perks", true, "Perk carrier alert",
+                "Avisa cuando te acercas a un enemigo que lleva perks encima (una vez por enemigo)", "Alerts you when you get close to an enemy carrying perks (once per enemy)");
+            CfgSenseRadius = Cfg.Bind("HUD", "Distancia del aviso de enemigos (m)", 40f, "Perk carrier alert range (m)",
+                "Distancia a la que se avisa", "Distance at which the alert triggers", new AcceptableValueRange<float>(5f, 150f));
+            CfgPhdVfx = Cfg.Bind("HUD", "Efecto visual de PHD Flopper", true, "PHD Flopper visual effect",
+                "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion", "Energy ring and sparks when PHD Flopper saves you from a fall or blast");
+            CfgWebVfx = Cfg.Bind("HUD", "Efecto visual de la telarana", true, "Web visual effect",
+                "Telarana en el suelo donde tu granada atrapa enemigos", "Web on the ground where your grenade catches enemies");
+            CfgIgnoreArmPenalty = Cfg.Bind("Perks", "Ignorar penalizacion de brazos", true, "Ignore arm penalty",
+                "Con un brazo danado el juego anula el buff de recarga; con esto Speed Cola se mantiene", "With a damaged arm the game cancels the reload buff; with this Speed Cola still works");
+            CfgClassicBlock = Cfg.Bind("Perks", "Classic: impedir beber perks de mas", true, "Classic: block extra perks",
+                "En modo Classic no deja beber una perk que ya llevas ni una de mas. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo",
+                "In Classic mode, blocks drinking a perk you already have or one too many. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
+            CfgLeftKeeps = Cfg.Bind("Perks", "Abandonar la raid no cuenta como muerte", true, "Leaving is not dying",
+                "Si sales de la raid o te desconectas (p. ej. con mods que deshacen la raid al desconectarse), no pierdes tus perks de Clasico ni las Eternas",
+                "If you leave or disconnect (e.g. with mods that undo the raid on disconnect), you keep your Classic and Eternal perks");
+            CfgHandScale = Cfg.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Bottle size in hand",
+                "Multiplicador del tamano del modelo de la perk al beberla", "Size multiplier of the perk model while drinking");
+            CfgOpenKey = Cfg.Bind("Menu", "Tecla para abrir Research", KeyCode.F9, "Research shortcut",
+                "Atajo alternativo al boton Research del menu principal", "Alternative shortcut to the Research button");
+            CfgJingle = Cfg.Bind("Audio", "Cancion al beber", true, "Jingle when drinking",
+                "Reproduce la cancion de la perk al beberla", "Plays the perk jingle when drinking");
+            CfgJingleVolume = Cfg.Bind("Audio", "Volumen de la cancion", 0.6f, "Jingle volume", "Volumen 0-1", "Volume 0-1", new AcceptableValueRange<float>(0f, 1f));
+            CfgVoice = Cfg.Bind("Audio", "Voz del locutor", true, "Announcer voice",
+                "Voz de 'Random Perk' y 'Eternal Perk'", "Announcer voice for 'Random Perk' and 'Eternal Perk'");
+            CfgVoiceVolume = Cfg.Bind("Audio", "Volumen de la voz", 0.9f, "Announcer volume", "Volumen 0-1", "Volume 0-1", new AcceptableValueRange<float>(0f, 1f));
+            CfgPowerup = Cfg.Bind("Powerup", "Perk aleatoria al matar", true, "Random perk on kill",
+                "Al matar puede caer una botella flotante que da una perk al azar (como mucho una por raid)", "Kills can drop a floating bottle that gives a random perk (at most one per raid)");
+            CfgPowerupChance = Cfg.Bind("Powerup", "Probabilidad por baja (%)", 4f, "Chance per kill (%)",
+                "Probabilidad de que caiga al matar a un enemigo", "Chance that it drops when you kill an enemy", new AcceptableValueRange<float>(0f, 100f));
+            CfgSwapWindow = Cfg.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Weapon swap window (s)",
+                "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas", "Quick Hands: time after swapping weapons during which kills count");
+            CfgPosKey = Cfg.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "Copy position key",
+                "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones)", "In raid, copies the map and your coordinates to the clipboard (to place quests)");
+            CfgGuardsAlways = Cfg.Bind("Debug", "Guardias siempre", false, "Always spawn guards",
+                "Hace aparecer a los Embotelladores de las misiones de este mapa aunque la mision no este en marcha (para probar)",
+                "Spawns the quest Bottlers on this map even if the quest is not started (for testing)");
+            CfgSalesUnlocked = Cfg.Bind("Debug", "Perks a la venta sin misiones", false, "Perks for sale without quests",
+                "Therapist vende todas las perks aunque no hayas hecho sus misiones", "Therapist sells every perk even without their quests");
+            CfgSalesUnlocked.SettingChanged += (s, e) => Story.SyncSales();
             Instance = this;
             Player.OnPlayerDeadStatic += PerkFx.OnKill;        // bajas del jugador (Stamin-Up y las perks nuevas)
-            CfgJingle = Config.Bind("Audio", "Cancion al beber", true, "Reproduce la cancion de Speed Cola al beberla / Play the jingle when drinking");
-            CfgJingleVolume = Config.Bind("Audio", "Volumen de la cancion", 0.6f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
-            CfgPhdVfx = Config.Bind("HUD", "Efecto visual de PHD Flopper", true, "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion / Energy ring and sparks when PHD Flopper saves you from a fall or blast");
-            CfgWebVfx = Config.Bind("HUD", "Efecto visual de la telarana", true, "Telarana en el suelo donde tu granada atrapa enemigos / Web on the ground where your grenade catches enemies");
-            CfgClassicBlock = Config.Bind("Perks", "Classic: impedir beber perks de mas", true,
-                "En modo Classic no deja beber una perk que ya llevas ni una 6.a. Si da problemas, desactivalo: se podra beber y la botella sobrante se devuelve por correo / In Classic mode, blocks drinking a perk you already have or a 6th one. If it causes problems, turn it off: you can drink it and the extra bottle is returned by mail");
-            CfgPosKey = Config.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones) / In raid, copies the map and your coordinates to the clipboard (to place quests)");
-            CfgLeftKeeps = Config.Bind("Perks", "Abandonar la raid no cuenta como muerte", true, "Si sales de la raid o te desconectas (p. ej. con mods que deshacen la raid al desconectarse), no pierdes tus perks de Clasico ni las Eternas / Leaving or disconnecting does not count as dying: you keep your Classic and Eternal perks");
-            CfgGuardsAlways = Config.Bind("Debug", "Guardias siempre", false, "Hace aparecer a los Embotelladores de las misiones de este mapa aunque la mision no este en marcha (para probar) / Spawns the quest Bottlers on this map even if the quest is not started (for testing)");
-            CfgSalesUnlocked = Config.Bind("Debug", "Perks a la venta sin misiones", false, "Therapist vende todas las perks aunque no hayas hecho sus misiones / Therapist sells every perk even without their quests");
-            CfgSalesUnlocked.SettingChanged += (s, e) => Story.SyncSales();
-            CfgVoice = Config.Bind("Audio", "Voz del locutor", true, "Voz de 'Random Perk' y 'Eternal Perk' / Announcer voice for 'Random Perk' and 'Eternal Perk'");
-            CfgVoiceVolume = Config.Bind("Audio", "Volumen de la voz", 0.9f, new ConfigDescription("Volumen 0-1 / Volume 0-1", new AcceptableValueRange<float>(0f, 1f)));
-            CfgPowerup = Config.Bind("Powerup", "Perk aleatoria al matar", true, "Al matar puede caer una botella flotante que da una perk al azar (como mucho una por raid) / Kills can drop a floating bottle that gives a random perk (at most one per raid)");
-            CfgPowerupChance = Config.Bind("Powerup", "Probabilidad por baja (%)", 4f, new ConfigDescription("Probabilidad de que caiga al matar a un enemigo / Chance per kill", new AcceptableValueRange<float>(0f, 100f)));
-            CfgHandScale = Config.Bind("Perks", "Tamano de la lata en la mano", 1.35f, "Multiplicador del tamaño del modelo de la Speed Cola al beberla / Hand model size multiplier");
-            CfgSwapWindow = Config.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas");
 
             Hud.Init(Path.GetDirectoryName(Info.Location));
 
@@ -94,7 +128,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v2.0.0) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v2.1.0) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
@@ -102,6 +136,8 @@ namespace TarkovaCola.Client
             if (!InRaidWorld && Input.GetKeyDown(CfgOpenKey.Value)) { Dbg.Log("MENU", "tecla " + CfgOpenKey.Value + " pulsada"); ResearchScreen.Toggle(); }
             if (InRaid && Input.GetKeyDown(CfgPosKey.Value)) CopyPosition();
             Tracker.Tick();
+            PerkSense.Tick();
+            Cfg.Tick();
             Hud.TickRaidPanel();
             PerkService.TickSave();      // el progreso se envia al servidor unos segundos despues del ultimo cambio
         }

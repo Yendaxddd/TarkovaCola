@@ -21,7 +21,7 @@ namespace TarkovaCola.Server
         public string Name { get; init; } = "Tarkova-Cola";
         public string Author { get; init; } = "Yendaxddd";
         public List<string> Contributors { get; init; } = new List<string>();
-        public SptVersion Version { get; init; } = new SptVersion(2, 0, 0);
+        public SptVersion Version { get; init; } = new SptVersion(2, 1, 0);
         public SptRange SptVersion { get; init; } = new SptRange("~4.1.0");
         public bool HasPrepatcher { get; init; } = false;
         public List<string> Incompatibilities { get; init; } = new List<string>();
@@ -41,8 +41,6 @@ namespace TarkovaCola.Server
         public string DescEn, DescEs;
         public int GpPrice;               // precio en GP Coin
         public string Bundle;             // ruta del bundle del item (suelo/inventario/icono)
-        // probabilidad aproximada de que UN objeto sacado de cada sitio sea esta perk (0 = no aparece ahi)
-        public double AmmoCrate, Safe, Rogue, Killa;
     }
 
     internal static class Perks
@@ -78,7 +76,6 @@ namespace TarkovaCola.Server
                 "De alguna forma, beberla hace que tu cuerpo se llene de energia y te da la ventaja de un nino con TDAH " +
                 "y pantallas sin supervision. Bebela! A ver que es lo peor que puede pasar!\n\n" +
                 "Velocidad de recarga x1.5 el resto de la raid.",
-            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
         internal static readonly PerkDef StaminUp = new PerkDef
@@ -102,7 +99,6 @@ namespace TarkovaCola.Server
                 "Efectos secundarios: adelantar a tu propio escuadron, olvidar donde esta la extraccion y creer sin motivo que las escaleras son opcionales. " +
                 "Bebela! A ver hasta donde te llevan esas piernas!\n\n" +
                 "Estamina de piernas x1.5 el resto de la raid.",
-            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
         internal static readonly PerkDef Juggernog = new PerkDef
@@ -124,7 +120,6 @@ namespace TarkovaCola.Server
                 "Efectos secundarios: abrir puertas con la frente, ignorar la palabra \"cobertura\" y una confianza profunda e irracional en tu caja torácica. " +
                 "¡Bébela! ¡A ver cuántas balas hacen falta para que cambies de opinión!\n\n" +
                 "Daño recibido -33% el resto de la raid.",
-            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
         internal static readonly PerkDef PhdFlopper = new PerkDef
@@ -146,7 +141,6 @@ namespace TarkovaCola.Server
                 "Efectos secundarios: saltar desde cualquier sitio para ver qué pasa, abrazar granadas activas y llamar \"exagerados\" a los moretones. " +
                 "¡Bébela! ¡A caer con confianza!\n\n" +
                 "Inmune al daño por caídas y explosiones el resto de la raid.",
-            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
         internal static readonly PerkDef WidowsWine = new PerkDef
@@ -168,7 +162,6 @@ namespace TarkovaCola.Server
                 "Efectos secundarios: tejer redes mientras duermes, un amor poco sano por las esquinas y unas ganas repentinas de decir \"pasa a mi salón\". " +
                 "¡Bébela! ¡Que vengan a ti!\n\n" +
                 "Tus granadas atrapan en telarañas a los enemigos a menos de 10 m: -60% de velocidad de movimiento durante 6 segundos.",
-            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
         internal static readonly PerkDef Deadshot = new PerkDef
@@ -190,7 +183,6 @@ namespace TarkovaCola.Server
                 "Efectos secundarios: entrecerrar los ojos ante todo, contar las respiraciones en voz alta y unas ganas irresistibles de cantar tus disparos. " +
                 "¡Bébela! ¡Apunta pequeño, falla pequeño!\n\n" +
                 "Apuntas un 15% más rápido y el balanceo del arma baja un 25% el resto de la raid.",
-            AmmoCrate = 0.012, Safe = 0.06, Rogue = 0.04, Killa = 0.15,
         };
 
         internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };

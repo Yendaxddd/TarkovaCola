@@ -2,6 +2,7 @@
   "items": [
     {
       "id": "6a1c00000000000000000f01",
+      "clone": "591093bb86f7747caa7bb2ee",
       "nameEn": "Sealed envelope",
       "shortEn": "Envelope",
       "descEn": "A sealed envelope with no sender. It smells faintly of cola, and something inside rattles like a bottle cap.",
@@ -11,6 +12,7 @@
     },
     {
       "id": "6a1c00000000000000000f02",
+      "clone": "66c0b39ca1f68fcc1d0c0cc3",
       "nameEn": "Laboratory notebook",
       "shortEn": "Notebook",
       "descEn": "A water-stained notebook full of formulas, dosages and a coffee ring shaped like a bottle cap.",
@@ -20,6 +22,7 @@
     },
     {
       "id": "6a1c00000000000000000f03",
+      "clone": "6389c8c5dbfd5e4b95197e6b",
       "nameEn": "Bottling schematics",
       "shortEn": "Schematics",
       "descEn": "Folded blueprints of a small bottling line. Someone drew a skull with a straw in the corner.",
@@ -29,6 +32,7 @@
     },
     {
       "id": "6a1c00000000000000000f04",
+      "clone": "5ae9a0dd86f7742e5f454a05",
       "nameEn": "Speed Cola shipment manifest",
       "shortEn": "Manifest",
       "descEn": "Property of the Bottlers. Contents: everything needed to make Speed Cola.",
@@ -38,6 +42,7 @@
     },
     {
       "id": "6a1c00000000000000000f05",
+      "clone": "5ae9a25386f7746dd946e6d9",
       "nameEn": "Stamin-Up route map",
       "shortEn": "Route map",
       "descEn": "Property of the Bottlers. Contents: everything needed to make Stamin-Up.",
@@ -47,6 +52,7 @@
     },
     {
       "id": "6a1c00000000000000000f06",
+      "clone": "669fac549b0ce3feae01a137",
       "nameEn": "Juggernog lab sample",
       "shortEn": "Sample",
       "descEn": "Property of the Bottlers. Contents: everything needed to make Juggernog.",
@@ -56,6 +62,7 @@
     },
     {
       "id": "6a1c00000000000000000f07",
+      "clone": "66c0b90c8398582e4b0c2e27",
       "nameEn": "PHD Flopper test log",
       "shortEn": "Test log",
       "descEn": "Property of the Bottlers. Contents: everything needed to make PHD Flopper.",
@@ -65,6 +72,7 @@
     },
     {
       "id": "6a1c00000000000000000f08",
+      "clone": "66a0e523e749756c920d02d0",
       "nameEn": "Widow's Wine web canister",
       "shortEn": "Canister",
       "descEn": "Property of the Bottlers. Contents: everything needed to make Widow's Wine.",
@@ -74,6 +82,7 @@
     },
     {
       "id": "6a1c00000000000000000f09",
+      "clone": "63989ced706b793c7d60cfef",
       "nameEn": "Deadshot Daiquiri scope log",
       "shortEn": "Scope log",
       "descEn": "Property of the Bottlers. Contents: everything needed to make Deadshot Daiquiri.",
@@ -83,6 +92,7 @@
     },
     {
       "id": "6a1c00000000000000000f0a",
+      "clone": "679b992329acd1f2f60985a5",
       "nameEn": "Master formula",
       "shortEn": "Formula",
       "descEn": "The original perk-a-cola formula, signed by a doctor whose name has been scratched out. It is still sticky.",

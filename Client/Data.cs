@@ -51,6 +51,11 @@ namespace TarkovaCola.Client
 
         private static readonly Dictionary<string, string[]> S = new Dictionary<string, string[]>
         {
+            // ---- aviso de enemigos con perks ----
+            ["sense.title"]     = new[] { "PERK-A-COLA CERCA", "PERK-A-COLA NEARBY" },
+            ["sense.sub"]       = new[] { "Un enemigo cercano lleva {0}", "A nearby enemy is carrying {0}" },
+            ["sense.guard"]     = new[] { "Un Embotellador anda cerca", "A Bottler is close by" },
+
             // ---- pantalla: general ----
             ["augments"]        = new[] { "MEJORAS", "AUGMENTS" },
             ["title.progress"]  = new[] { "PROGRESO", "PROGRESS" },

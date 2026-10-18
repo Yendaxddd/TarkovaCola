@@ -20,6 +20,19 @@ STORY = ROOT / "Server" / "ModFiles" / "story.json"
 SPT_DB = ROOT.parent / "SPT_Runtime" / "SPT_Data" / "database"
 
 SKIER, THERAPIST = "58330581ace78e27b8b10cee", "54cb57776803fa99248b456e"
+# aspecto de cada objeto de mision: se clona un objeto parecido del juego (sobre, cuaderno, muestra...)
+ITEM_LOOKS = {
+    "f01": "591093bb86f7747caa7bb2ee",  # Sealed letter
+    "f02": "66c0b39ca1f68fcc1d0c0cc3",  # Lab journal
+    "f03": "6389c8c5dbfd5e4b95197e6b",  # TerraGroup "Blue Folders" materials
+    "f04": "5ae9a0dd86f7742e5f454a05",  # Goshan cargo manifests
+    "f05": "5ae9a25386f7746dd946e6d9",  # OLI cargo route documents
+    "f06": "669fac549b0ce3feae01a137",  # Chemical sample
+    "f07": "66c0b90c8398582e4b0c2e27",  # Pilot logbook
+    "f08": "66a0e523e749756c920d02d0",  # Chemical container
+    "f09": "63989ced706b793c7d60cfef",  # Informant's journal
+    "f0a": "679b992329acd1f2f60985a5",  # Labrys research notes
+}
 ROUBLES, GP = "5449016a4bdc2d6f028b456f", "5d235b4d86f7742e017bc88a"
 NUTRITION = 8                                                     # Unidad de nutricion del hideout
 TARCOLA = "57514643245977207f2c2d09"
@@ -404,7 +417,7 @@ for m in M:
         s["tc"].update({"boss": True, "bossPerks": b["perks"]})
         s["source"] = "Tarkova-Cola mision %d: el Barman (el primero del grupo) y su escolta" % n
 
-    story_items.append({"id": item_id, "nameEn": m["en"]["item"][1], "shortEn": m["en"]["item"][0], "descEn": m["en"]["item"][2],
+    story_items.append({"id": item_id, "clone": ITEM_LOOKS[item_id[-3:]], "nameEn": m["en"]["item"][1], "shortEn": m["en"]["item"][0], "descEn": m["en"]["item"][2],
                         "nameEs": m["es"]["item"][1], "shortEs": m["es"]["item"][0], "descEs": m["es"]["item"][2]})
 
 story = {
@@ -417,7 +430,7 @@ story = {
 }
 
 pack = {"name": "TarkovaCola", "requires": "~1.3.5", "description": {"en": "Tarkova-Cola: the Bottlers storyline", "ch": "Tarkova-Cola"},
-        "author": "Yendaxddd", "version": "2.0.0"}
+        "author": "Yendaxddd", "version": "2.1.0"}
 
 
 def write(path, obj):
