@@ -376,7 +376,7 @@ for m in M:
 
     quests[q] = {
         "_id": q, "QuestName": "tarkovacola_%02d" % n, "traderId": m["trader"], "location": "any",
-        "image": "/files/quest/icon/5788d151d53a280a8e8798cc.jpg", "type": "PickUp", "side": "Pmc",
+        "image": "/files/quest/icon/tarkovacola_q%02d.png" % n, "type": "PickUp", "side": "Pmc",
         "isKey": False, "restartable": False, "instantComplete": False, "secretQuest": False, "notDisplayedQuest": False,
         "canShowNotificationsInGame": True, "status": 0,
         **{k: q + " " + k for k in ("name", "description", "note", "successMessageText", "failMessageText", "startedMessageText",
@@ -430,7 +430,7 @@ story = {
 }
 
 pack = {"name": "TarkovaCola", "requires": "~1.3.5", "description": {"en": "Tarkova-Cola: the Bottlers storyline", "ch": "Tarkova-Cola"},
-        "author": "Yendaxddd", "version": "2.1.0"}
+        "author": "Yendaxddd", "version": "2.2.0"}
 
 
 def write(path, obj):
@@ -446,5 +446,46 @@ write(OUT / "locales" / "es.json", locales["es"])
 write(OUT / "zones" / "TarkovaCola.json", zones)
 write(ROOT / "Server" / "ModFiles" / "guards.json", spawns)          # los hace aparecer el cliente del mod (VisitAPI pedia el bando equivocado)
 write(STORY, story)
+
+# ---- imagenes de las misiones (Server/ModFiles/images/tarkovacola_qNN.png; el servidor las sirve en /files/quest/icon/) ----
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+PERK_COLOR = {"speedcola": (40, 170, 70), "staminup": (230, 150, 30), "juggernog": (200, 30, 40), "phdflopper": (140, 60, 200),
+              "widowswine": (120, 20, 60), "deadshot": (200, 170, 40)}
+IMG_DIR = ROOT / "Server" / "ModFiles" / "images"
+IMG_DIR.mkdir(parents=True, exist_ok=True)
+W, H = 628, 354                                               # el doble del tamano del juego (314x177): se ve nitida
+font_big = ImageFont.truetype("C:/Windows/Fonts/impact.ttf", 46)
+font_small = ImageFont.truetype("C:/Windows/Fonts/bahnschrift.ttf", 24)
+for m in M:
+    perks = m["perks"] if isinstance(m.get("perks"), list) else m.get("recipes") or list(PERK_ITEM)
+    if m.get("final"): perks = list(PERK_ITEM)
+    c1 = PERK_COLOR[perks[0]]; c2 = PERK_COLOR[perks[-1]]
+    img = Image.new("RGB", (W, H))
+    px = img.load()
+    for y in range(H):
+        for x in range(W):
+            t = x / W
+            k = 0.35 + 0.35 * (1 - y / H)
+            px[x, y] = tuple(int((c1[i] * (1 - t) + c2[i] * t) * k) for i in range(3))
+    # vineta
+    shade = Image.new("L", (W, H), 0); ImageDraw.Draw(shade).rectangle([0, int(H * 0.62), W, H], fill=170)
+    img = Image.composite(Image.new("RGB", (W, H), (10, 10, 12)), img, shade.filter(ImageFilter.GaussianBlur(30)))
+    # iconos de las perks
+    size = 150 if len(perks) <= 2 else (110 if len(perks) <= 4 else 92)
+    gap = 14; total = len(perks) * size + (len(perks) - 1) * gap; x0 = (W - total) // 2
+    for i, p in enumerate(perks):
+        ic = Image.open(ROOT / "Client" / "assets" / (p + "_icon.png")).convert("RGBA").resize((size, size), Image.LANCZOS)
+        glow = Image.new("RGBA", (size + 40, size + 40), (0, 0, 0, 0)); glow.paste((255, 255, 255, 70), (20, 20), ic)
+        img.paste(glow.filter(ImageFilter.GaussianBlur(10)), (x0 + i * (size + gap) - 20, 30 - 20), glow.filter(ImageFilter.GaussianBlur(10)))
+        img.paste(ic, (x0 + i * (size + gap), 30), ic)
+    d = ImageDraw.Draw(img)
+    title = m["en"]["name"].upper()
+    tw = d.textlength(title, font=font_big)
+    d.text(((W - tw) / 2, H - 92), title, font=font_big, fill=(245, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
+    sub = "TARKOVA-COLA  ·  %d / %d" % (m["n"], len(M))
+    sw = d.textlength(sub, font=font_small)
+    d.text(((W - sw) / 2, H - 38), sub, font=font_small, fill=(200, 190, 170))
+    img.save(IMG_DIR / ("tarkovacola_q%02d.png" % m["n"]))
+print("imagenes de mision ->", IMG_DIR)
 for m in M: print("mision %2d %-22s %-14s %s" % (m["n"], m["es"]["name"], m["map"], m["at"]))
 print("ok ->", OUT, "y", STORY)

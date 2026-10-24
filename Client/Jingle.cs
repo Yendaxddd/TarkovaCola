@@ -31,6 +31,40 @@ namespace TarkovaCola.Client
             PlayFile(file, Plugin.CfgVoiceVolume.Value, delay);
         }
 
+        // Efecto de sonido con duracion maxima (volumen de las canciones, aunque las canciones esten apagadas).
+        // Cada uno suena en su propia fuente para poder cortarlo sin cortar lo demas: a los 'maxSeconds' se desvanece en medio segundo.
+        public static void Sfx(string file, float maxSeconds)
+        {
+            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgJingleVolume.Value, maxSeconds));
+        }
+
+        private static IEnumerator SfxRoutine(string file, float volume, float maxSeconds)
+        {
+            if (!Valid(file))
+            {
+                if (_loading.Add(file)) yield return Plugin.Instance.StartCoroutine(Load(file, 0f, 0f, false));
+                else { float wait = 0f; while (_loading.Contains(file) && wait < 5f) { wait += Time.unscaledDeltaTime; yield return null; } }
+            }
+            AudioClip clip;
+            if (!_clips.TryGetValue(file, out clip) || clip == null) yield break;
+            var go = new GameObject("TarkovaCola_Sfx");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            var src = go.AddComponent<AudioSource>();
+            src.spatialBlend = 0f; src.playOnAwake = false; src.loop = false; src.priority = 40;
+            try { if (Singleton<BetterAudio>.Instantiated) src.outputAudioMixerGroup = Singleton<BetterAudio>.Instance.MasterMixerGroup; } catch { }
+            src.clip = clip; src.volume = Mathf.Clamp01(volume);
+            src.Play();
+            Dbg.Log("AUDIO", file + " (" + clip.length.ToString("0.0") + " s, se corta a los " + maxSeconds + " s)");
+            float t = 0f, fadeAt = Mathf.Max(0f, maxSeconds - 0.5f);
+            while (src != null && src.isPlaying && t < maxSeconds)
+            {
+                t += Time.unscaledDeltaTime;
+                if (t > fadeAt) src.volume = Mathf.Clamp01(volume) * Mathf.Clamp01((maxSeconds - t) / 0.5f);
+                yield return null;
+            }
+            if (go != null) UnityEngine.Object.Destroy(go);
+        }
+
         // Carga el archivo con antelacion (asi suena sin retraso cuando toca y se conoce lo que dura)
         public static void Preload(string file)
         {
@@ -105,6 +139,12 @@ namespace TarkovaCola.Client
         // Se reproduce en una fuente de audio propia (2D) conectada al mezclador del juego: asi respeta el volumen general y, como se usa
         // PlayOneShot, varios sonidos pueden sonar a la vez (beber dos perks seguidas ya no corta la cancion anterior en seco).
         private static AudioSource _src;
+
+        // Baja el volumen de lo que suena mientras habla otro locutor (Arena Mode)
+        internal static void Duck(bool on)
+        {
+            if (_src != null) _src.volume = on ? 0.35f : 1f;
+        }
 
         private static AudioSource Source()
         {

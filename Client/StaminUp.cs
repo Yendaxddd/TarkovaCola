@@ -102,7 +102,6 @@ namespace TarkovaCola.Client
             {
                 _distance -= 100f;
                 PerkService.AddProgress("st_feet", 100);
-                PerkService.AddProgress("st_recover", 100);
                 PerkService.AddStat("staminup_m", 100);
                 if (PerkService.Stat("staminup_m") >= 20000) Achievements.Unlock("st_marathon");
             }

@@ -90,7 +90,7 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "st_shooter", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 15 },
                 new AugDef { Id = "st_wind",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },
                 new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 , Unit = ProgUnit.Meters },
-                new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10000 , Unit = ProgUnit.Meters },
+                new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10 },
                 new AugDef { Id = "st_land",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 3 },
                 new AugDef { Id = "st_lungs",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 20 },
                 new AugDef { Id = "st_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
@@ -143,7 +143,7 @@ namespace TarkovaCola.Client
             {
                 new AugDef { Id = "pf_absorb",  Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 500 },    // curas el 25% del dano de explosion que causas
                 new AugDef { Id = "pf_shock",   Kind = NodeKind.Major,   Seq = 6, Lvl = 4, Goal = 5 },      // granadas: doble radio y mitad de mecha
-                new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 2000 , Unit = ProgUnit.Meters },   // aterrizar no te frena
+                new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },   // aterrizar no te frena
                 new AugDef { Id = "pf_stop",    Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 300 , Unit = ProgUnit.Seconds },    // quieto: estamina x2 de rapida
                 new AugDef { Id = "pf_ears",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // inmune a la contusion
                 new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 5000 , Unit = ProgUnit.Meters },   // inmune a alambre de puas y barro
@@ -170,7 +170,7 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "ww_burst",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 3 },      // 100 de dano en 3 s: gastas una granada y atrapas
                 new AugDef { Id = "ww_venom",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 5 },      // los atrapados tambien quedan aturdidos
                 new AugDef { Id = "ww_quick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },     // granadas mas rapidas de lanzar
-                new AugDef { Id = "ww_sticky",  Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 15 },     // granadas mas lejos
+                new AugDef { Id = "ww_sticky",  Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10 },     // granadas mas lejos
                 new AugDef { Id = "ww_bite",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 4, Goal = 10 },     // si tu granada mata, te la devuelven
                 new AugDef { Id = "ww_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },

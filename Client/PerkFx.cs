@@ -59,6 +59,7 @@ namespace TarkovaCola.Client
         internal const float AnimSpeed = 1.75f;           // Sprint Shooter
 
         // --- estado dinamico (por raid) ---
+        internal static float LastSprint = -100f;          // ultimo momento en que el jugador esprintaba (desafio de Quick Recovery)
         internal static float SwayMult = 1f;              // balanceo total del arma (lo lee JitterPatch)
         internal static float Speed;                      // velocidad del jugador (m/s, suavizada): "se esta moviendo"
         private static bool _wasBreathD;
@@ -122,13 +123,14 @@ namespace TarkovaCola.Client
         internal static void Tick(Player me)
         {
             var hc = me.HealthController;
-            if (!Perks.AnyActive || hc == null || !hc.IsAlive) { SwayMult = 1f; ResetAnim(); return; }
+            if (!Perks.AnyActive || hc == null || !hc.IsAlive) { SwayMult = 1f; ResetAnim(); Deadshot.TickDeadAim(me); return; }
             var phys = me.Physical;
             if (phys == null || phys.Stamina == null) return;
             float dt = Time.deltaTime, now = Time.time;
             var stamina = phys.Stamina;
             float cap = stamina.TotalCapacity;
             bool sprinting = phys.Sprinting;
+            if (sprinting) LastSprint = now;
             if (me.ProceduralWeaponAnimation != null) Perk.MyBreath = me.ProceduralWeaponAnimation.Breath;     // lo usa JitterPatch
 
             // ---- movimiento: distancia recorrida y tiempo quieto (desafios de PHD Flopper) ----
@@ -152,7 +154,6 @@ namespace TarkovaCola.Client
                 while (_travel >= 100f)
                 {
                     _travel -= 100f;
-                    PerkService.AddProgress("pf_soles", 100);
                     PerkService.AddProgress("pf_terrain", 100);
                 }
                 if (still)
@@ -209,14 +210,18 @@ namespace TarkovaCola.Client
             if (Deadshot.Active) sway *= Deadshot.SwayFactor(me, Deadshot.Aiming(me));      // Deadshot: menos balanceo (Stillness, Shaky Hands)
             sway *= Synergy.SwayFactor;                                                       // sinergia PHD Flopper + Deadshot
             SwayMult = sway;
+            Deadshot.TickDeadAim(me);                                                         // Dead Aim: arma fija en el centro
+            Deadshot.TickStillness(me, Time.deltaTime);                                        // Stillness: recuperas agachado o tumbado
 
             // ---- ruido de pasos: Clanky Plates (12 m) y Hard Stomp (15 m) mientras te mueves ----
             if (speed > 0.8f && now >= _nextStep)
             {
-                float r = 0f;
-                if (Perk.Has("dj_clank")) r = Mathf.Max(r, ClankRadius);
-                if (Perk.Has("dp_stomp")) r = Mathf.Max(r, StompRadius);
-                if (Perk.Has("dd_d_squeak")) r = Mathf.Max(r, Deadshot.SqueakRadius);
+                // varias desventajas de pasos se acumulan: la mas fuerte y +5 m por cada una de las demas
+                float r = 0f; int n = 0;
+                if (Perk.Has("dj_clank")) { r = Mathf.Max(r, ClankRadius); n++; }
+                if (Perk.Has("dp_stomp")) { r = Mathf.Max(r, StompRadius); n++; }
+                if (Perk.Has("dd_d_squeak")) { r = Mathf.Max(r, Deadshot.SqueakRadius); n++; }
+                if (n > 1) r += (n - 1) * 5f;
                 if (r > 0f)
                 {
                     _nextStep = now + StepInterval;
@@ -240,7 +245,7 @@ namespace TarkovaCola.Client
         {
             // hambre y sed extra: Slow Metabolism (ambas), Hungry Spider (energia), Dry Throat (hidratacion)
             bool m = Perk.Has("dj_metab");
-            float e = (m ? Metabolism : 0f) + (Perk.Has("dw_hungry") ? Metabolism : 0f) + (Perk.Has("dd_d_sugar") ? Metabolism : 0f);
+            float e = (m ? Metabolism : 0f) + (Perk.Has("dw_hungry") ? Metabolism : 0f) + (Perk.Has("dd_d_sugar") ? Metabolism : 0f) + (Perk.Has("dd_d_strain") ? Deadshot.StrainEnergy : 0f);
             float h = (m ? Metabolism : 0f) + (Perk.Has("dw_dry") ? Metabolism : 0f) + (Perk.Has("dd_d_lime") ? Metabolism : 0f);
             if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(-BaseEnergyRate * e * step);
             if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(-BaseHydrationRate * h * step);
@@ -302,12 +307,14 @@ namespace TarkovaCola.Client
             try
             {
                 var me = Plugin.Me;
+                if (me != null && victim == me && ArenaCompat.InArena) { ArenaCompat.OnDeath(); return; }      // Arena: no cuenta para el perfil
                 if (me != null && victim == me) { ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }      // (morir de verdad si cuenta)       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
                 StaminUp.OnPlayerDead(victim, aggressor, info, part);
                 if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
                 ClassicChallenge.OnKill(me, victim, info, part);                          // desafio de la raid (modo Classic)
                 AchTrack.OnKillAny(me, victim, part);                                     // logros de bajas
                 Powerup.OnKill(me, victim);                                               // puede caer una perk aleatoria
+                if (Perks.IsActive(StaminUp.Id) && Time.time - LastSprint <= 3f) PerkService.AddProgress("st_recover");      // Quick Recovery: baja justo despues de esprintar
                 if (!Perks.AnyActive) return;
 
                 bool boss = IsBoss(victim);
@@ -347,6 +354,7 @@ namespace TarkovaCola.Client
                     Plugin.Log.LogInfo("Fin de raid por abandono/desconexion: se conservan las perks de Clasico y las Eternas");
                     return;
                 }
+                if (ArenaCompat.InArena) { ArenaCompat.OnRaidEnd(); return; }       // partida de Arena: nada de esto cuenta para el perfil
                 Juggernog.OnRaidEnd(alive);
                 AchTrack.OnRaidEnd(alive);
                 ClassicMode.OnRaidEnd(status);
@@ -634,8 +642,9 @@ namespace TarkovaCola.Client
         }
 
         [HarmonyPostfix]
-        private static void Postfix(Grenade __instance, string profileId)
+        private static void Postfix(Grenade __instance, string profileId, ThrowWeap throwWeap)
         {
+            Creatura.OnThrown(__instance, profileId, throwWeap);          // le creatura: modelo y sonido
             try
             {
                 var me = Plugin.Me;

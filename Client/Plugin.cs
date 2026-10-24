@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.1.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.2.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -44,6 +44,10 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgLeftKeeps;
         internal static ConfigEntry<bool> CfgSalesUnlocked;
         internal static ConfigEntry<bool> CfgShowIcons;
+        internal static ConfigEntry<bool> CfgJr;
+        internal static ConfigEntry<bool> CfgArenaZombies;
+        internal static ConfigEntry<int> CfgArenaWaves;
+        internal static ConfigEntry<float> CfgArenaProgress;
         internal static ConfigEntry<bool> CfgSense;
         internal static ConfigEntry<float> CfgSenseRadius;
         internal static ConfigEntry<float> CfgVoiceVolume;
@@ -115,6 +119,18 @@ namespace TarkovaCola.Client
             CfgSalesUnlocked = Cfg.Bind("Debug", "Perks a la venta sin misiones", false, "Perks for sale without quests",
                 "Therapist vende todas las perks aunque no hayas hecho sus misiones", "Therapist sells every perk even without their quests");
             CfgSalesUnlocked.SettingChanged += (s, e) => Story.SyncSales();
+            CfgJr = Cfg.Bind("???", "??? - POR NADA DEL MUNDO ACTIVES ESTO, O VAYAS AL FLEA MARKET Y BUSQUES le creatura", false,
+                "??? - DO NOT TURN THIS ON FOR ANY REASON, OR GO TO THE FLEA MARKET AND SEARCH \"le creatura\"",
+                "...", "...", null,
+                "??? - POR NADA DEL MUNDO ACTIVES ESTO, O VAYAS AL FLEA MARKET Y BUSQUES \"le creatura\"");
+            CfgJr.SettingChanged += (s, e) => Creatura.SyncSale();
+            CfgArenaZombies = Cfg.Bind("Arena", "Soporte del modo Zombies", true, "Zombies mode support",
+                "Con Arena Mode: en su modo Zombies cae una perk aleatoria cada pocas oleadas y las perks ganan progreso (lento). Las partidas de Arena nunca cuentan para tu perfil",
+                "With Arena Mode: its Zombies mode drops a random perk every few waves and perks gain (slow) progress. Arena matches never count for your profile");
+            CfgArenaWaves = Cfg.Bind("Arena", "Perk aleatoria cada N oleadas", 5, "Random perk every N waves",
+                "Cada cuantas oleadas superadas aparece la botella de perk aleatoria", "How many cleared waves between random perk bottles", new AcceptableValueRange<int>(1, 50));
+            CfgArenaProgress = Cfg.Bind("Arena", "Ritmo de progreso", 0.25f, "Progress rate",
+                "Multiplicador del XP y del avance de los desafios de las perks en Zombies (1 = normal)", "Multiplier for perk XP and challenge progress in Zombies (1 = normal)", new AcceptableValueRange<float>(0f, 1f));
             Instance = this;
             Player.OnPlayerDeadStatic += PerkFx.OnKill;        // bajas del jugador (Stamin-Up y las perks nuevas)
 
@@ -128,7 +144,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v2.1.0) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v2.2.0) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
@@ -137,7 +153,9 @@ namespace TarkovaCola.Client
             if (InRaid && Input.GetKeyDown(CfgPosKey.Value)) CopyPosition();
             Tracker.Tick();
             PerkSense.Tick();
+            ArenaCompat.Tick();
             Cfg.Tick();
+            if (!InRaid) { try { Achievements.FlushNative(); } catch (Exception e) { Log.LogWarning("logros (menu): " + e.Message); } }
             Hud.TickRaidPanel();
             PerkService.TickSave();      // el progreso se envia al servidor unos segundos despues del ultimo cambio
         }
@@ -249,7 +267,7 @@ namespace TarkovaCola.Client
                 _crashSteps = 0;
                 _initTime = _nextInv = Time.time;
                 _colaCount = 0; _drinkCount = 0;
-                try { GuardSpawner.OnPlayerReady(me); }
+                if (!ArenaCompat.ArenaNow) try { GuardSpawner.OnPlayerReady(me); }
                 catch (Exception e) { Plugin.Log.LogError("Guardias (inicio): " + e); }
                 try { AchTrack.OnPlayerReady(); }
                 catch (Exception e) { Plugin.Log.LogError("Logros (inicio): " + e); }
@@ -257,6 +275,8 @@ namespace TarkovaCola.Client
                 catch (Exception e) { Plugin.Log.LogError("Eternal (inicio): " + e); }
                 try { ClassicMode.OnPlayerReady(me); }          // modo Classic: aplica las perks persistentes y sortea el desafio de la raid
                 catch (Exception e) { Plugin.Log.LogError("Classic (inicio): " + e); }
+                try { Achievements.CheckState(); Achievements.ClaimPending(); }     // logros (fuera del arranque de la raid)
+                catch (Exception e) { Plugin.Log.LogError("Logros (inicio): " + e); }
                 return;
             }
 
@@ -455,28 +475,36 @@ namespace TarkovaCola.Client
         [HarmonyPrefix]
         private static void Prefix()
         {
-            Perks.ClearActive();
-            Hud.ClearQueue();
-            RaidPanel.ResetSelection();
-            StaminUp.OnRaidStart();
-            PerkFx.OnRaidStart();
-            Eternal.OnRaidStart();
-            Powerup.OnRaidStart();
-            Tracker.Reset();
+            // Cada paso por separado: si uno falla se registra y los demas siguen. Nada puede escaparse de aqui, porque una
+            // excepcion cancelaria el inicio de la raid del juego (y el de otros mods).
+            Safe("perks", Perks.ClearActive);
+            Safe("hud", Hud.ClearQueue);
+            Safe("panel", RaidPanel.ResetSelection);
+            Safe("staminup", StaminUp.OnRaidStart);
+            Safe("efectos", PerkFx.OnRaidStart);
+            Safe("eternal", Eternal.OnRaidStart);
+            Safe("powerup", Powerup.OnRaidStart);
+            Safe("tracker", Tracker.Reset);
             XpPatch.Awarded = false;
-            Dbg.RaidStarted();
-            Perk.OnRaidStart();
-            PerkService.EnsureLoaded(force: true);
-            Synergy.OnRaidStart();                    // sinergias equipadas
-            QuestGuards.OnRaidStart();                // puntos de los guardias de las misiones
-            AchTrack.OnRaidStart();
-            ClassicMode.OnRaidStart();                // modo Classic: reactiva las perks que persisten de raids anteriores
-            PerkService.Sanitize();                   // sin su desventaja, una mejora no puede estar equipada
-            Perk.Refresh();
-            Eternal.Restore();                        // perks eternas guardadas
-            Achievements.CheckState();
-            Achievements.ClaimPending();
-            Dbg.Log("RAID", "empieza la raid (Speed Cola: nivel " + PerkService.Level("speedcola") + ", " + PerkService.Xp("speedcola") + " XP | Stamin-Up: nivel " + PerkService.Level("staminup") + ", " + PerkService.Xp("staminup") + " XP)");
+            Safe("dbg", Dbg.RaidStarted);
+            Safe("perk", Perk.OnRaidStart);
+            Safe("progreso", () => PerkService.EnsureLoaded(force: true));
+            Safe("arena", ArenaCompat.OnRaidStart);              // Arena Mode: restaura el perfil si una partida anterior no termino bien
+            Safe("sinergias", Synergy.OnRaidStart);              // sinergias equipadas
+            Safe("guardias", QuestGuards.OnRaidStart);           // puntos de los guardias de las misiones
+            Safe("logros", AchTrack.OnRaidStart);
+            Safe("classic", ClassicMode.OnRaidStart);            // modo Classic: reactiva las perks que persisten de raids anteriores
+            Safe("sanear", () => PerkService.Sanitize());        // sin su desventaja, una mejora no puede estar equipada
+            Safe("equipo", Perk.Refresh);
+            Safe("eternas", Eternal.Restore);                    // perks eternas guardadas
+            // (los logros se revisan en Tracker, cuando el jugador ya existe: no en mitad del arranque de la raid)
+            Safe("log", () => Dbg.Log("RAID", "empieza la raid (Speed Cola: nivel " + PerkService.Level("speedcola") + ", " + PerkService.Xp("speedcola") + " XP | Stamin-Up: nivel " + PerkService.Level("staminup") + ", " + PerkService.Xp("staminup") + " XP)"));
+        }
+
+        private static void Safe(string step, Action action)
+        {
+            try { action(); }
+            catch (Exception e) { Plugin.Log.LogError("inicio de raid (" + step + "): " + e); }
         }
     }
 
@@ -516,6 +544,7 @@ namespace TarkovaCola.Client
                 if (profile != null && profile.EftStats != null) raidXp = Math.Max(raidXp, profile.EftStats.TotalSessionExperience);
                 var active = Perks.ActivePerks.ToList();
                 Plugin.Log.LogInfo("Fin de raid (" + source + "): XP de la sesion=" + raidXp + ", perks activas=" + (active.Count == 0 ? "(ninguna)" : string.Join(", ", active.Select(p => p.Id).ToArray())));
+                raidXp = ArenaCompat.ScaleXp(raidXp);         // Arena: Zombies da XP reducido, los demas modos nada
                 if (raidXp > 0)
                     foreach (var perk in active)
                         PerkService.AddXp(perk.Id, (int)Math.Round(raidXp * (1.0 + PerkService.XpBonus)));

@@ -126,22 +126,37 @@ namespace TarkovaCola.Client
         {
             var cfg = Singleton<GlobalConfiguration>.Instance;
             __state = cfg.BaseCheckTime;
-            if (Perk.Has("a_check"))
-            {
-                cfg.BaseCheckTime = __state / Perk.CheckSpeed;
-                Dbg.Log("EFECTO", "Chamber Check: revisar cargador x" + Perk.CheckSpeed.ToString("0.00") + " mas rapido");
-            }
-            if (Plugin.InRaid)
-            {
-                Dbg.Log("DESAFIO", "cargador revisado en el inventario");
-                PerkService.AddProgress("a_count");
-            }
         }
 
         [HarmonyPostfix]
         private static void Postfix(float __state)
         {
             Singleton<GlobalConfiguration>.Instance.BaseCheckTime = __state;   // se restaura: solo cambia para esta revision
+        }
+    }
+
+    // ---------- Descargar un cargador: Chamber Check (+75%) y desafio de Round Counter ----------
+    [HarmonyPatch(typeof(Player.PlayerInventoryController), "UnloadMagazine")]
+    internal static class UnloadMagazinePatch
+    {
+        [HarmonyPrefix]
+        private static void Prefix(Magazine magazine, out float __state)
+        {
+            var cfg = Singleton<GlobalConfiguration>.Instance;
+            __state = cfg.BaseUnloadTime;
+            if (!Plugin.InRaid || magazine == null || magazine.Count <= 0) return;
+            if (Plugin.SpeedColaActive) { Dbg.Log("DESAFIO", "cargador descargado"); PerkService.AddProgress("a_count"); }
+            if (Perk.Has("a_check"))
+            {
+                cfg.BaseUnloadTime = __state / Perk.CheckSpeed;
+                Dbg.Log("EFECTO", "Chamber Check: descarga x" + Perk.CheckSpeed.ToString("0.00") + " mas rapida");
+            }
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(float __state)
+        {
+            Singleton<GlobalConfiguration>.Instance.BaseUnloadTime = __state;
         }
     }
 

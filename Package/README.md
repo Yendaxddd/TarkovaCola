@@ -1,4 +1,4 @@
-# Tarkova-Cola 2.1.0
+# Tarkova-Cola 2.2.0
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -8,6 +8,15 @@ Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for 
 ---
 
 ## Español
+
+### Novedades de la 2.2
+- **Arreglo (importante):** al llegar a nivel 5 en una perk podía salir un error en blanco al empezar la raid y romper el inicio de raid de otros mods (HUDs, contadores de botín). El inicio de la raid ya está aislado de cualquier error y los logros se revisan cuando tu personaje ya existe.
+- **Compatibilidad con Arena Mode:** su modo Zombies da una perk aleatoria cada 5 oleadas y las perks ganan progreso lento. Las partidas de Arena nunca cuentan para tu perfil de SPT (se conservan las perks de Clásico y las Eternas). Opciones en F12 > Arena.
+- **Muchas más perks en el mundo:** botiquines, cajas de armas, bolsas de deporte, Scavs muertos, alijos, cajones y chaquetas, y **sueltas** donde pueden salir bebidas. Más probabilidad en todo (PMC 10%, Scavs 3%, Rogues 12%). Tu `loot.json` viejo se reemplaza (copia en `loot.json.old`).
+- **Revisión de mejoras:** se rehicieron mejoras que anulaban su propia desventaja, desafíos repetidos y desventajas que no se acumulaban (Deadshot, Juggernog, Speed Cola, Stamin-Up, PHD Flopper, Widow's Wine). Los desafíos cambiados reinician su progreso si no estaban completos.
+- **Dead Aim** ahora deja el arma fija en el centro: sin balanceo al moverte, al girar ni al apuntar (el retroceso se mantiene).
+- **Imágenes** para las 10 misiones de la historia (faltaban).
+- ???
 
 ### Novedades de la 2.1
 - **Menú F12 en inglés** (o español): los nombres de las opciones siguen el idioma del mod (Auto = idioma del juego). Tu configuración se conserva.
@@ -77,6 +86,15 @@ Borra las carpetas `TarkovaCola` (y el pack de VisitAPI). Si te quedan perks en 
 ---
 
 ## English
+
+### What's new in 2.2
+- **Fix (important):** reaching level 5 on a perk could show a blank error at raid start and break other mods' raid start (HUD mods, loot counters). Raid start is now fully isolated from errors, and achievements are checked once your character is loaded.
+- **Arena Mode compatibility:** its Zombies mode drops a random perk every 5 waves and perks gain slow progress. Arena matches never count for your SPT profile (Classic and Eternal perks are kept). Options in F12 > Arena.
+- **Many more perks in the world:** medical cases, weapon boxes, duffle bags, dead Scavs, buried caches, drawers and jackets, and as **loose loot** wherever drinks can spawn. Higher chances everywhere (PMCs 10%, Scavs 3%, Rogues 12%). Your old `loot.json` is replaced (backup in `loot.json.old`).
+- **Augment review:** augments that cancelled their own drawback, duplicated challenges and drawbacks that didn't stack were reworked (Deadshot, Juggernog, Speed Cola, Stamin-Up, PHD Flopper, Widow's Wine). Changed challenges restart their progress if they weren't done.
+- **Dead Aim** now keeps your weapon locked to the center: no sway while moving, turning or aiming (recoil still applies).
+- **Quest images** for all 10 storyline quests (they were missing).
+- ???
 
 ### What's new in 2.1
 - **F12 menu in English** (or Spanish): option names follow the mod language (Auto = game language). Your saved settings are kept.
@@ -150,4 +168,5 @@ MIT License (código / code)
 **Créditos / Credits**
 - Speed Cola 3D model: "Speedcola CoD Zombies" by **albertjuli** ([Sketchfab](https://skfb.ly/6VRDU)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Converted to a Unity asset bundle, textures re-prepared, rescaled and rotated.
 - Other bottles (Stamin-Up, Juggernog, PHD Flopper, Widow's Wine, Deadshot Daiquiri): "cod zombies perks" by **Unknown Dev** ([Sketchfab](https://sketchfab.com/3d-models/cod-zombies-perks-77e9cb71adaf44b5a974c584f96cfc6c)), Sketchfab Free Standard license. Only the compiled asset bundles are included, not the original model files.
+- "le creatura": fan-made M4 SOPMOD II Jr. model (Girls' Frontline, © MICA Team / Sunborn); throw sounds supplied by the mod author. Only the compiled asset bundle is included.
 - Icons, jingles and announcer voice lines: Call of Duty, property of their owners (not MIT).

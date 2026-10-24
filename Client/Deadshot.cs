@@ -60,7 +60,6 @@ namespace TarkovaCola.Client
                 if (p <= 0f) return 0f;
                 float b = BaseAim * p;
                 if (Perk.Has("dd_quick")) b += QuickAim;
-                if (Perk.Has("dd_d_strain")) b -= StrainAim;
                 b += Synergy.AimBonus;                      // sinergia Speed Cola + Deadshot
                 return b;
             }
@@ -95,14 +94,52 @@ namespace TarkovaCola.Client
             catch (Exception e) { Dbg.Log("ERROR", "Deadshot (arma): " + e.Message); }
         }
 
+        // ---------------------------------------------------------------- Dead Aim: el arma se queda fija en el centro
+        // Se quitan de la animacion del arma la respiracion (balanceo al apuntar y en reposo), el andar, la inercia al girar y el
+        // temblor de manos. El retroceso (Shooting) y el resto se mantienen. Al dejar de tenerla se devuelven solo los que se quitaron.
+        private const EFT.Animations.EProceduralAnimationMask NoSway = EFT.Animations.EProceduralAnimationMask.Breathing
+            | EFT.Animations.EProceduralAnimationMask.Walking | EFT.Animations.EProceduralAnimationMask.MotionReaction
+            | EFT.Animations.EProceduralAnimationMask.HandShake;
+        private static EFT.Animations.ProceduralWeaponAnimation _deadAimPwa;
+        private static EFT.Animations.EProceduralAnimationMask _deadAimRemoved;
+
+        // Stillness: agachado o tumbado (sin esprintar) recuperas estamina y aguante de brazos mas rapido
+        internal const float StillStamina = 2.0f, StillArms = 1.5f;      // puntos por segundo extra
+        internal const float TriggerCost = 0.6f;
+        internal const float StrainEnergy = 0.15f;                         // Eye Strain: la energia baja un 15% mas rapido                           // Heavy Trigger: aguante de brazos por disparo
+
+        internal static void TickStillness(Player me, float dt)
+        {
+            if (!Perk.Has("dd_still") || me == null || me.Physical == null || me.Physical.Sprinting || !Low(me)) return;
+            var st = me.Physical.Stamina; var hs = me.Physical.HandsStamina;
+            if (st != null) st.Current = Mathf.Min(st.TotalCapacity, st.Current + StillStamina * dt);
+            if (hs != null) hs.Current = Mathf.Min(hs.TotalCapacity, hs.Current + StillArms * dt);
+        }
+
+        internal static void TickDeadAim(Player me)
+        {
+            var pwa = me != null ? me.ProceduralWeaponAnimation : null;
+            bool on = pwa != null && Perk.Has("dd_aim");
+            if (_deadAimPwa != null && (!on || !ReferenceEquals(_deadAimPwa, pwa)))
+            {
+                try { _deadAimPwa.Mask |= _deadAimRemoved; } catch { }        // se devuelve lo quitado
+                _deadAimPwa = null; _deadAimRemoved = 0;
+            }
+            if (!on) return;
+            var take = pwa.Mask & NoSway;
+            if (take == 0) return;
+            pwa.Mask &= ~take;
+            _deadAimRemoved |= take;
+            _deadAimPwa = pwa;
+        }
+
         // ---------------------------------------------------------------- balanceo (desde PerkFx.Tick)
         internal static float SwayFactor(Player me, bool aiming)
         {
             float p = Perks.Power(Id);
             if (p <= 0f) return 1f;
             float m = 1f - BaseSway * p;
-            if (Perk.Has("dd_still") && Low(me)) m *= StillSway;
-            if (!aiming && Perk.Has("dd_d_shaky")) m *= ShakySway;
+            if (Perk.Has("dd_aim")) m = 0f;                             // Dead Aim: sin balanceo
             return m;
         }
 
@@ -173,6 +210,8 @@ namespace TarkovaCola.Client
             if (fragmentIndex == 0)
             {
                 Deadshot.ShotsThisRaid++;
+                if (Perk.Has("dd_d_shaky") && me.Physical != null && me.Physical.HandsStamina != null)          // Heavy Trigger: cada disparo cansa los brazos
+                    me.Physical.HandsStamina.Current = Mathf.Max(0f, me.Physical.HandsStamina.Current - Deadshot.TriggerCost);
                 if (Deadshot.ShotsThisRaid % 10 == 0) { PerkService.AddProgress("dd_sky", 10); PerkService.AddStat("dd_shots", 10); }
             }
         }

@@ -113,8 +113,11 @@ namespace TarkovaCola.Server
         private readonly HideoutTable _hideout;
         private readonly SPTarkov.Server.Core.Helpers.Traders.TraderAssortHelper _assortHelper;
 
-        public TarkovaColaQuests(CustomItemService items, TemplateTable templates, TradersTable traders, HideoutTable hideout, SPTarkov.Server.Core.Helpers.Traders.TraderAssortHelper assortHelper)
+        private readonly SPTarkov.Server.Core.Routers.ImageRouter _images;
+
+        public TarkovaColaQuests(CustomItemService items, TemplateTable templates, TradersTable traders, HideoutTable hideout, SPTarkov.Server.Core.Helpers.Traders.TraderAssortHelper assortHelper, SPTarkov.Server.Core.Routers.ImageRouter images)
         {
+            _images = images;
             _items = items;
             _templates = templates;
             _traders = traders;
@@ -124,6 +127,7 @@ namespace TarkovaCola.Server
 
         public Task OnLoadAsync(CancellationToken cancellationToken)
         {
+            RegisterImages();
             JsonDocument story = null;
             try
             {
@@ -149,6 +153,24 @@ namespace TarkovaCola.Server
                 catch (Exception e) { Console.WriteLine("[Tarkova-Cola] ERROR bloqueando las ventas: " + e); }
             }
             return Task.CompletedTask;
+        }
+
+        // Imagenes de las misiones: ModFiles/images/tarkovacola_qNN.png se sirven en /files/quest/icon/tarkovacola_qNN.png
+        private void RegisterImages()
+        {
+            try
+            {
+                var dir = Path.Combine(QuestIds.ModDir, "images");
+                if (!Directory.Exists(dir)) return;
+                int n = 0;
+                foreach (var f in Directory.GetFiles(dir, "*.png"))
+                {
+                    _images.AddRoute("/files/quest/icon/" + Path.GetFileNameWithoutExtension(f), f);
+                    n++;
+                }
+                Console.WriteLine("[Tarkova-Cola] " + n + " imagenes de mision registradas");
+            }
+            catch (Exception e) { Console.WriteLine("[Tarkova-Cola] imagenes de mision: " + e.Message); }
         }
 
         // Objetos de mision: clones de un objeto de informacion de 1x1 (preferiblemente ya marcado como objeto de mision)

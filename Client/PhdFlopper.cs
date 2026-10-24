@@ -102,6 +102,8 @@ namespace TarkovaCola.Client
             PerkService.AddStat("phd_fall_m", Mathf.RoundToInt(height));
             if (PerkService.Stat("phd_fall_m") >= GravityMeters) Achievements.Unlock("pf_gravity");
 
+            if (height >= StaggerHeight) PerkService.AddProgress("pf_soles");          // desafio de Soft Soles: caidas de 3 m o mas
+
             // Stagger: aterrizar de 3 m o mas te quita estamina
             if (height >= StaggerHeight && Perk.Has("dp_stagger") && me.Physical != null && me.Physical.Stamina != null)
             {

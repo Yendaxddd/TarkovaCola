@@ -37,11 +37,23 @@ namespace TarkovaCola.Client
         // Baja del jugador (desde PerkFx.OnKill)
         internal static void OnKill(Player me, Player victim)
         {
-            if (!Plugin.CfgPowerup.Value || _spawned || victim == null || victim == me) return;
+            if (!Plugin.CfgPowerup.Value || _spawned || victim == null || victim == me || ArenaCompat.InArena) return;      // en Arena Zombies cae cada N oleadas (ArenaCompat)
             float chance = Mathf.Clamp(Plugin.CfgPowerupChance.Value, 0f, 100f) / 100f;
             if (Random.value >= chance) return;
             _spawned = true;
             Spawn(victim.Position + Vector3.up * 1.1f);
+        }
+
+        // Arena Zombies: la perk aparece cerca del jugador, delante de el (sin limite por raid)
+        internal static void SpawnNear(Player me)
+        {
+            if (_fx != null) { Object.Destroy(_fx.gameObject); _fx = null; }
+            var fwd = me.Transform.forward; fwd.y = 0f;
+            var pos = me.Position + (fwd.sqrMagnitude > 0.01f ? fwd.normalized : Vector3.forward) * 2.5f;
+            RaycastHit hit;
+            if (Physics.Raycast(pos + Vector3.up * 1.5f, Vector3.down, out hit, 6f)) pos = hit.point;
+            else pos = me.Position;
+            Spawn(pos + Vector3.up * 1.1f);
         }
 
         private static void Spawn(Vector3 pos)
@@ -91,6 +103,7 @@ namespace TarkovaCola.Client
 
             if (pool.Length == 0)
             {
+                if (ArenaCompat.InArena) { Hud.Notify(L.T("powerup.title"), L.T("arena.full"), null); return; }      // en Arena no se manda nada al perfil
                 var def = Perks.All[Random.Range(0, Perks.All.Length)];
                 PerkService.RequestRefund(def.ItemTpl, 1);
                 Dbg.Log("POWERUP", "no queda ninguna perk que dar: botella extra de " + def.Id + " por correo");

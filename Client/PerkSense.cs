@@ -16,7 +16,7 @@ namespace TarkovaCola.Client
 
         internal static void Tick()
         {
-            if (!Plugin.InRaid || !Plugin.CfgSense.Value) return;
+            if (!Plugin.InRaid || !Plugin.CfgSense.Value || ArenaCompat.InArena) return;
             float now = Time.time;
             if (now < _next) return;
             _next = now + 1f;

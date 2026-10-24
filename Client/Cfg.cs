@@ -28,17 +28,18 @@ namespace TarkovaCola.Client
         private static readonly Dictionary<string, string> SectionsEn = new Dictionary<string, string>
         {
             ["Idioma"] = "Language", ["HUD"] = "HUD", ["Perks"] = "Perks", ["Menu"] = "Menu", ["Audio"] = "Audio",
-            ["Powerup"] = "Powerup", ["Desafios"] = "Challenges", ["Herramientas"] = "Tools", ["Debug"] = "Debug",
+            ["Powerup"] = "Powerup", ["Desafios"] = "Challenges", ["Herramientas"] = "Tools", ["Debug"] = "Debug", ["Arena"] = "Arena", ["???"] = "???",
         };
 
         internal static void Init(ConfigFile file) { _file = file; }
 
-        internal static ConfigEntry<T> Bind<T>(string section, string key, T def, string nameEn, string descEs, string descEn, AcceptableValueBase range = null)
+        // dispEs: nombre a mostrar en espanol si no puede ser la clave (las claves no admiten comillas)
+        internal static ConfigEntry<T> Bind<T>(string section, string key, T def, string nameEn, string descEs, string descEn, AcceptableValueBase range = null, string dispEs = null)
         {
             var attr = new ConfigurationManagerAttributes { Order = _order-- };       // en el orden en que se declaran
             var e = _file.Bind(section, key, def, new ConfigDescription(descEn, range, attr));
             string secEn;
-            _entries.Add(new Entry { Attr = attr, SecEs = section, SecEn = SectionsEn.TryGetValue(section, out secEn) ? secEn : section, NameEs = key, NameEn = nameEn, DescEs = descEs, DescEn = descEn });
+            _entries.Add(new Entry { Attr = attr, SecEs = section, SecEn = SectionsEn.TryGetValue(section, out secEn) ? secEn : section, NameEs = dispEs ?? key, NameEn = nameEn, DescEs = descEs, DescEn = descEn });
             Apply(L.Spanish);
             return e;
         }

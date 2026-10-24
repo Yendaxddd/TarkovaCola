@@ -51,6 +51,8 @@ namespace TarkovaCola.Client
         private static readonly List<Vector2> _hits = new List<Vector2>();                                          // x = momento, y = dano
         private static float _nextCheck, _nextBurst, _lastTime;
         private static bool _burstPending, _lastRefunded;
+        private static float _nextChal;
+        private const float StickyFar = 20f;          // Sticky Floor (desafio): telarana a 20 m o mas
         private static string _lastTpl;
 
         internal static string Notice() { return Effect(Perks.Power(Id)); }
@@ -161,7 +163,7 @@ namespace TarkovaCola.Client
                 if (fresh)
                 {
                     PerkService.AddProgress("ww_spin");                              // desafios de Spinneret y Sticky Floor: enemigos atrapados
-                    PerkService.AddProgress("ww_sticky");
+                    if ((center - me.Position).sqrMagnitude >= StickyFar * StickyFar) PerkService.AddProgress("ww_sticky");   // Sticky Floor: telarana lejos de ti
                     Achievements.Unlock("ww_first");                                 // logros: primer enemigo atrapado y 50 en total
                     PerkService.AddStat("widow_webbed", 1);
                     Synergy.OnWebbed();
@@ -204,7 +206,6 @@ namespace TarkovaCola.Client
         // Una baja del jugador con una granada suya (con Widow's Wine activa): desafios de Web Burst y Widow's Bite, y la devolucion.
         internal static void OnGrenadeKill()
         {
-            PerkService.AddProgress("ww_burst");
             PerkService.AddProgress("ww_bite");
             PerkService.AddStat("widow_gkills", 1);                                 // logro "Silk and shrapnel"
             if (PerkService.Stat("widow_gkills") >= GrenadeKillsNeeded) Achievements.Unlock("ww_grenades");
@@ -219,13 +220,15 @@ namespace TarkovaCola.Client
         // Dano recibido (desde DamageHubPatch): 100 de dano en menos de 3 s dispara la ráfaga (una vez cada 5 min)
         internal static void OnDamageTaken(float damage)
         {
-            if (!Perk.Has("ww_burst")) return;
             float now = Time.time;
             _hits.Add(new Vector2(now, damage));
             _hits.RemoveAll(h => now - h.x > BurstWindow);
             float sum = 0f;
             foreach (var h in _hits) sum += h.y;
-            if (sum >= BurstDamage && now >= _nextBurst) { _burstPending = true; _hits.Clear(); }   // se resuelve en el siguiente Update, no en mitad del dano
+            if (sum < BurstDamage) return;
+            _hits.Clear();
+            if (now >= _nextChal) { _nextChal = now + 10f; PerkService.AddProgress("ww_burst"); }      // desafio: aguantar la rafaga de dano
+            if (Perk.Has("ww_burst") && now >= _nextBurst) _burstPending = true;   // se resuelve en el siguiente Update, no en mitad del dano
         }
 
         private static void Burst(Player me)

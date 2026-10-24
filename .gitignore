@@ -40,3 +40,8 @@ UnityBundle/Assets/Models/perks/tex.meta
 # --- copia temporal de PhdVfx.cs para la previsualizacion (la crea preview_phdvfx.ps1) ---
 UnityBundle/Assets/Editor/PhdVfxPreview/PhdVfx.cs
 UnityBundle/Assets/Editor/PhdVfxPreview/PhdVfx.cs.meta
+
+# modelo de Jr ("le creatura"): solo se publica el bundle compilado
+UnityBundle/Assets/Models/jr/
+UnityBundle/Assets/Models/jr.meta
+UnityBundle/Assets/Prefabs/jr.prefab*

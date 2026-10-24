@@ -41,6 +41,7 @@ namespace TarkovaCola.Client
                 Plugin.Log.LogInfo("Progreso de perks cargado (" + (string.IsNullOrEmpty(json) ? "nuevo" : "existente") + ")");
                 Migrate();
                 Story.SyncSales();                               // opcion de depuracion de ventas (F12)
+                Creatura.SyncSale();                             // opcion secreta (F12)
             }
             catch (Exception e)
             {
@@ -53,13 +54,24 @@ namespace TarkovaCola.Client
         private static void Migrate()
         {
             int v = (int?)_state["chv"] ?? 0;
-            if (v >= 1) return;
-            var prog = _state["prog"] as JObject;
-            var jug = prog != null ? prog["juggernog"] as JObject : null;
-            if (jug != null)
-                foreach (var id in new[] { "jg_bones", "jg_thick" })
-                    if (!IsDone(id) && jug.Remove(id)) Plugin.Log.LogInfo("Desafio " + id + " reiniciado (cambio de objetivo)");
-            _state["chv"] = 1;
+            if (v >= 2) return;
+            if (v < 1)
+            {
+                var prog = _state["prog"] as JObject;
+                var jug = prog != null ? prog["juggernog"] as JObject : null;
+                if (jug != null)
+                    foreach (var id in new[] { "jg_bones", "jg_thick" })
+                        if (!IsDone(id) && jug.Remove(id)) Plugin.Log.LogInfo("Desafio " + id + " reiniciado (cambio de objetivo)");
+            }
+            // v2 (2.2.0): desafios con otro objetivo
+            var all = _state["prog"] as JObject;
+            if (all != null)
+                foreach (var kv in new[] { ("speedcola", "a_count"), ("staminup", "st_recover"), ("phdflopper", "pf_soles"), ("widowswine", "ww_sticky"), ("widowswine", "ww_burst") })
+                {
+                    var o = all[kv.Item1] as JObject;
+                    if (o != null && !IsDone(kv.Item2) && o.Remove(kv.Item2)) Plugin.Log.LogInfo("Desafio " + kv.Item2 + " reiniciado (cambio de objetivo)");
+                }
+            _state["chv"] = 2;
             Save();
         }
 
@@ -197,6 +209,8 @@ namespace TarkovaCola.Client
             if (ClassicMode.Enabled) return;                              // en Classic no hay Research: los desafios de mejoras no avanzan
             var c = Data.Aug(id);
             if (c == null || !IsActive(c)) return;
+            n = ArenaCompat.ScaleProgress(id, n);                         // Arena Zombies: progreso lento
+            if (n <= 0) return;
 
             var prog = Sub(Sub(State, "prog"), c.Perk);
             int now = Math.Min(c.Goal, ((int?)prog[id] ?? 0) + n);

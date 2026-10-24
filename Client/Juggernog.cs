@@ -154,16 +154,7 @@ namespace TarkovaCola.Client
         {
             if (damage < 3f || (info.DamageType & PerkFx.Hits) == 0) return;
             bool limb = part == EBodyPart.LeftArm || part == EBodyPart.RightArm || part == EBodyPart.LeftLeg || part == EBodyPart.RightLeg;
-            if (limb && Perk.Has("jg_thick") && !hc.IsBodyPartBroken(part) && UnityEngine.Random.value < ThickFracture)
-            {
-                Dbg.Log("EFECTO", "Thick Skin: " + part + " se fractura");
-                hc.DoFracture(part);
-            }
-            if (Perk.Has("jg_bones") && UnityEngine.Random.value < BonesBleed)
-            {
-                Dbg.Log("EFECTO", "Heavy Bones: " + part + " sangra");
-                hc.DoBleed(false, part);
-            }
+            // (Thick Skin y Heavy Bones ya no tienen castigo propio: se anulaban entre ellas si llevabas las dos; su desventaja es la ligada)
         }
 
         // Comer, beber o curarse con otra cosa que no sea una perk (desafios de Keep Going y Quick Patch)

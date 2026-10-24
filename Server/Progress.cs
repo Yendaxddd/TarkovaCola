@@ -101,6 +101,14 @@ namespace TarkovaCola.Server
                         return http.NoBody(new PerkResponse { Json = "ok" });
                     }),
 
+                // opcion secreta de F12: Therapist vende "le creatura"
+                new RouteAction<JrRequest>("/tarkovacola/jr",
+                    async (url, info, sessionId, output, ct) =>
+                    {
+                        Creatura.SetForSale(info != null && info.On);
+                        return http.NoBody(new PerkResponse { Json = "ok" });
+                    }),
+
                 new RouteAction<AchRequest>("/tarkovacola/ach/claim",
                     async (url, info, sessionId, output, ct) =>
                     {

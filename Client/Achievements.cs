@@ -69,18 +69,37 @@ namespace TarkovaCola.Client
             Store[key] = true;
             Dbg.Log("LOGRO", "desbloqueado: " + key);
 
+            // En raid, la ventana nativa de logro del juego se deja para el menu (se ha visto como un error en blanco al empezar la raid):
+            // en raid sale nuestro aviso y el logro nativo se marca al volver.
             bool native = false;
-            try
-            {
-                var me = Plugin.Me;
-                AchievementsController controller = me != null ? me.AchievementsController : MenuController();
-                native = controller != null && controller.UnlockAchievementForced(def.ServerId);
-            }
-            catch (Exception e) { Plugin.Log.LogWarning("No se pudo desbloquear el logro nativo " + key + ": " + e.Message); }
-            if (!native) Hud.Notify(L.T("notice.ach.title"), (def.ServerId + " name").Localized());   // respaldo si el juego no lo mostro
+            if (Plugin.InRaid) _pendingNative.Add(def.ServerId);
+            else native = UnlockNative(def.ServerId);
+            try { if (!native) Hud.Notify(L.T("notice.ach.title"), (def.ServerId + " name").Localized()); } catch { }
 
             PerkService.Save();
+            PerkService.Flush();                                     // que no se vuelva a conceder si la raid se corta
             Claim(new[] { def.ServerId });
+        }
+
+        private static readonly System.Collections.Generic.List<string> _pendingNative = new System.Collections.Generic.List<string>();
+
+        private static bool UnlockNative(string serverId)
+        {
+            try
+            {
+                var controller = MenuController();
+                return controller != null && controller.UnlockAchievementForced(serverId);
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("No se pudo desbloquear el logro nativo " + serverId + ": " + e.Message); return false; }
+        }
+
+        // Plugin.Update fuera de la raid: los logros conseguidos en raid se marcan en el juego
+        internal static void FlushNative()
+        {
+            if (_pendingNative.Count == 0 || Plugin.InRaid) return;
+            var list = _pendingNative.ToArray();
+            _pendingNative.Clear();
+            foreach (var id in list) UnlockNative(id);
         }
 
         // El controlador de logros del menu principal vive dentro de la operacion de menu de la aplicacion.

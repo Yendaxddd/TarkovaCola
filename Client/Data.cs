@@ -51,6 +51,11 @@ namespace TarkovaCola.Client
 
         private static readonly Dictionary<string, string[]> S = new Dictionary<string, string[]>
         {
+            // ---- Arena Mode ----
+            ["arena.title"]     = new[] { "TARKOVA-COLA · ZOMBIES", "TARKOVA-COLA · ZOMBIES" },
+            ["arena.start"]     = new[] { "Perk aleatoria cada {0} oleadas. Esta partida no cuenta para tu perfil", "Random perk every {0} waves. This match does not count for your profile" },
+            ["arena.full"]      = new[] { "Ya tienes todas las perks", "You already have every perk" },
+
             // ---- aviso de enemigos con perks ----
             ["sense.title"]     = new[] { "PERK-A-COLA CERCA", "PERK-A-COLA NEARBY" },
             ["sense.sub"]       = new[] { "Un enemigo cercano lleva {0}", "A nearby enemy is carrying {0}" },
@@ -163,7 +168,7 @@ namespace TarkovaCola.Client
             ["a_steady.c"] = new[] { "Ten los brazos rotos 4 veces con Speed Cola activa.", "Get your arms broken 4 times with Speed Cola active." },
 
             ["a_check.n"]  = new[] { "REVISIÓN RÁPIDA", "CHAMBER CHECK" },
-            ["a_check.d"]  = new[] { "Revisar cargadores en el inventario es un 75% más rápido.", "Checking magazines in your inventory is 75% faster." },
+            ["a_check.d"]  = new[] { "Descargar cargadores en el inventario es un 75% más rápido.", "Unloading magazines in your inventory is 75% faster." },
             ["a_check.c"]  = new[] { "Revisa el cargador de tu arma 20 veces en raid.", "Check your weapon's magazine 20 times in raid." },
 
             ["a_mags.n"]   = new[] { "MALABARISTA", "MAG JUGGLER" },
@@ -172,7 +177,7 @@ namespace TarkovaCola.Client
 
             ["a_count.n"]  = new[] { "CONTEO DE BALAS", "ROUND COUNTER" },
             ["a_count.d"]  = new[] { "Los cargadores muestran su munición exacta, los hayas revisado o no.", "Magazines show their exact ammo count, checked or not." },
-            ["a_count.c"]  = new[] { "Revisa cargadores dentro del inventario 15 veces.", "Check magazines in your inventory 15 times." },
+            ["a_count.c"]  = new[] { "Descarga 15 cargadores en raid con Speed Cola activa.", "Unload 15 magazines in raid with Speed Cola active." },
 
             ["s_slot.n"]   = new[] { "RANURA EXTRA", "EXTRA SLOT" },
             ["s_slot.d"]   = new[] { "Podrás llevar 2 mejoras secundarias (por defecto solo 1).", "You can carry 2 minor augments (1 by default)." },
@@ -419,7 +424,7 @@ namespace TarkovaCola.Client
 
             // ---- Juggernog ----
             ["dd_aim.n"]      = new[] { "DEAD AIM", "DEAD AIM" },
-            ["dd_aim.d"]      = new[] { "El arma no se balancea al moverte.", "Your weapon does not sway while you move." },
+            ["dd_aim.d"]      = new[] { "El arma se queda fija en el centro: sin balanceo al moverte, al girar ni al apuntar (el retroceso se mantiene).", "Your weapon stays locked to the center: no sway while moving, turning or aiming (recoil still applies)." },
             ["dd_aim.c"]      = new[] { "Mata a 20 enemigos mientras te mueves, con Deadshot activa.", "Kill 20 enemies while moving, with Deadshot active." },
             ["dd_pen.n"]      = new[] { "INCREÍBLE", "INCREDIBLE" },
             ["dd_pen.d"]      = new[] { "Tus balas penetran un 30% más la armadura.", "Your bullets have 30% more armor penetration." },
@@ -437,7 +442,7 @@ namespace TarkovaCola.Client
             ["dd_head.d"]     = new[] { "Matar con un tiro a la cabeza te devuelve el 20% de la estamina.", "A headshot kill restores 20% of your stamina." },
             ["dd_head.c"]     = new[] { "Mata a 15 enemigos de un tiro a la cabeza, con Deadshot activa.", "Kill 15 enemies with headshots, with Deadshot active." },
             ["dd_still.n"]    = new[] { "QUIETUD", "STILLNESS" },
-            ["dd_still.d"]    = new[] { "Agachado o tumbado, el balanceo baja un 25% más.", "Crouched or prone, sway drops by another 25%." },
+            ["dd_still.d"]    = new[] { "Agachado o tumbado recuperas la estamina y el aguante de los brazos más rápido.", "While crouched or prone, stamina and arm stamina recover faster." },
             ["dd_still.c"]    = new[] { "Mata a 10 enemigos agachado o tumbado, con Deadshot activa.", "Kill 10 enemies while crouched or prone, with Deadshot active." },
             ["dd_slot.n"]     = new[] { "RANURA EXTRA", "EXTRA SLOT" },
             ["dd_slot.d"]     = new[] { "Podrás llevar 2 mejoras secundarias (por defecto solo 1).", "You can carry 2 minor augments (1 by default)." },
@@ -446,10 +451,10 @@ namespace TarkovaCola.Client
             ["dd_d_tunnel.d"] = new[] { "Sacar y cambiar de arma es un 15% más lento.", "Drawing and swapping weapons is 15% slower." },
             ["dd_d_breath.n"] = new[] { "RESPIRACIÓN PESADA", "HEAVY BREATHING" },
             ["dd_d_breath.d"] = new[] { "Correr gasta un 15% más de estamina.", "Sprinting burns 15% more stamina." },
-            ["dd_d_shaky.n"]  = new[] { "MANOS TEMBLOROSAS", "SHAKY HANDS" },
-            ["dd_d_shaky.d"]  = new[] { "Sin apuntar, el balanceo del arma sube un 20%.", "When not aiming, weapon sway rises by 20%." },
+            ["dd_d_shaky.n"]  = new[] { "GATILLO PESADO", "HEAVY TRIGGER" },
+            ["dd_d_shaky.d"]  = new[] { "Cada disparo gasta un poco de aguante de los brazos.", "Every shot drains a bit of arm stamina." },
             ["dd_d_strain.n"] = new[] { "VISTA CANSADA", "EYE STRAIN" },
-            ["dd_d_strain.d"] = new[] { "Apuntas un 10% más lento.", "You aim down sights 10% slower." },
+            ["dd_d_strain.d"] = new[] { "La energía baja un 15% más rápido.", "Energy drains 15% faster." },
             ["dd_d_lime.n"]   = new[] { "LIMA AMARGA", "BITTER LIME" },
             ["dd_d_lime.d"]   = new[] { "La sed baja un 20% más rápido.", "Thirst drops 20% faster." },
             ["dd_d_sugar.n"]  = new[] { "BORDE DE AZÚCAR", "SUGAR RIM" },
@@ -460,16 +465,16 @@ namespace TarkovaCola.Client
             ["jg_skull.d"]    = new[] { "Más probabilidad de que las balas reboten en tu casco.", "Higher chance that bullets ricochet off your helmet." },
             ["jg_skull.c"]    = new[] { "Recibe 1,500 de daño con Juggernog activa.", "Take 1,500 damage with Juggernog active." },
             ["jg_thick.n"]    = new[] { "PIEL GRUESA", "THICK SKIN" },
-            ["jg_thick.d"]    = new[] { "Sangras menos, pero los huesos se rompen más fácil.", "You bleed less, but your bones break more easily." },
+            ["jg_thick.d"]    = new[] { "Los sangrados te quitan la mitad de vida.", "Bleeding drains half as much health." },
             ["jg_thick.c"]    = new[] { "Arregla 5 sangrados pesados con Juggernog activa.", "Fix 5 heavy bleeds with Juggernog active." },
             ["jg_bones.n"]    = new[] { "HUESOS PESADOS", "HEAVY BONES" },
-            ["jg_bones.d"]    = new[] { "Te fracturas menos, pero sangras más fácil.", "Your bones break less, but you bleed more easily." },
+            ["jg_bones.d"]    = new[] { "La mitad de las fracturas no llegan a ocurrir.", "Half of all fractures never happen." },
             ["jg_bones.c"]    = new[] { "Arregla 5 fracturas con Juggernog activa.", "Fix 5 fractures with Juggernog active." },
             ["jg_patch.n"]    = new[] { "PARCHE RÁPIDO", "QUICK PATCH" },
             ["jg_patch.d"]    = new[] { "Las animaciones de curación van el doble de rápido.", "Healing animations are twice as fast." },
             ["jg_patch.c"]    = new[] { "Usa 10 items médicos con Juggernog activa.", "Use 10 medical items with Juggernog active." },
             ["jg_plates.n"]   = new[] { "PLACAS DE HUESO", "BONE PLATING" },
-            ["jg_plates.d"]   = new[] { "Tus placas de armadura aguantan el doble de daño.", "Your armor plates take twice the damage." },
+            ["jg_plates.d"]   = new[] { "Tus placas de armadura pierden durabilidad la mitad de rápido.", "Your armor plates lose durability half as fast." },
             ["jg_plates.c"]   = new[] { "Recibe 60 impactos en tu armadura con Juggernog activa.", "Take 60 hits on your armor with Juggernog active." },
             ["jg_keep.n"]     = new[] { "SIGUE ADELANTE", "KEEP GOING" },
             ["jg_keep.d"]     = new[] { "El hambre y la sed te quitan vida mucho más lento.", "Hunger and thirst drain your health much more slowly." },
@@ -504,7 +509,7 @@ namespace TarkovaCola.Client
             ["pf_shock.c"]    = new[] { "Mata a 5 enemigos con granadas con PHD Flopper activa.", "Kill 5 enemies with grenades with PHD Flopper active." },
             ["pf_soles.n"]    = new[] { "SUELAS SUAVES", "SOFT SOLES" },
             ["pf_soles.d"]    = new[] { "Aterrizar tras una caída no te frena.", "Landing after a fall doesn't slow you down." },
-            ["pf_soles.c"]    = new[] { "Recorre 2 km con PHD Flopper activa.", "Travel 2 km with PHD Flopper active." },
+            ["pf_soles.c"]    = new[] { "Cae desde 3 m o más 10 veces con PHD Flopper activa.", "Fall from 3 m or higher 10 times with PHD Flopper active." },
             ["pf_stop.n"]     = new[] { "PARADA TÉCNICA", "PIT STOP" },
             ["pf_stop.d"]     = new[] { "Si te quedas quieto, la estamina se recupera el doble de rápido.", "Standing still recovers stamina twice as fast." },
             ["pf_stop.c"]     = new[] { "Quédate quieto 5 minutos en total con PHD Flopper activa.", "Stand still for 5 minutes in total with PHD Flopper active." },
@@ -539,7 +544,7 @@ namespace TarkovaCola.Client
             ["ww_fuse.c"]     = new[] { "Atrapa a 3 enemigos con una sola granada.", "Web 3 enemies with a single grenade." },
             ["ww_burst.n"]    = new[] { "RÁFAGA DE TELARAÑAS", "WEB BURST" },
             ["ww_burst.d"]    = new[] { "Si recibes 100 de daño en menos de 3 s, gastas una granada del inventario: los enemigos cercanos quedan atrapados y aturdidos (1 vez cada 5 min).", "If you take 100 damage in under 3 s, a grenade from your inventory is spent: nearby enemies are webbed and stunned (once every 5 min)." },
-            ["ww_burst.c"]    = new[] { "Mata a 3 enemigos con granadas con Widow's Wine activa.", "Kill 3 enemies with grenades with Widow's Wine active." },
+            ["ww_burst.c"]    = new[] { "Recibe 100 de daño en menos de 3 s, 3 veces, con Widow's Wine activa.", "Take 100 damage in under 3 s, 3 times, with Widow's Wine active." },
             ["ww_venom.n"]    = new[] { "MORDIDA VENENOSA", "VENOMOUS BITE" },
             ["ww_venom.d"]    = new[] { "Los enemigos atrapados en la telaraña también quedan aturdidos.", "Enemies caught in the web are also stunned." },
             ["ww_venom.c"]    = new[] { "Mata a 5 enemigos atrapados con Widow's Wine activa.", "Kill 5 webbed enemies with Widow's Wine active." },
@@ -548,7 +553,7 @@ namespace TarkovaCola.Client
             ["ww_quick.c"]    = new[] { "Lanza 10 granadas con Widow's Wine activa.", "Throw 10 grenades with Widow's Wine active." },
             ["ww_sticky.n"]   = new[] { "SUELO PEGAJOSO", "STICKY FLOOR" },
             ["ww_sticky.d"]   = new[] { "Puedes lanzar las granadas un 35% más lejos.", "You can throw grenades 35% farther." },
-            ["ww_sticky.c"]   = new[] { "Atrapa a 15 enemigos con Widow's Wine activa.", "Web 15 enemies with Widow's Wine active." },
+            ["ww_sticky.c"]   = new[] { "Atrapa a 10 enemigos con telarañas que estallen a 20 m o más de ti, con Widow's Wine activa.", "Web 10 enemies with webs that burst at least 20 m away from you, with Widow's Wine active." },
             ["ww_bite.n"]     = new[] { "PICADURA DE LA VIUDA", "WIDOW'S BITE" },
             ["ww_bite.d"]     = new[] { "Si una granada tuya mata a un enemigo, te la devuelven (llega por correo al terminar la raid).", "If one of your grenades kills an enemy, it is returned to you (it arrives by mail after the raid)." },
             ["ww_bite.c"]     = new[] { "Mata a 10 enemigos con granadas con Widow's Wine activa.", "Kill 10 enemies with grenades with Widow's Wine active." },
@@ -584,7 +589,7 @@ namespace TarkovaCola.Client
             ["st_feet.c"]     = new[] { "Corre 5 km en total con Stamin-Up activa.", "Sprint 5 km in total with Stamin-Up active." },
             ["st_recover.n"]  = new[] { "RECUPERACIÓN RÁPIDA", "QUICK RECOVERY" },
             ["st_recover.d"]  = new[] { "La estamina se recupera un 25% más rápido.", "Stamina recovers 25% faster." },
-            ["st_recover.c"]  = new[] { "Corre 10 km en total con Stamin-Up activa.", "Sprint 10 km in total with Stamin-Up active." },
+            ["st_recover.c"]  = new[] { "Mata a 10 enemigos menos de 3 s después de esprintar, con Stamin-Up activa.", "Kill 10 enemies within 3 s of sprinting, with Stamin-Up active." },
             ["st_land.n"]     = new[] { "ATERRIZAJE SUAVE", "SOFT LANDING" },
             ["st_land.d"]     = new[] { "El daño por caída se reduce un 30%.", "Fall damage is reduced by 30%." },
             ["st_land.c"]     = new[] { "Mata a 3 enemigos que estén al menos 2 m por debajo de ti, con Stamin-Up activa.", "Kill 3 enemies who are at least 2 m below you, with Stamin-Up active." },
