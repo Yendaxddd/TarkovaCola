@@ -1,4 +1,4 @@
-# Tarkova-Cola 2.2.0
+# Tarkova-Cola 2.2.1
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -8,6 +8,10 @@ Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for 
 ---
 
 ## Español
+
+### Hotfix 2.2.1
+- Compatibilidad con mods que restauran el equipo al morir (p. ej. Fair Equipment Restoration): las devoluciones de botellas (Eternas / Clásico / Widow's Bite) y las recompensas de logros se envían al terminar la raid, nunca durante.
+- Los logros conseguidos al morir se procesan bien.
 
 ### Novedades de la 2.2
 - **Arreglo (importante):** al llegar a nivel 5 en una perk podía salir un error en blanco al empezar la raid y romper el inicio de raid de otros mods (HUDs, contadores de botín). El inicio de la raid ya está aislado de cualquier error y los logros se revisan cuando tu personaje ya existe.
@@ -86,6 +90,10 @@ Borra las carpetas `TarkovaCola` (y el pack de VisitAPI). Si te quedan perks en 
 ---
 
 ## English
+
+### Hotfix 2.2.1
+- Compatibility with mods that restore your equipment on death (e.g. Fair Equipment Restoration): bottle refunds (Eternal / Classic / Widow's Bite) and achievement rewards are now sent after the raid ends, never during it.
+- Achievements unlocked when you die are now handled correctly.
 
 ### What's new in 2.2
 - **Fix (important):** reaching level 5 on a perk could show a blank error at raid start and break other mods' raid start (HUD mods, loot counters). Raid start is now fully isolated from errors, and achievements are checked once your character is loaded.

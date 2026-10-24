@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.2.0")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "2.2.1")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -144,7 +144,7 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v2.2.0) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v2.2.1) - parches: " + ok + " ok, " + fail + " con error");
         }
 
         private void Update()
@@ -155,7 +155,8 @@ namespace TarkovaCola.Client
             PerkSense.Tick();
             ArenaCompat.Tick();
             Cfg.Tick();
-            if (!InRaid) { try { Achievements.FlushNative(); } catch (Exception e) { Log.LogWarning("logros (menu): " + e.Message); } }
+            if (InRaidWorld) _lastInWorld = Time.realtimeSinceStartup;
+            if (ServerSafe) { try { Achievements.FlushNative(); Achievements.FlushClaims(); PerkService.FlushRefunds(); } catch (Exception e) { Log.LogWarning("logros/correo (menu): " + e.Message); } }
             Hud.TickRaidPanel();
             PerkService.TickSave();      // el progreso se envia al servidor unos segundos despues del ultimo cambio
         }
@@ -197,6 +198,10 @@ namespace TarkovaCola.Client
 
         // Hay una raid cargada (aunque estes muerto o en el menu de pausa).
         internal static bool InRaidWorld { get { return Me != null; } }
+
+        // Fuera de la raid desde hace unos segundos (el servidor ya proceso el final de la raid): se pueden pedir cambios del perfil
+        private static float _lastInWorld = -100f;
+        internal static bool ServerSafe { get { return !InRaidWorld && Time.realtimeSinceStartup - _lastInWorld > 8f; } }
 
         // En raid y con el jugador vivo.
         internal static bool InRaid

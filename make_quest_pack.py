@@ -430,7 +430,7 @@ story = {
 }
 
 pack = {"name": "TarkovaCola", "requires": "~1.3.5", "description": {"en": "Tarkova-Cola: the Bottlers storyline", "ch": "Tarkova-Cola"},
-        "author": "Yendaxddd", "version": "2.2.0"}
+        "author": "Yendaxddd", "version": "2.2.1"}
 
 
 def write(path, obj):

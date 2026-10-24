@@ -1,4 +1,4 @@
-# Tarkova-Cola 2.2.0
+# Tarkova-Cola 2.2.1
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
 Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika, Report issues on SPT Page/Here). Optional: **VisitAPI 1.3.5+** for the storyline.
@@ -6,6 +6,10 @@ Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika,
 > El README del zip (Package/README.md) está en español e inglés.
 
 ---
+
+### Hotfix 2.2.1
+- Compatibility with mods that restore your equipment on death (e.g. Fair Equipment Restoration): bottle refunds (Eternal / Classic / Widow's Bite) and achievement rewards are now sent after the raid ends, never during it.
+- Achievements unlocked when you die are now handled correctly.
 
 ### What's new in 2.2
 - **Fix (important):** reaching level 5 on a perk could show a blank error at raid start and break other mods' raid start (HUD mods, loot counters). Raid start is now fully isolated from errors, and achievements are checked once your character is loaded.

@@ -120,7 +120,26 @@ namespace TarkovaCola.Client
         }
 
         // Pide al servidor que envie por correo una o mas unidades de un item (Widow's Bite: la granada que mato).
+        // Las devoluciones por correo se mandan al terminar la raid, nunca durante: cambiar el perfil del servidor en mitad de la raid
+        // (el correo, las recompensas) puede confundir a los mods que restauran el equipo al morir (comparan el perfil de antes y despues).
+        private static readonly List<KeyValuePair<string, int>> _pendingRefunds = new List<KeyValuePair<string, int>>();
+
         internal static void RequestRefund(string tpl, int count)
+        {
+            if (!Plugin.ServerSafe) { _pendingRefunds.Add(new KeyValuePair<string, int>(tpl, count)); Dbg.Log("CORREO", "devolucion de " + tpl + " x" + count + " al terminar la raid"); return; }
+            SendRefund(tpl, count);
+        }
+
+        // Plugin.Update fuera de la raid
+        internal static void FlushRefunds()
+        {
+            if (_pendingRefunds.Count == 0 || !Plugin.ServerSafe) return;
+            var list = _pendingRefunds.ToArray();
+            _pendingRefunds.Clear();
+            foreach (var r in list) SendRefund(r.Key, r.Value);
+        }
+
+        private static void SendRefund(string tpl, int count)
         {
             try
             {

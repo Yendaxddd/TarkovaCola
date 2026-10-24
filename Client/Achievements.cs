@@ -72,7 +72,7 @@ namespace TarkovaCola.Client
             // En raid, la ventana nativa de logro del juego se deja para el menu (se ha visto como un error en blanco al empezar la raid):
             // en raid sale nuestro aviso y el logro nativo se marca al volver.
             bool native = false;
-            if (Plugin.InRaid) _pendingNative.Add(def.ServerId);
+            if (Plugin.InRaidWorld) _pendingNative.Add(def.ServerId);
             else native = UnlockNative(def.ServerId);
             try { if (!native) Hud.Notify(L.T("notice.ach.title"), (def.ServerId + " name").Localized()); } catch { }
 
@@ -96,7 +96,7 @@ namespace TarkovaCola.Client
         // Plugin.Update fuera de la raid: los logros conseguidos en raid se marcan en el juego
         internal static void FlushNative()
         {
-            if (_pendingNative.Count == 0 || Plugin.InRaid) return;
+            if (_pendingNative.Count == 0 || !Plugin.ServerSafe) return;
             var list = _pendingNative.ToArray();
             _pendingNative.Clear();
             foreach (var id in list) UnlockNative(id);
@@ -133,9 +133,26 @@ namespace TarkovaCola.Client
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).
         internal static void ClaimPending() { Claim(All.Where(a => IsDone(a.Key)).Select(a => a.ServerId).ToArray()); }
 
+        private static readonly System.Collections.Generic.HashSet<string> _pendingClaims = new System.Collections.Generic.HashSet<string>();
+
+        // Las recompensas de logros se piden al terminar la raid (cambian el perfil del servidor: ver PerkService.RequestRefund)
         private static void Claim(string[] ids)
         {
             if (ids.Length == 0) return;
+            if (!Plugin.ServerSafe) { foreach (var id in ids) _pendingClaims.Add(id); return; }
+            SendClaim(ids);
+        }
+
+        internal static void FlushClaims()
+        {
+            if (_pendingClaims.Count == 0 || !Plugin.ServerSafe) return;
+            var ids = _pendingClaims.ToArray();
+            _pendingClaims.Clear();
+            SendClaim(ids);
+        }
+
+        private static void SendClaim(string[] ids)
+        {
             try
             {
                 var body = new JObject { ["ids"] = new JArray(ids) }.ToString(Formatting.None);
