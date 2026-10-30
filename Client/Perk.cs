@@ -91,20 +91,20 @@ namespace TarkovaCola.Client
             get
             {
                 if (!Plugin.SpeedColaActive) return 1f;
+                if (Rev.NoReloadBonus) return 1f;           // Bajon (2 min sin matar) y A medias (recarga con balas en el cargador)
                 float full = _eq.Contains("a_rush") ? RushReload : BaseReload;
                 return (1f + (full - 1f) * Perks.Power("speedcola")) * Synergy.ReloadBoost;        // como modificador (Classic) da solo una parte; la sinergia con PHD Flopper suma un empujon temporal
             }
         }
 
-        // sacar / cambiar de arma: Quick Hands la acelera; Sluggish Reflexes y Greasy Fingers la frenan
+        // sacar / cambiar de arma: Quick Hands la acelera; Clumsy Talons y Butterfingers la frenan
         internal static float DrawMult
         {
             get
             {
                 float m = Has("a_quick") ? QuickHandsDraw : 1f;
-                if (Has("dj_sluggish")) m *= PerkFx.SluggishDraw;
-                if (Has("dw_greasy")) m *= PerkFx.GreasyDraw;
-                if (Has("dd_d_tunnel")) m *= Deadshot.TunnelDraw;
+                if (Has("va_d_clumsy")) m *= VultureAid.ClumsyDraw;
+                m *= MeleeMacchiato.DrawMult(Plugin.Me);           // Quick Draw (cuchillo) / Butterfingers (armas de fuego)
                 return m * Synergy.DrawMult;
             }
         }

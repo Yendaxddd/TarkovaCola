@@ -90,6 +90,7 @@ namespace TarkovaCola.Client
             _lastBlast = now;
             if (!fresh) return;
             if (Plugin.Me != null) Synergy.OnAbsorb(Plugin.Me);
+            PerkService.AddProgress("pf_drop");                                         // desafio de Caida explosiva: explosiones aguantadas
             PerkService.AddStat("phd_blasts", 1);
             if (PerkService.Stat("phd_blasts") >= HugsNeeded) Achievements.Unlock("pf_hugs");
         }
@@ -103,6 +104,7 @@ namespace TarkovaCola.Client
             if (PerkService.Stat("phd_fall_m") >= GravityMeters) Achievements.Unlock("pf_gravity");
 
             if (height >= StaggerHeight) PerkService.AddProgress("pf_soles");          // desafio de Soft Soles: caidas de 3 m o mas
+            if (height >= StaggerHeight && Perk.Has("pf_drop")) Rev.FallBlast(me);      // Caida explosiva
 
             // Stagger: aterrizar de 3 m o mas te quita estamina
             if (height >= StaggerHeight && Perk.Has("dp_stagger") && me.Physical != null && me.Physical.Stamina != null)
@@ -147,7 +149,9 @@ namespace TarkovaCola.Client
                 if (missing > bestMissing) { bestMissing = missing; best = p; }
             }
             if (best == EBodyPart.Common) return;
-            hc.ChangeHealth(best, Mathf.Min(amount, bestMissing), DamageHelper.MedKitUse);
+            Rev.SelfHeal = true;                                          // (no es un botiquin: Cura lenta no lo reduce)
+            try { hc.ChangeHealth(best, Mathf.Min(amount, bestMissing), DamageHelper.MedKitUse); }
+            finally { Rev.SelfHeal = false; }
             Dbg.Throttled("absorb", 3f, "EFECTO", "Blast Absorber: +" + Mathf.Min(amount, bestMissing).ToString("0.0") + " en " + best);
         }
 

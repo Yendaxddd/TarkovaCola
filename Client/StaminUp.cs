@@ -35,7 +35,6 @@ namespace TarkovaCola.Client
         internal const float BurnoutMult = 0.5f;
         internal const float JellyAfter = 5f;            // Jelly Legs: tras correr 5 s seguidos, balanceo +25% durante 6 s
         internal const float JellySeconds = 6f;
-        internal const float HungryExtra = 0.5f;         // Hungry Legs / Sweaty: +50% de gasto de energia / hidratacion mientras corres
         internal const float CrampsSeconds = 2f;         // Cramps: 2 s mas sin recuperar estamina al dejar de correr
         internal const float BelowMeters = 2f;           // Soft Landing (desafio): el enemigo estaba >=2 m por debajo
         internal const float RushBSeconds = 180f;        // logro Rush B: 2 bajas en los 3 primeros minutos
@@ -145,24 +144,12 @@ namespace TarkovaCola.Client
                 if (phys.Oxygen != null) phys.Oxygen.Current = phys.Oxygen.TotalCapacity;
             }
 
-            // ---- Loud Boots / Hungry Legs / Sweaty: solo mientras se corre ----
-            if (sprinting)
+            // ---- Loud Boots: solo mientras se corre ----
+            if (sprinting && Perk.Has("dt_boots") && now >= _nextBoots)
             {
-                if (Perk.Has("dt_boots") && now >= _nextBoots)
-                {
-                    _nextBoots = now + BootsInterval;
-                    Singleton<GlobalEventDispatcher>.Instance.PlaySound(me, me.Position, BootsRadius, AISoundType.step);
-                }
-                if (now >= _nextDrain && (Perk.Has("dt_hungry") || Perk.Has("dt_sweaty")))
-                {
-                    float step = now - _nextDrain + 1f;
-                    _nextDrain = now + 1f;
-                    var hc = me.HealthController;
-                    if (Perk.Has("dt_hungry") && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(-PerkFx.BaseEnergyRate * HungryExtra * step);
-                    if (Perk.Has("dt_sweaty") && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(-PerkFx.BaseHydrationRate * HungryExtra * step);
-                }
+                _nextBoots = now + BootsInterval;
+                Singleton<GlobalEventDispatcher>.Instance.PlaySound(me, me.Position, BootsRadius, AISoundType.step);
             }
-            else _nextDrain = now + 1f;
         }
 
         // Si la perk deja de estar activa (nueva raid) no debe quedar nada tocado.

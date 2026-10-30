@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 512px; height: 512px; background: transparent; overflow: hidden; }
+  svg { display: block; }
+  .t { font-family: Impact, "Arial Black", sans-serif; letter-spacing: 3px; }
+</style></head>
+<body>
+<svg id="s" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <radialGradient id="red" cx="40%" cy="32%" r="75%"><stop offset="0" stop-color="#ff3b4e"/><stop offset=".55" stop-color="#c3112b"/><stop offset="1" stop-color="#5e0612"/></radialGradient>
+    <radialGradient id="dark" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#16303f"/><stop offset="1" stop-color="#050b11"/></radialGradient>
+    <radialGradient id="neon" cx="50%" cy="50%" r="50%"><stop offset=".55" stop-color="#4dff8a" stop-opacity=".0"/><stop offset=".8" stop-color="#4dff8a" stop-opacity=".35"/><stop offset="1" stop-color="#4dff8a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6e0"/><stop offset=".5" stop-color="#e9d7a8"/><stop offset="1" stop-color="#b89a5c"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a6"/><stop offset="1" stop-color="#d79a26"/></linearGradient>
+    <path id="arcTop" d="M 106 256 A 150 150 0 0 1 406 256"/>
+    <path id="arcBot" d="M 86 256 A 170 170 0 0 0 426 256"/>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000" flood-opacity=".55"/></filter>
+    <clipPath id="iconClip"><circle r="27"/></clipPath>
+  </defs>
+  <g id="root"></g>
+</svg>
+<script>
+const v = (new URLSearchParams(location.search)).get('v') || '1';
+const perks = ['speedcola','staminup','juggernog','phdflopper','widowswine','deadshot','bandolier','vultureaid','meleemacchiato'];
+const S = 'http://www.w3.org/2000/svg', X = 'http://www.w3.org/1999/xlink';
+const root = document.getElementById('root');
+function el(tag, attrs, parent) { const e = document.createElementNS(S, tag); for (const k in attrs) { if (k === 'href') e.setAttributeNS(X, 'href', attrs[k]); else e.setAttribute(k, attrs[k]); } (parent || root).appendChild(e); return e; }
+function cap(r, teeth, fill) {   // chapa dentada
+  let d = '';
+  for (let i = 0; i <= teeth * 2; i++) { const a = i / (teeth * 2) * Math.PI * 2, rr = i % 2 ? r : r - 14; d += (i ? 'L' : 'M') + (256 + Math.cos(a) * rr).toFixed(1) + ' ' + (256 + Math.sin(a) * rr).toFixed(1); }
+  return el('path', { d: d + 'Z', fill: fill, filter: 'url(#shadow)' });
+}
+function bubbles(n, seed, color) {
+  let s = seed; const r = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, d = 40 + r() * 70, R = 3 + r() * 9; el('circle', { cx: 256 + Math.cos(a) * d, cy: 256 + Math.sin(a) * d * 0.9, r: R, fill: 'none', stroke: color, 'stroke-width': 2, opacity: .55 }); }
+}
+function arcText(txt, path, size, fill, stroke, off) {
+  const t = el('text', { class: 't', 'font-size': size, fill: fill, stroke: stroke, 'stroke-width': stroke ? 3 : 0, 'paint-order': 'stroke', 'text-anchor': 'middle' });
+  const tp = el('textPath', { href: '#' + path, startOffset: off || '50%' }, t); tp.textContent = txt; return t;
+}
+function perkRing(r, size, ringColor) {
+  perks.forEach((p, i) => {
+    const a = -Math.PI / 2 + i / perks.length * Math.PI * 2, x = 256 + Math.cos(a) * r, y = 256 + Math.sin(a) * r;
+    const g = el('g', { transform: `translate(${x},${y})` });
+    el('circle', { r: size / 2 + 4, fill: '#0b141c', stroke: ringColor, 'stroke-width': 3 }, g);
+    el('image', { href: '../../Client/assets/' + p + '_icon.png', x: -size / 2, y: -size / 2, width: size, height: size, 'clip-path': 'url(#iconClip)' }, g);
+  });
+}
+function bigT(fill, stroke) {
+  const t = el('text', { class: 't', x: 256, y: 318, 'font-size': 190, fill: fill, stroke: stroke, 'stroke-width': 8, 'paint-order': 'stroke', 'text-anchor': 'middle', filter: 'url(#shadow)' }); t.textContent = 'T';
+}
+
+if (v === '1') {            // chapa de refresco
+  cap(250, 24, 'url(#red)');
+  el('circle', { cx: 256, cy: 256, r: 212, fill: 'none', stroke: 'url(#metal)', 'stroke-width': 10 });
+  el('circle', { cx: 256, cy: 256, r: 196, fill: 'none', stroke: '#ffffff', 'stroke-opacity': .15, 'stroke-width': 2 });
+  bubbles(16, 7, '#ffd9dd');
+  bigT('url(#metal)', '#5e0612');
+  arcText('TARKOVA', 'arcTop', 58, '#fff6e0', '#5e0612');
+  arcText('· COLA ·', 'arcBot', 50, '#fff6e0', '#5e0612');
+} else if (v === '2') {     // emblema con las perks
+  el('circle', { cx: 256, cy: 256, r: 246, fill: 'url(#neon)' });
+  el('circle', { cx: 256, cy: 256, r: 222, fill: 'url(#dark)', stroke: '#4dff8a', 'stroke-width': 4, filter: 'url(#glow)' });
+  perkRing(170, 58, '#4dff8a');
+  bubbles(10, 3, '#4dff8a');
+  const a = el('text', { class: 't', x: 256, y: 252, 'font-size': 64, fill: '#eafff0', 'text-anchor': 'middle', filter: 'url(#glow)' }); a.textContent = 'TARKOVA';
+  const b = el('text', { class: 't', x: 256, y: 312, 'font-size': 58, fill: '#4dff8a', 'text-anchor': 'middle', filter: 'url(#glow)' }); b.textContent = 'COLA';
+} else {                    // chapa + perks
+  cap(250, 24, 'url(#red)');
+  el('circle', { cx: 256, cy: 256, r: 214, fill: '#140306', 'fill-opacity': .35, stroke: 'url(#gold)', 'stroke-width': 8 });
+  perkRing(168, 54, '#ffd36a');
+  el('circle', { cx: 256, cy: 256, r: 104, fill: 'url(#red)', stroke: 'url(#gold)', 'stroke-width': 6, filter: 'url(#shadow)' });
+  bubbles(8, 11, '#ffd9dd');
+  const a = el('text', { class: 't', x: 256, y: 248, 'font-size': 40, fill: '#fff6e0', stroke: '#5e0612', 'stroke-width': 4, 'paint-order': 'stroke', 'text-anchor': 'middle' }); a.textContent = 'TARKOVA';
+  const b = el('text', { class: 't', x: 256, y: 296, 'font-size': 46, fill: 'url(#gold)', stroke: '#5e0612', 'stroke-width': 4, 'paint-order': 'stroke', 'text-anchor': 'middle' }); b.textContent = 'COLA';
+}
+</script>
+</body></html>

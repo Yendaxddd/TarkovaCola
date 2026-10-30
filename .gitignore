@@ -45,3 +45,39 @@ UnityBundle/Assets/Editor/PhdVfxPreview/PhdVfx.cs.meta
 UnityBundle/Assets/Models/jr/
 UnityBundle/Assets/Models/jr.meta
 UnityBundle/Assets/Prefabs/jr.prefab*
+
+# maquinas de perks (modelos de Black Ops 3): solo se publica el bundle compilado
+UnityBundle/Assets/Models/machines/
+UnityBundle/Assets/Models/machines.meta
+UnityBundle/Assets/Prefabs/machine_*
+
+# modelos de BO6 (Saluki): solo se publican los bundles compilados
+UnityBundle/Assets/Models/bo6/
+UnityBundle/Assets/Models/bo6.meta
+UnityBundle/Assets/Prefabs/bo6_*
+UnityBundle/Assets/Prefabs/power_switch*
+
+# --- 3.0: modelos y datos de Black Ops 6/7 (Saluki/Greyhound): solo se publican compilados en el zip de la release ---
+Client/assets/machines.bundle
+Client/assets/cod_drink.json
+Client/assets/cod_viewhands.json
+Server/ModFiles/bundles/assets/content/items/mods/
+UnityBundle/Assets/Anim/
+UnityBundle/Assets/Anim.meta
+UnityBundle/Assets/EftLab/
+UnityBundle/Assets/EftLab.meta
+UnityWeapons/
+# proyecto del WTT SDK (7Bpencil/WTT-SDK-Public): solo nuestros scripts
+UnityWeaponsSdk/*
+!UnityWeaponsSdk/Assets/
+UnityWeaponsSdk/Assets/*
+!UnityWeaponsSdk/Assets/Editor/
+UnityWeaponsSdk/Assets/Editor/*
+!UnityWeaponsSdk/Assets/Editor/TarkovaCola/
+!UnityWeaponsSdk/Assets/TarkovaCola/
+UnityWeaponsSdk/Assets/TarkovaCola/*
+!UnityWeaponsSdk/Assets/TarkovaCola/UiLab/
+UnityWeaponsSdk/Assets/TarkovaCola/UiLab/Src/
+# capturas de pruebas
+lab_*.png
+v.log

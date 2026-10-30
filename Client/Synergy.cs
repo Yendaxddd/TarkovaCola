@@ -227,6 +227,7 @@ namespace TarkovaCola.Client
         {
             float now = Time.time;
             _absorbAt = now;
+            Apex.OnAbsorb();                                                        // desafio APEX de PHD Flopper
             AddProgress(Blast, 1); AddProgress(Bounce, 1); AddProgress(Shock, 1);
             if (P(Blast) > 0f)
             {
@@ -266,7 +267,7 @@ namespace TarkovaCola.Client
         internal static void OnBreath() { AddProgress(Breath, 1); }
 
         // Enemigo atrapado por primera vez en una telarana (desde WidowsWine.Web)
-        internal static void OnWebbed() { AddProgress(WebBlast, 1); }
+        internal static void OnWebbed() { AddProgress(WebBlast, 1); Apex.OnWebbed(); }
 
         // Baja del jugador (desde PerkFx.OnKill)
         internal static void OnKill(Player me, Player victim, bool webbed, bool armored)

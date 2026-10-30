@@ -86,9 +86,24 @@ namespace TarkovaCola.Client
             // fondo que tapa y bloquea el menu de debajo
             var dim = UiKit.Img(transform, "Dim", UiKit.C(3, 8, 13, 0.94f), null, raycast: true);
             UiKit.Stretch(dim.rectTransform);
-            var grad = UiKit.Img(transform, "Glow", UiKit.C(20, 90, 60, 0.10f));
-            grad.rectTransform.anchorMin = new Vector2(0.55f, 0f); grad.rectTransform.anchorMax = Vector2.one;
-            grad.rectTransform.offsetMin = grad.rectTransform.offsetMax = Vector2.zero;
+            // fondo vivo: un resplandor del color de la perk que se ve (cambia suave al elegir otra) y otro frio, los dos a la deriva;
+            // burbujas de cola subiendo, lineas de monitor y vineta
+            var glow = UiKit.Img(transform, "PerkGlow", new Color(0f, 0f, 0f, 0f), UiKit.Glow);
+            glow.rectTransform.anchorMin = glow.rectTransform.anchorMax = new Vector2(0.68f, 0.55f);
+            glow.rectTransform.sizeDelta = new Vector2(Screen.height * 1.5f, Screen.height * 1.5f);
+            glow.gameObject.AddComponent<UiDrift>().Amp = new Vector2(Screen.width * 0.06f, Screen.height * 0.05f);
+            _glow = glow.gameObject.AddComponent<UiTint>(); _glow.Graphic = glow; _glow.Speed = 2.5f;
+            var cold = UiKit.Img(transform, "ColdGlow", UiKit.C(40, 140, 220, 0.07f), UiKit.Glow);
+            cold.rectTransform.anchorMin = cold.rectTransform.anchorMax = new Vector2(0.12f, 0.2f);
+            cold.rectTransform.sizeDelta = new Vector2(Screen.height * 1.2f, Screen.height * 1.2f);
+            var cd = cold.gameObject.AddComponent<UiDrift>(); cd.Amp = new Vector2(Screen.width * 0.05f, Screen.height * 0.06f); cd.Phase = 2.3f; cd.Speed = 0.09f;
+            var bubbles = UiKit.Rect(transform, "Bubbles"); UiKit.Stretch(bubbles);
+            bubbles.gameObject.AddComponent<UiBubbles>();
+            var scan = UiKit.Rect(transform, "Scan"); UiKit.Stretch(scan);
+            var raw = scan.gameObject.AddComponent<RawImage>(); raw.texture = UiKit.Scan; raw.raycastTarget = false;
+            raw.uvRect = new Rect(0f, 0f, 1f, Screen.height / 3f);
+            scan.gameObject.AddComponent<UiScan>().Img = raw;
+            var vig = UiKit.Img(transform, "Vignette", UiKit.C(0, 0, 0, 0.55f), UiKit.Vignette); UiKit.Stretch(vig.rectTransform);
 
             // contenido 1920x1080 centrado y escalado a la pantalla (sin deformar)
             _content = UiKit.Rect(transform, "Content");
@@ -111,14 +126,19 @@ namespace TarkovaCola.Client
             Rebuild(true);
         }
 
+        private UiTint _glow;
+
         private void Rebuild(bool animate)
         {
+            // el resplandor del fondo toma el color de la perk que se ve (APEX en rojo)
+            if (_glow != null) { var pc = _view == "apex" ? ApexRed : UiKit.PerkColor(_perk != null ? _perk.Id : null); _glow.Target = new Color(pc.r, pc.g, pc.b, 0.16f); }
             _animate = animate; _idx = 0;
             _anims.Clear(); _fills.Clear();
             foreach (var r in new[] { _header, _left, _stage })
                 for (int i = r.childCount - 1; i >= 0; i--) Destroy(r.GetChild(i).gameObject);
 
             if (_view == "syn") { BuildSynergy(); return; }
+            if (_view == "apex") { BuildApex(); return; }                         // APEX (Modern y Classic)
             if (_view == "eternal" && !ClassicMode.Enabled) { BuildEternal(); return; }              // sinergias (Modern y Classic)
             if (ClassicMode.Enabled) { BuildClassic(); return; }       // en modo Classic no hay Research: se muestra el resumen de perks
 
@@ -213,10 +233,7 @@ namespace TarkovaCola.Client
             T(_header, L.T("augments"), 60, 26, 400, 20, 14, UiKit.Dim);
             T(_header, L.T(_view == "progress" ? "title.progress" : "title.equip"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
 
-            Tab("progress", L.T("nav.progress"), 560, 140);
-            Tab("equip", L.T("nav.equip"), 700, 140);
-            Tab("syn", L.T("nav.syn"), 840, 140);
-            Tab("eternal", L.T("nav.eternal"), 980, 140);
+            NavTabs();
             ModeToggle(1190, 46);
 
             int lv = PerkService.Level(_perk.Id);
@@ -263,8 +280,7 @@ namespace TarkovaCola.Client
         {
             T(_header, L.T("classic.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
             T(_header, L.T("classic.title"), 60, 42, 520, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            Tab("progress", L.T("nav.summary"), 600);
-            Tab("syn", L.T("nav.syn"), 780);
+            NavTabs();
             ModeToggle(1190, 46);
             var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
             var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
@@ -372,10 +388,7 @@ namespace TarkovaCola.Client
         {
             T(_header, L.T("syn.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
             T(_header, L.T("eternal.page"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            Tab("progress", L.T("nav.progress"), 560, 140);
-            Tab("equip", L.T("nav.equip"), 700, 140);
-            Tab("syn", L.T("nav.syn"), 840, 140);
-            Tab("eternal", L.T("nav.eternal"), 980, 140);
+            NavTabs();
             ModeToggle(1190, 46);
             var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
             var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
@@ -439,18 +452,7 @@ namespace TarkovaCola.Client
         {
             T(_header, L.T("syn.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
             T(_header, L.T("syn.title"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            if (ClassicMode.Enabled)
-            {
-                Tab("progress", L.T("nav.summary"), 600);
-                Tab("syn", L.T("nav.syn"), 780);
-            }
-            else
-            {
-                Tab("progress", L.T("nav.progress"), 560, 140);
-                Tab("equip", L.T("nav.equip"), 700, 140);
-                Tab("syn", L.T("nav.syn"), 840, 140);
-                Tab("eternal", L.T("nav.eternal"), 980, 140);
-            }
+            NavTabs();
             ModeToggle(1190, 46);
             var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
             var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
@@ -563,6 +565,142 @@ namespace TarkovaCola.Client
         private void OnSyn(string id)
         {
             string err = Synergy.Toggle(id);
+            if (err != null) { Toast(L.T(err)); return; }
+            UiKit.Sound(EUISoundType.MenuInspectorWindowOpen);
+            Rebuild(false);
+        }
+
+        // las pestanas de arriba (Modern: progreso, equipar, sinergia, eternas, APEX; Classic: resumen, sinergia, APEX)
+        private void NavTabs()
+        {
+            if (ClassicMode.Enabled)
+            {
+                Tab("progress", L.T("nav.summary"), 600);
+                Tab("syn", L.T("nav.syn"), 780);
+                Tab("apex", "APEX", 960);
+                return;
+            }
+            Tab("progress", L.T("nav.progress"), 540, 130);
+            Tab("equip", L.T("nav.equip"), 670, 130);
+            Tab("syn", L.T("nav.syn"), 800, 130);
+            Tab("eternal", L.T("nav.eternal"), 930, 130);
+            Tab("apex", "APEX", 1060, 130);
+        }
+
+        // ---------------------------------------------------------------- pestana APEX (Modern y Classic)
+        // Rejilla con los 9 APEX (uno por perk) y, a la derecha, el detalle: efecto, desafio y el boton (usar nucleo / equipar).
+        private string _apexSel;
+        private static readonly Color ApexRed = UiKit.C(255, 92, 72);
+
+        private void BuildApex()
+        {
+            T(_header, L.T("apex.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
+            T(_header, "APEX", 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            NavTabs();
+            ModeToggle(1190, 46);
+            var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
+            var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
+            UiKit.Stretch(x.rectTransform);
+
+            var rt = T(_left, L.T("apex.rules"), 80, 210, 280, 700, 15, UiKit.Text, TextAlignmentOptions.TopLeft, true);
+            rt.lineSpacing = 8f; rt.paragraphSpacing = 12f;
+            float textH = rt.GetPreferredValues(rt.text, 280f, 0f).y + 6f;
+            var rules = UiKit.Panel(_left, 60, 150, 320, Mathf.Min(780f, 60f + textH + 24f), UiKit.PanelBg, UiKit.Line);
+            Enter(rules.rectTransform);
+            rt.transform.SetParent(rules.transform, false);
+            UiKit.Place(rt.rectTransform, 20, 60, 280, textH);
+            T(rules.transform, L.T("apex.rules.title"), 20, 18, 280, 22, 16, ApexRed, TextAlignmentOptions.TopLeft, false, true);
+            UiKit.Place(UiKit.Img(rules.transform, "Underline", ApexRed).rectTransform, 20, 44, 280, 1);
+
+            T(_stage, L.T("apex.equipped"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
+            T(_stage, L.F("apex.cores", Apex.Cores), 640, 14, 800, 22, 16, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+            if (Apex.Get(_apexSel ?? "") == null) _apexSel = Apex.Equipped ?? Apex.All[0].Id;
+            const float tw = 300f, th = 230f, gx = 14f, gy = 12f;
+            for (int i = 0; i < Apex.All.Length; i++)
+                ApexTile((i % 3) * (tw + gx), 60 + (i / 3) * (th + gy), tw, th, Apex.All[i]);
+            ApexCard(950, 60, 490, 818, Apex.Get(_apexSel));
+        }
+
+        private void ApexTile(float x, float y, float w, float h, ApexDef a)
+        {
+            bool unlocked = Apex.IsUnlocked(a.Id), started = Apex.IsStarted(a.Id), eq = Apex.Equipped == a.Id, on = a.Id == _apexSel;
+            Color accent = eq ? UiKit.Green : unlocked ? ApexRed : started ? UiKit.Gold : UiKit.C(110, 126, 142);
+            string id = a.Id;
+            var b = UiButton.Make(_stage, x, y, w, h, () => { if (_apexSel != id) { _apexSel = id; Rebuild(false); } },
+                                  on ? UiKit.C(255, 92, 72, 0.14f) : UiKit.Panel2, on ? UiKit.C(255, 92, 72, 0.22f) : UiKit.C(42, 68, 94, 0.97f));
+            Enter(b.GetComponent<RectTransform>());
+            Color border = on ? ApexRed : new Color(accent.r, accent.g, accent.b, 0.6f);
+            float bw = on ? 2f : 1f;
+            UiKit.Place(UiKit.Img(b.transform, "bt", border).rectTransform, 0, 0, w, bw);
+            UiKit.Place(UiKit.Img(b.transform, "bb", border).rectTransform, 0, h - bw, w, bw);
+            UiKit.Place(UiKit.Img(b.transform, "bl", border).rectTransform, 0, 0, bw, h);
+            UiKit.Place(UiKit.Img(b.transform, "br", border).rectTransform, w - bw, 0, bw, h);
+
+            var perk = Perks.Get(a.Perk);
+            var ic = UiKit.Img(b.transform, "Icon", unlocked ? Color.white : UiKit.C(255, 255, 255, 0.55f), Hud.IconSprite(a.Perk)); UiKit.Place(ic.rectTransform, 12, 12, 52, 52); ic.preserveAspect = true;
+            Fit(T(b.transform, Apex.Name(a).ToUpperInvariant(), 76, 12, w - 88, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 11, 18);
+            T(b.transform, perk != null ? perk.Name : a.Perk, 76, 38, w - 88, 16, 12, UiKit.Dim, TextAlignmentOptions.TopLeft, false, false);
+            T(b.transform, L.T(eq ? "apex.tag.eq" : unlocked ? "apex.tag.un" : started ? "apex.tag.run" : "apex.tag.lock"), 76, 56, w - 88, 16, 12, accent, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(b.transform, Apex.Desc(a), 12, 82, w - 24, 90, 13, UiKit.Text, TextAlignmentOptions.TopLeft, true), 9, 13);
+            if (started && !unlocked)
+            {
+                int p = Apex.Progress(a.Id);
+                var tmp = new AugDef { Unit = a.Unit };
+                T(b.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, a.Goal), 12, 186, w - 24, 16, 12, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+                Bar(b.transform, 12, 208, w - 24, 6, p / (float)a.Goal, UiKit.Gold);
+            }
+        }
+
+        private void ApexCard(float x, float y, float w, float h, ApexDef a)
+        {
+            bool unlocked = Apex.IsUnlocked(a.Id), started = Apex.IsStarted(a.Id), eq = Apex.Equipped == a.Id;
+            Color accent = eq ? UiKit.Green : unlocked ? ApexRed : started ? UiKit.Gold : UiKit.C(110, 126, 142);
+            var card = UiKit.Panel(_stage, x, y, w, h, UiKit.Panel2, new Color(accent.r, accent.g, accent.b, 0.75f), 2f);
+            Enter(card.rectTransform);
+            var perk = Perks.Get(a.Perk);
+            UiKit.Badge(card.transform, w / 2f, 84, 120, true, accent, Hud.IconSprite(a.Perk), unlocked ? Color.white : UiKit.C(255, 255, 255, 0.6f));
+            Fit(T(card.transform, Apex.Name(a).ToUpperInvariant(), 14, 152, w - 28, 34, 26, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 26);
+            T(card.transform, "APEX  ·  " + (perk != null ? perk.Name : a.Perk), 14, 190, w - 28, 20, 14, UiKit.Dim, TextAlignmentOptions.Top, false, false);
+            T(card.transform, L.T(eq ? "apex.tag.eq" : unlocked ? "apex.tag.un" : started ? "apex.tag.run" : "apex.tag.lock"), 14, 214, w - 28, 18, 13, accent, TextAlignmentOptions.Top, false, true);
+            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 20, 242, w - 40, 1);
+
+            T(card.transform, L.T("apex.effect"), 20, 256, w - 40, 16, 12, ApexRed, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(card.transform, Apex.Desc(a), 20, 276, w - 40, 96, 16, UiKit.Text, TextAlignmentOptions.TopLeft, true), 11, 16);
+            UiKit.Place(UiKit.Img(card.transform, "Sep2", UiKit.Line).rectTransform, 20, 384, w - 40, 1);
+
+            T(card.transform, L.T("syn.challenge"), 20, 398, w - 40, 16, 12, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
+            Fit(T(card.transform, Apex.Challenge(a), 20, 418, w - 40, 70, 15, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 11, 15);
+            if (unlocked)
+                T(card.transform, L.T("syn.done"), 20, 500, w - 40, 22, 16, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
+            else if (started)
+            {
+                int p = Apex.Progress(a.Id);
+                var tmp = new AugDef { Unit = a.Unit };
+                T(card.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, a.Goal), 20, 496, w - 40, 20, 15, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+                Bar(card.transform, 20, 522, w - 40, 8, p / (float)a.Goal, UiKit.Gold);
+            }
+            Fit(T(card.transform, L.F("apex.need", perk != null ? perk.Name : a.Perk), 20, 546, w - 40, 40, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+
+            string id = a.Id;
+            if (unlocked || (!started && Apex.Cores > 0))
+            {
+                bool red = unlocked && eq;
+                var btn = UiButton.Make(card.transform, 20, h - 76, w - 40, 56, () => OnApex(id),
+                                        red ? UiKit.C(120, 30, 30, 0.9f) : UiKit.C(31, 138, 76, 0.9f), red ? UiKit.C(160, 40, 40, 0.95f) : UiKit.C(40, 170, 96, 0.95f));
+                var bt = UiKit.Txt(btn.transform, unlocked ? L.T(eq ? "syn.unequip" : "syn.equip") : L.F("apex.use", Apex.Cores), 20, UiKit.White, TextAlignmentOptions.Center, false, true);
+                UiKit.Stretch(bt.rectTransform);
+            }
+            else
+            {
+                var dim = UiKit.Panel(card.transform, 20, h - 76, w - 40, 56, UiKit.C(255, 255, 255, 0.04f), UiKit.Line);
+                var dt = UiKit.Txt(dim.transform, L.T(started ? "apex.running" : "apex.nocore"), 16, UiKit.Dim, TextAlignmentOptions.Center, false, true);
+                UiKit.Stretch(dt.rectTransform);
+            }
+        }
+
+        private void OnApex(string id)
+        {
+            string err = Apex.IsUnlocked(id) ? Apex.Toggle(id) : Apex.Start(id);
             if (err != null) { Toast(L.T(err)); return; }
             UiKit.Sound(EUISoundType.MenuInspectorWindowOpen);
             Rebuild(false);

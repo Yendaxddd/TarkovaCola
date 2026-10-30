@@ -58,7 +58,7 @@ namespace TarkovaCola.Client
         {
             int n = Perks.ActivePerks.Count();
             if (n >= 5) U("g_five");
-            if (n >= Perks.All.Length) U("g_six");
+            if (n >= Perks.Original.Length) U("g_six");
             if (ClassicMode.Enabled)
             {
                 var e = ClassicMode.Entries();
@@ -105,7 +105,7 @@ namespace TarkovaCola.Client
             _kills.Add(now);
             _kills.RemoveAll(t => now - t > 10f);
             if (_kills.Count >= 3 && active >= 3) U("g_combo");
-            if (PerkFx.IsBoss(victim) && active >= Perks.All.Length) U("g_bossall");
+            if (PerkFx.IsBoss(victim) && active >= Perks.Original.Length) U("g_bossall");
         }
 
         // ---------------------------------------------------------------- otros eventos
@@ -134,7 +134,7 @@ namespace TarkovaCola.Client
         {
             U("e_first");
             if (Eternal.Count >= 3) U("e_three");
-            if (Eternal.Count >= Perks.All.Length) U("e_all");
+            if (Eternal.Count >= Perks.Original.Length) U("e_all");
             if (viaPowerup) U("p_eternal");
         }
 
@@ -163,7 +163,7 @@ namespace TarkovaCola.Client
             }
             if (!alive) return;
             if (Synergy.Equipped().Any(id => Synergy.Power(id) > 0f)) U("syn_extract");
-            if (Perks.ActivePerks.Count() >= Perks.All.Length) U("x_extract6");
+            if (Perks.ActivePerks.Count() >= Perks.Original.Length) U("x_extract6");
         }
 
         // ---------------------------------------------------------------- estado (niveles, mejoras, sinergias, misiones)
@@ -171,7 +171,7 @@ namespace TarkovaCola.Client
         {
             if (PerkService.IsMax(Deadshot.Id)) U("dd_lvl5");
             if (Perks.Deadshot.Augs.All(a => PerkService.IsDone(a.Id))) U("dd_all");
-            if (Perks.All.All(p => PerkService.IsMax(p.Id))) U("g_lvl5all");
+            if (Perks.Original.All(p => PerkService.IsMax(p.Id))) U("g_lvl5all");
             var augs = Perks.All.SelectMany(p => p.Augs).ToList();
             int done = augs.Count(a => PerkService.IsDone(a.Id));
             if (done >= 20) U("g_aug20");
@@ -179,7 +179,7 @@ namespace TarkovaCola.Client
             if (!ClassicMode.Enabled)
             {
                 if (Perks.All.Any(p => PerkService.EquippedMajor(p.Id, false) != null && PerkService.EquippedMinors(p.Id, false).Count >= 2)) U("m_loaded");
-                if (Perks.All.All(p => p.Augs.Any(a => PerkService.IsDone(a.Id)))) U("m_spread");
+                if (Perks.Original.All(p => p.Augs.Any(a => PerkService.IsDone(a.Id)))) U("m_spread");
             }
             OnSynergyUnlocked();
             CheckMissions();

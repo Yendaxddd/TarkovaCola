@@ -41,6 +41,7 @@ namespace TarkovaCola.Client
             var me = Plugin.Me;
             if (me == null || me.Skills != __instance) return;
             if (Plugin.SpeedColaActive) __result.ReloadSpeed *= Perk.ReloadMult;
+            if (Perk.Has("va_d_myopia")) __result.AimSpeed -= VultureAid.MyopiaAim;
             if (Deadshot.Active)                                                  // Deadshot: apuntar mas rapido y menos retroceso
             {
                 __result.AimSpeed += Deadshot.AimBonus;
@@ -87,20 +88,6 @@ namespace TarkovaCola.Client
                 if (Plugin.CfgIgnoreArmPenalty.Value && reload < rm) reload = rm;
             }
             draw *= Perk.DrawMult;
-        }
-    }
-
-    // ---------- Desafio Bolt Runner: desencasquillar ----------
-    [HarmonyPatch(typeof(Player.FirearmController.RepairMalfunction), "OnMalfunctionOffEvent")]
-    internal static class UnjamPatch
-    {
-        [HarmonyPostfix]
-        private static void Postfix(Player.FirearmController.RepairMalfunction __instance)
-        {
-            var p = __instance.Controller != null ? __instance.Controller._player : null;
-            if (!Util.IsMe(p)) return;
-            Dbg.Log("DESAFIO", "arma desencasquillada (cola activa=" + Plugin.SpeedColaActive + ")");
-            if (Plugin.SpeedColaActive) PerkService.AddProgress("a_bolt");
         }
     }
 
@@ -288,6 +275,7 @@ namespace TarkovaCola.Client
 
             Perk.ReloadCount++;
             Dbg.Log("RECARGA", "cambio de cargador #" + Perk.ReloadCount + " (" + magazine.Count + " balas)");
+            Rev.OnReloadStart(__instance);                  // Recarga en caliente, A medias
             if (!Perk.Has("d_over") || Perk.ReloadCount % 4 != 0) return;
 
             Dbg.Log("EFECTO", "Overpressure: el cargador pierde sus " + magazine.Count + " balas");

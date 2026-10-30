@@ -167,6 +167,7 @@ namespace TarkovaCola.Client
             if (!_escOpen && !_menuOpen) { QuestGuards.DrawIcons(scale); if (Plugin.CfgShowIcons.Value) DrawPermanentIcons(scale); Powerup.DrawMarker(scale, _white); }
             if (Event.current != null && Event.current.type == EventType.Repaint) ShowPending();      // (OnGUI se llama varias veces por frame)
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
+            Machines.DrawGui(scale);
         }
 
         // ---- contorno de la Eternal Perk: la silueta del icono ensanchada, en blanco (el tinte azul lo pone el dibujo) ----

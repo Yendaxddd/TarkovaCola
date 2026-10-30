@@ -58,10 +58,11 @@ namespace TarkovaCola.Client
             IconFile = "speedcola_icon.png",
             JingleFile = "speedcola_jingle.mp3",
             HandBundle = "speedcola_hand.bundle",
+            HandRefHeight = 0.13f,                      // lata de BO6
             Augs = new[]
             {
                 new AugDef { Id = "a_quick",  Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 3 },
-                new AugDef { Id = "a_bolt",   Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 5 },
+                new AugDef { Id = "a_bolt",   Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 10 },     // Recarga en caliente (3.0; antes Bolt Runner)
                 new AugDef { Id = "a_rush",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 4 },
                 new AugDef { Id = "a_steady", Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 4 },
                 new AugDef { Id = "a_check",  Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 20 },
@@ -83,7 +84,7 @@ namespace TarkovaCola.Client
             IconFile = "staminup_icon.png",
             JingleFile = "staminup_jingle.mp3",
             HandBundle = "staminup_hand.bundle",
-            HandRefHeight = 0.17f,
+            HandRefHeight = 0.13f,
             Augs = new[]
             {
                 new AugDef { Id = "st_rush",    Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 1 },
@@ -110,7 +111,7 @@ namespace TarkovaCola.Client
             IconFile = "juggernog_icon.png",
             JingleFile = "juggernog_jingle.mp3",
             HandBundle = "juggernog_hand.bundle",
-            HandRefHeight = 0.17f,
+            HandRefHeight = 0.13f,
             // la desventaja i de cada tipo es la ligada a la mejora i de ese tipo (en el orden de esta lista)
             Augs = new[]
             {
@@ -137,19 +138,19 @@ namespace TarkovaCola.Client
             IconFile = "phdflopper_icon.png",
             JingleFile = "phdflopper_jingle.mp3",
             HandBundle = "phdflopper_hand.bundle",
-            HandRefHeight = 0.17f,
-            // (Master of Movement, el deslizamiento, sera el tercer mayor: Seq 7 queda libre para el)
+            HandRefHeight = 0.13f,
             Augs = new[]
             {
                 new AugDef { Id = "pf_absorb",  Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 500 },    // curas el 25% del dano de explosion que causas
                 new AugDef { Id = "pf_shock",   Kind = NodeKind.Major,   Seq = 6, Lvl = 4, Goal = 5 },      // granadas: doble radio y mitad de mecha
+                new AugDef { Id = "pf_drop",    Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 15 },     // Caida explosiva (3.0): caer de 3 m o mas explota a tu alrededor
                 new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },   // aterrizar no te frena
                 new AugDef { Id = "pf_stop",    Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 300 , Unit = ProgUnit.Seconds },    // quieto: estamina x2 de rapida
                 new AugDef { Id = "pf_ears",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // inmune a la contusion
                 new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 5000 , Unit = ProgUnit.Meters },   // inmune a alambre de puas y barro
                 new AugDef { Id = "pf_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
-            DrbMajor = new[] { "dp_concussed", "dp_throw" },
+            DrbMajor = new[] { "dp_concussed", "dp_throw", "dp_powder" },
             DrbMinor = new[] { "dp_stagger", "dp_lazy", "dp_pockets", "dp_stomp" },
             DrinkNotice = TarkovaCola.Client.PhdFlopper.Notice,
             EffectText = TarkovaCola.Client.PhdFlopper.Effect,
@@ -162,11 +163,11 @@ namespace TarkovaCola.Client
             IconFile = "widowswine_icon.png",
             JingleFile = "widowswine_jingle.mp3",
             HandBundle = "widowswine_hand.bundle",
-            HandRefHeight = 0.17f,
+            HandRefHeight = 0.13f,                      // lata generica de BO6
             Augs = new[]
             {
                 new AugDef { Id = "ww_spin",    Kind = NodeKind.Major,   Seq = 4, Lvl = 3, Goal = 25 },     // telarana x2 de radio y +2 s
-                new AugDef { Id = "ww_fuse",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 1 },      // las explosiones no dañan tu armadura
+                new AugDef { Id = "ww_fuse",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 1 },      // Nido (3.0): cada telaraña deja una trampa 20 s
                 new AugDef { Id = "ww_burst",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 3 },      // 100 de dano en 3 s: gastas una granada y atrapas
                 new AugDef { Id = "ww_venom",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 5 },      // los atrapados tambien quedan aturdidos
                 new AugDef { Id = "ww_quick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },     // granadas mas rapidas de lanzar
@@ -187,7 +188,7 @@ namespace TarkovaCola.Client
             IconFile = "deadshot_icon.png",
             JingleFile = "deadshot_jingle.wav",
             HandBundle = "deadshot_hand.bundle",
-            HandRefHeight = 0.17f,
+            HandRefHeight = 0.13f,
             Augs = new[]
             {
                 new AugDef { Id = "dd_aim",     Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 20 },     // Dead Aim: el arma no se balancea al moverte
@@ -206,7 +207,75 @@ namespace TarkovaCola.Client
             OnDrink = TarkovaCola.Client.Deadshot.OnDrink,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };
+        internal static readonly PerkDef Bandolier = new PerkDef
+        {
+            Id = TarkovaCola.Client.Bandolier.Id,
+            ItemTpl = TarkovaCola.Client.Bandolier.ItemTpl,
+            IconFile = "bandolier_icon.png", JingleFile = "bandolier_jingle.mp3", HandBundle = "bandolier_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "bb_sleek",  Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 5 },      // Sleek: 20% de rellenar el cargador al vaciarlo
+                new AugDef { Id = "bb_disc",   Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },      // Cinturon de balas (3.0; antes Discipline): 6 cargadores llenos, +10% de dano
+                new AugDef { Id = "bb_bring",  Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 10 },     // Bring it on!: municion y cargadores no pesan
+                new AugDef { Id = "bb_pouch",  Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 5 },      // Extra Pouch: 10% de granada al matar
+                new AugDef { Id = "bb_cold",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 1000 },   // Cold Barrel: -30% de calor
+                new AugDef { Id = "bb_leech",  Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 15 },     // Ammo Leech: tiro a la cabeza, +2 balas
+                new AugDef { Id = "bb_strap",  Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 3000, Unit = ProgUnit.Meters },   // Padded Strap
+                new AugDef { Id = "bb_slot",   Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "bb_d_loose", "bb_d_numb", "bb_d_clatter" },
+            DrbMinor = new[] { "bb_d_pin", "bb_d_brass", "bb_d_fumble", "bb_d_burn" },
+            DrinkNotice = TarkovaCola.Client.Bandolier.Notice,
+            EffectText = TarkovaCola.Client.Bandolier.Effect,
+        };
+
+        internal static readonly PerkDef VultureAid = new PerkDef
+        {
+            Id = TarkovaCola.Client.VultureAid.Id,
+            ItemTpl = TarkovaCola.Client.VultureAid.ItemTpl,
+            IconFile = "vultureaid_icon.png", JingleFile = "vultureaid_jingle.mp3", HandBundle = "vultureaid_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "va_scent",    Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 10 },   // Scent of Money: PMC ricos marcados
+                new AugDef { Id = "va_bonus",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 25 },   // Carrion Bonus: botin extra en tus bajas
+                new AugDef { Id = "va_reroll",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 40 },   // Re-roll de contenedores
+                new AugDef { Id = "va_sharp",    Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 20 },   // Sharp Eyes: 30 m
+                new AugDef { Id = "va_leftover", Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 15 },   // Leftovers: municion en tus bajas
+                new AugDef { Id = "va_kit",      Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 10 },   // Field Kit: botiquin en tus bajas
+                new AugDef { Id = "va_lucky",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 15 },   // Lucky Find: GP Coin al registrar
+                new AugDef { Id = "va_slot",     Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "va_d_stench", "va_d_greedy", "va_d_hunch" },
+            DrbMinor = new[] { "va_d_dry", "va_d_myopia", "va_d_clumsy", "va_d_grip" },
+            DrinkNotice = TarkovaCola.Client.VultureAid.Notice,
+            EffectText = TarkovaCola.Client.VultureAid.Effect,
+        };
+
+        internal static readonly PerkDef MeleeMacchiato = new PerkDef
+        {
+            Id = TarkovaCola.Client.MeleeMacchiato.Id,
+            ItemTpl = TarkovaCola.Client.MeleeMacchiato.ItemTpl,
+            IconFile = "meleemacchiato_icon.png", JingleFile = "meleemacchiato_jingle.mp3", HandBundle = "meleemacchiato_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "mm_charge", Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 2000, Unit = ProgUnit.Meters },   // Charge
+                new AugDef { Id = "mm_frenzy", Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 10 },     // Frenzy: golpes seguidos x1.2
+                new AugDef { Id = "mm_iron",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 10 },     // Iron Skull
+                new AugDef { Id = "mm_quick",  Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 30 },     // Quick Draw
+                new AugDef { Id = "mm_hone",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 50 },     // Whetstone
+                new AugDef { Id = "mm_flash",  Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 200 },    // Flash Strike
+                new AugDef { Id = "mm_wind",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 25 },     // Second Wind
+                new AugDef { Id = "mm_slot",   Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "mm_d_glass", "mm_d_jitter", "mm_d_crash" },
+            DrbMinor = new[] { "mm_d_butter", "mm_d_bitter", "mm_d_loud", "mm_d_sugar" },
+            DrinkNotice = TarkovaCola.Client.MeleeMacchiato.Notice,
+            EffectText = TarkovaCola.Client.MeleeMacchiato.Effect,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot, Bandolier, VultureAid, MeleeMacchiato };
+        // las seis originales (los logros de "todas las perks" se escribieron para ellas)
+        internal static readonly PerkDef[] Original = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };
 
         // perks con arbol de mejoras (las que se muestran en Research y en el panel del ESC)
         internal static IEnumerable<PerkDef> UiPerks { get { return All.Where(p => p.HasTree); } }

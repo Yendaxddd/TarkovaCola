@@ -11,6 +11,7 @@ namespace TarkovaCola.Client
         public string DispName;
         public string Description;
         public int? Order;
+        public bool? IsAdvanced;
     }
 
     // Opciones de F12 en los dos idiomas. La clave del archivo .cfg se queda como estaba (en espanol) para no perder lo que cada uno tenia;
@@ -31,12 +32,15 @@ namespace TarkovaCola.Client
             ["Powerup"] = "Powerup", ["Desafios"] = "Challenges", ["Herramientas"] = "Tools", ["Debug"] = "Debug", ["Arena"] = "Arena", ["???"] = "???",
         };
 
+        private static readonly HashSet<string> DevSections = new HashSet<string> { "Herramientas", "Debug" };
+
         internal static void Init(ConfigFile file) { _file = file; }
 
         // dispEs: nombre a mostrar en espanol si no puede ser la clave (las claves no admiten comillas)
         internal static ConfigEntry<T> Bind<T>(string section, string key, T def, string nameEn, string descEs, string descEn, AcceptableValueBase range = null, string dispEs = null)
         {
-            var attr = new ConfigurationManagerAttributes { Order = _order-- };       // en el orden en que se declaran
+            // en el orden en que se declaran; las herramientas de desarrollo (editor de maquinas, clips, depuracion) solo con "Advanced settings"
+            var attr = new ConfigurationManagerAttributes { Order = _order--, IsAdvanced = DevSections.Contains(section) };
             var e = _file.Bind(section, key, def, new ConfigDescription(descEn, range, attr));
             string secEn;
             _entries.Add(new Entry { Attr = attr, SecEs = section, SecEn = SectionsEn.TryGetValue(section, out secEn) ? secEn : section, NameEs = dispEs ?? key, NameEn = nameEn, DescEs = descEs, DescEn = descEn });

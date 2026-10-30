@@ -203,9 +203,12 @@ namespace TarkovaCola.Client
         {
             if (__result == null) return;
             if (QuestGuards.Any && QuestGuards.Has(player, Deadshot.Id)) { __result.PenetrationPower *= QuestGuards.Penetration; return; }   // Embotellador con Deadshot
-            if (!Deadshot.Active) return;
             var me = Plugin.Me;
+            if (fragmentIndex == 0 && Bandolier.Active && me != null && player == me.ProfileId)
+                try { Bandolier.OnShot(me); } catch (Exception e) { Dbg.Throttled("bbshot", 10f, "ERROR", "Bandolier (disparo): " + e.Message); }
+            if (!Deadshot.Active) return;
             if (me == null || player != me.ProfileId) return;
+            if (Apex.Has(Deadshot.Id)) __result.PenetrationPower += Apex.PenBonus;      // APEX: +1 clase de penetracion, sea cual sea la municion
             if (Perk.Has("dd_pen")) __result.PenetrationPower *= Deadshot.Penetration;
             if (fragmentIndex == 0)
             {

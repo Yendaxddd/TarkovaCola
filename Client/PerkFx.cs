@@ -80,6 +80,7 @@ namespace TarkovaCola.Client
             WidowsWine.OnRaidStart();
             Deadshot.OnRaidStart();
             WebVfx.OnRaidStart();
+            Rev.OnRaidStart();
             Speed = 0f; _wasBreathD = false;
         }
 
@@ -146,7 +147,7 @@ namespace TarkovaCola.Client
             Speed = Mathf.Lerp(Speed, speed, Mathf.Clamp01(dt * 5f));
             bool still = speed < 0.15f;
             ClassicChallenge.OnMove(moved, sprinting, dt);                // desafio de raid (modo Classic): correr, recorrer, sobrevivir
-            if (sprinting) { Synergy.OnRun(moved); AchTrack.OnRun(moved); }                          // desafio de la sinergia Speed Cola + Stamin-Up
+            if (sprinting) { Synergy.OnRun(moved); AchTrack.OnRun(moved); Apex.OnRun(moved); }                          // desafio de la sinergia Speed Cola + Stamin-Up
 
             if (Perks.IsActive(PhdFlopper.Id))
             {
@@ -170,13 +171,6 @@ namespace TarkovaCola.Client
                 stamina.Current = Mathf.Min(cap, stamina.Current + rest * PitStopBonus);
             }
 
-            // ---- Dead Weight / Bitter Wine: correr gasta mas estamina (un extra sobre lo que el juego ya gasto este frame) ----
-            float extra = (Perk.Has("dj_dead") ? DeadWeightDrain : 0f) + (Perk.Has("dw_bitter") ? BitterDrain : 0f) + (Perk.Has("dd_d_breath") ? Deadshot.BreathingDrain : 0f);
-            if (extra > 0f && sprinting && _prevStamina >= 0f)
-            {
-                float drop = _prevStamina - stamina.Current;
-                if (drop > 0f) stamina.Current = Mathf.Max(0f, stamina.Current - drop * extra);
-            }
             float save = Synergy.StaminaSave;                                // sinergia Speed Cola + Stamin-Up: correr gasta algo menos
             if (save > 0f && sprinting && _prevStamina >= 0f)
             {
@@ -206,9 +200,11 @@ namespace TarkovaCola.Client
             if (Perk.JitterOn || StaminUp.JellyOn) sway *= Perk.JitterSway;
             if (cap > 0f && stamina.Current < cap * ChestLow && Perk.Has("dt_chest")) sway *= ChestSway;
             if (Perk.Has("dj_hands")) sway *= HeavyHandsSway;
+            if (Perk.Has("mm_d_jitter") && me.HandsController is Player.FirearmController) sway *= MeleeMacchiato.JitterSway;
             if (now < ConcussUntil) sway *= ConcussSway;
             if (Deadshot.Active) sway *= Deadshot.SwayFactor(me, Deadshot.Aiming(me));      // Deadshot: menos balanceo (Stillness, Shaky Hands)
             sway *= Synergy.SwayFactor;                                                       // sinergia PHD Flopper + Deadshot
+            sway *= Rev.SwayFactor(me);                                                       // Adicto a la polvora, Ojo seco
             SwayMult = sway;
             Deadshot.TickDeadAim(me);                                                         // Dead Aim: arma fija en el centro
             Deadshot.TickStillness(me, Time.deltaTime);                                        // Stillness: recuperas agachado o tumbado
@@ -221,6 +217,8 @@ namespace TarkovaCola.Client
                 if (Perk.Has("dj_clank")) { r = Mathf.Max(r, ClankRadius); n++; }
                 if (Perk.Has("dp_stomp")) { r = Mathf.Max(r, StompRadius); n++; }
                 if (Perk.Has("dd_d_squeak")) { r = Mathf.Max(r, Deadshot.SqueakRadius); n++; }
+                if (Perk.Has("va_d_stench")) { r = Mathf.Max(r, VultureAid.StenchRadius); n++; }
+                if (Perk.Has("mm_d_loud")) { r = Mathf.Max(r, MeleeMacchiato.LoudRadius); n++; }
                 if (n > 1) r += (n - 1) * 5f;
                 if (r > 0f)
                 {
@@ -239,16 +237,12 @@ namespace TarkovaCola.Client
 
             UpdateAnim(me);
             WidowsWine.Update(me);
+            Rev.Tick(me, still);
         }
 
         private static void OneHz(Player me, IHealthController hc, float step)
         {
-            // hambre y sed extra: Slow Metabolism (ambas), Hungry Spider (energia), Dry Throat (hidratacion)
-            bool m = Perk.Has("dj_metab");
-            float e = (m ? Metabolism : 0f) + (Perk.Has("dw_hungry") ? Metabolism : 0f) + (Perk.Has("dd_d_sugar") ? Metabolism : 0f) + (Perk.Has("dd_d_strain") ? Deadshot.StrainEnergy : 0f);
-            float h = (m ? Metabolism : 0f) + (Perk.Has("dw_dry") ? Metabolism : 0f) + (Perk.Has("dd_d_lime") ? Metabolism : 0f);
-            if (e > 0f && hc.EnergyRate < 0f) me.ActiveHealthController.ChangeEnergy(-BaseEnergyRate * e * step);
-            if (h > 0f && hc.HydrationRate < 0f) me.ActiveHealthController.ChangeHydration(-BaseHydrationRate * h * step);
+            // (los impuestos de hambre y sed de las desventajas se quitaron en la revision de la 3.0: ver Revision.cs)
 
             // salud en rojo con Juggernog: logro de extraer con vida en rojo, y vigilancia de curaciones para los desafios
             if (Perks.IsActive(Juggernog.Id))
@@ -277,6 +271,7 @@ namespace TarkovaCola.Client
                 else if (hc is Player.BaseGrenadeHandsController)
                 {
                     if (Perk.Has("ww_quick")) want = QuickSpinnerAnim;
+                    if (Perk.Has("dw_greasy")) want *= Rev.StickySilkAnim;       // Seda pegajosa
                     want *= Synergy.PinMult;
                 }
                 else
@@ -310,6 +305,7 @@ namespace TarkovaCola.Client
                 if (me != null && victim == me && ArenaCompat.InArena) { ArenaCompat.OnDeath(); return; }      // Arena: no cuenta para el perfil
                 if (me != null && victim == me) { ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }      // (morir de verdad si cuenta)       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
                 StaminUp.OnPlayerDead(victim, aggressor, info, part);
+                Trials.OnDeath(victim);                                                   // prueba de TEDD: el objetivo a abatir
                 if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
                 ClassicChallenge.OnKill(me, victim, info, part);                          // desafio de la raid (modo Classic)
                 AchTrack.OnKillAny(me, victim, part);                                     // logros de bajas
@@ -318,6 +314,13 @@ namespace TarkovaCola.Client
                 if (!Perks.AnyActive) return;
 
                 bool boss = IsBoss(victim);
+                try
+                {
+                    Bandolier.OnKill(me, victim, info, part, boss);
+                    VultureAid.OnKill(me, victim, boss);
+                    MeleeMacchiato.OnKill(me, info, boss);
+                }
+                catch (Exception e) { Dbg.Throttled("newperkkill", 10f, "ERROR", "bajas (perks nuevas): " + e); }
                 bool grenade = (info.DamageType & (EDamageType.Explosion | EDamageType.GrenadeFragment)) != 0;
                 bool jug = Perks.IsActive(Juggernog.Id), phd = Perks.IsActive(PhdFlopper.Id), wid = Perks.IsActive(WidowsWine.Id);
                 Dbg.Log("BAJA", "baja de " + victim.Profile.Info.Settings.Role + ": jefe=" + boss + " granada=" + grenade + " tipo=" + info.DamageType);
@@ -337,6 +340,8 @@ namespace TarkovaCola.Client
                 if (webbed) PerkService.AddProgress("ww_venom");
                 Synergy.OnKill(me, victim, webbed, Deadshot.Armored(victim));
                 if (Deadshot.Active) Deadshot.OnKill(me, victim, info, part);
+                try { Apex.OnKill(me, victim, info, part); }                            // desafios APEX; Bandolier rellena, PHD explota
+                catch (Exception e) { Dbg.Throttled("apexkill", 10f, "ERROR", "APEX (baja): " + e); }
             }
             catch (Exception e) { Plugin.Log.LogError("baja (perks): " + e); }
         }
@@ -355,6 +360,7 @@ namespace TarkovaCola.Client
                     return;
                 }
                 if (ArenaCompat.InArena) { ArenaCompat.OnRaidEnd(); return; }       // partida de Arena: nada de esto cuenta para el perfil
+                Apex.OnRaidEnd(status);                                              // nucleos APEX: se guardan si extraes
                 Juggernog.OnRaidEnd(alive);
                 AchTrack.OnRaidEnd(alive);
                 ClassicMode.OnRaidEnd(status);
@@ -381,7 +387,6 @@ namespace TarkovaCola.Client
             if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
             float m = 1f;
             if (StaminUp.Active) m *= 1f + (StaminUp.CapacityMult - 1f) * Perks.Power(StaminUp.Id);     // como modificador (Classic) solo una parte
-            if (Perk.Has("dp_lazy")) m *= PerkFx.LazyLegs;
             if (m != 1f) __result *= m;
         }
     }
@@ -423,10 +428,11 @@ namespace TarkovaCola.Client
         private static void Postfix(PhysicalBase.PlayerBridge __instance, ref float __result)
         {
             if (!Perks.AnyActive || !Util.IsMe(__instance._iPlayer)) return;
+            float cut = Bandolier.WeightCut(__instance._iPlayer as Player);          // Bring it on! y Padded Strap
+            if (cut > 0f) __result = Mathf.Max(0f, __result - cut);
             float m = 1f;
             if (Perk.Has("st_feet")) m *= PerkFx.FeetWeight;
             if (Perk.Has("dj_plates")) m *= PerkFx.PlatesWeight;
-            if (Perk.Has("dp_pockets")) m *= PerkFx.PocketsWeight;
             m *= Synergy.WeightMult;                                     // sinergia Stamin-Up + Juggernog
             if (m != 1f) __result *= m;
         }
@@ -443,22 +449,30 @@ namespace TarkovaCola.Client
         [HarmonyPrefix]
         private static void Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, DamageInfo damageInfo)
         {
-            if (damage <= 0f || (!Perks.AnyActive && !QuestGuards.Any)) return;
+            if (damage <= 0f || (!Perks.AnyActive && !QuestGuards.Any && !BotPerks.Any)) return;
             try
             {
                 var victim = __instance.Player;
                 if (victim == null) return;
+                if (BotPerks.Any) { damage = BotPerks.OnDamage(victim, damage, damageInfo); if (damage <= 0f) return; }   // perks de enemigos y companeros
                 if (Util.IsMe(victim))
                 {
                     if (QuestGuards.Any) QuestGuards.OnHitMe(victim, damageInfo);         // un Embotellador con Widow's Wine te frena
                     if (!Perks.AnyActive) return;
+                    // APEX: Juggernog = inmune al cuerpo a cuerpo; Melee Macchiato = sin dano mientras dura tu golpe
+                    if (Apex.Has(Juggernog.Id) && (damageInfo.DamageType & EDamageType.Melee) != 0) { damage = 0f; return; }
+                    if (Apex.Has(MeleeMacchiato.Id) && MeleeStyle.Swinging) { damage = 0f; return; }
                     if (Perks.IsActive(PhdFlopper.Id)) damage = PhdFlopper.OnDamage(bodyPart, damage, damageInfo);
                     if (damage <= 0f) return;
                     if (Perks.IsActive(Juggernog.Id)) damage = Juggernog.OnDamage(__instance, bodyPart, damage, damageInfo);
                     if (damage <= 0f) return;
+                    damage = MeleeMacchiato.OnDamageTaken(victim, __instance, bodyPart, damage);   // Charge, Iron Skull, Glass Jaw
+                    if (damage <= 0f) return;
+                    damage = Rev.OnDamageTaken(victim, bodyPart, damage, damageInfo);   // Sin red, Huevos fragiles
                     if (Synergy.AnyEquipped) damage *= Synergy.DamageMult;      // sinergia Juggernog + Widow's Wine
                     ClassicChallenge.OnDamageTaken(damageInfo);                 // desafio "ghost": solo cuenta el dano que de verdad recibes
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
+                    Apex.OnDamageTaken(damage);                                 // desafio APEX de Juggernog
                 }
                 else
                 {
@@ -476,6 +490,8 @@ namespace TarkovaCola.Client
                     {
                         if (Synergy.AnyEquipped && Perks.IsActive(WidowsWine.Id) && WidowsWine.IsWebbed(victim)) damage *= Synergy.OutgoingMult;   // Widow's Wine + Deadshot
                         if (Perks.IsActive(PhdFlopper.Id)) PhdFlopper.OnDealt(damage, damageInfo);
+                        if ((damageInfo.DamageType & EDamageType.Melee) != 0) damage = MeleeMacchiato.OnHit(me, victim, damage);   // Melee Macchiato (x2, Frenzy, Whetstone, Second Wind)
+                        damage = Rev.OnDamageDealt(me, bodyPart, damage, damageInfo);    // Todo o nada, Cinturon de balas, Sed de sangre
                     }
                 }
             }
@@ -602,8 +618,7 @@ namespace TarkovaCola.Client
             }
             if (wid)
             {
-                if (ArmorHook.InExplosion) { if (Perk.Has("ww_fuse")) armorDamage = 0f; }
-                else if (Perk.Has("dw_brittle")) armorDamage *= WidowsWine.BrittleDamage;
+                if (!ArmorHook.InExplosion && Perk.Has("dw_brittle")) armorDamage *= WidowsWine.BrittleDamage;
             }
             if (armorDamage != before) Dbg.Throttled("armor", 5f, "EFECTO", "armadura: desgaste " + before.ToString("0.0") + " -> " + armorDamage.ToString("0.0"));
         }
@@ -725,6 +740,7 @@ namespace TarkovaCola.Client
                 var me = Plugin.Me;
                 if (me == null) return;
                 PhdFlopper.OnExplosionNear(grenadePosition);                         // Concussed: cualquier explosion cercana
+                Rev.OnExplosion(me, grenadePosition);                                // Metralla, Panico
                 if (me.ProfileId == playerProfileIDWhoThrew && Perks.IsActive(WidowsWine.Id)) WidowsWine.OnExploded(grenade, grenadeItem as Item, grenadePosition);
             }
             catch (Exception e) { Plugin.Log.LogError("granada (explosion): " + e); }
