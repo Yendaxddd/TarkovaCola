@@ -204,6 +204,7 @@ namespace TarkovaCola.Client
         {
             PerkFx.RefreshPhysical(me);
             (me.HandsController as Player.FirearmController)?.SyncWithCharacterSkills();     // recarga de Speed Cola en el arma que ya llevas
+            if (Perks.IsActive(Deadshot.Id)) Deadshot.Reapply(me);                           // (3.0.1) bonos de Deadshot en el arma
         }
 
         // El operador murio: se pierden todas las perks de Classic

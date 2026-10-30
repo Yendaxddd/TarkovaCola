@@ -202,10 +202,15 @@ namespace TarkovaCola.Client
         }
 
         // solo con la raid ya en marcha (en la cuenta atras quitar un objeto cerraba el juego) y en local, como Machines.Charge (la operacion
-        // por red de un Remove no es del tipo que espera)
+        // por red de un Remove no es del tipo que espera). Nunca con el inventario abierto: si el nucleo se esta arrastrando con el raton,
+        // quitarlo deja a EFT con un arrastre de un objeto que ya no existe y la interfaz se rompe (3.0.1); se absorbe al cerrarlo.
+        private static float _closedAt;
         private static void AbsorbCores(Player me)
         {
             if (Time.time < _absorbFrom) return;
+            if (Hud.MenuOpen) { _closedAt = float.MaxValue; return; }
+            if (_closedAt == float.MaxValue) _closedAt = Time.time;
+            if (Time.time < _closedAt + 0.5f) return;
             foreach (var it in me.Profile.Inventory.GetPlayerItems(EPlayerItems.Equipment).Where(i => i != null && i.StringTemplateId == CoreTpl).ToList())
             {
                 var op = ItemManipulator.Remove(it, me.InventoryController, false);

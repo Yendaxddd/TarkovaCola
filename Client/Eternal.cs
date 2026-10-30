@@ -77,8 +77,14 @@ namespace TarkovaCola.Client
         internal static void OnPlayerReady(Player me)
         {
             if (_set.Count == 0) return;
+            // (3.0.1) hubo perks eternas guardadas de antes de la 3.0 que no hacian efecto (Widow's Wine sin telaranas hasta morir y
+            // volver a beberla): se comprueba que sigan activas y se reaplica lo que la perk hace al beberla en el arma
+            foreach (var id in _set)
+                if (!Perks.IsActive(id)) { Perks.Activate(id); Dbg.Log("ETERNAL", id + " no estaba activa al aparecer: reactivada"); }
+            Perk.Refresh();
             PerkFx.RefreshPhysical(me);
             (me.HandsController as Player.FirearmController)?.SyncWithCharacterSkills();
+            if (_set.Contains(Deadshot.Id)) Deadshot.Reapply(me);
             Hud.Notify(L.T("eternal.title"), L.F("eternal.start", _set.Count), List.First().Id);
         }
 

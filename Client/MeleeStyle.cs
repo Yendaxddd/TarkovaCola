@@ -16,7 +16,7 @@ namespace TarkovaCola.Client
     // El dano no depende de la animacion (el juego mira lo que hay delante), asi que girar el golpe es solo visual.
     internal static class MeleeStyle
     {
-        internal enum Kind { Light, Medium, Heavy }
+        internal enum Kind { Light, Medium, Heavy, Fist }
         internal const float LightMax = 0.3f, MediumMax = 1.0f;       // kg
         private const float ComboWindow = 0.55f;                       // s tras acabar un golpe para encadenar el siguiente
         private const float BlendIn = 0.07f;                           // s para girar el arma al empezar el golpe
@@ -35,8 +35,16 @@ namespace TarkovaCola.Client
         // el controlador del cuchillo es el que tiene ahora el jugador local
         internal static bool Mine(Player.KnifeController ctrl) { var me = Plugin.Me; return me != null && ReferenceEquals(me.HandsController, ctrl); }
 
+        // armas que se empunan en el puno (daga de puno Akula, manos de infectado): se golpea con el puno, asi que girar el golpe o
+        // mover las manos deja el arma flotando en el aire (3.0.1). Con ellas no se toca la animacion de EFT.
+        private static readonly System.Collections.Generic.HashSet<string> Fists = new System.Collections.Generic.HashSet<string>
+        {
+            "674d90b55704568fe60bc8f5" /* Akula (daga de puno) */, "670ad7f1ad195290cd00da7a" /* manos de infectado */,
+        };
+
         internal static Kind Classify(Item item)
         {
+            if (item != null && Fists.Contains(item.StringTemplateId)) return Kind.Fist;
             float w = item != null ? item.Template.Weight : 0.2f;
             return w < LightMax ? Kind.Light : (w < MediumMax ? Kind.Medium : Kind.Heavy);
         }
@@ -47,6 +55,7 @@ namespace TarkovaCola.Client
         {
             if (!Plugin.CfgMeleeStyles.Value) return false;
             _kind = Classify(ctrl.Item);
+            if (_kind == Kind.Fist) return false;
             bool chained = Time.time - _lastEnd <= ComboWindow * ComboMult;
             _combo = chained ? (_combo + 1) % 3 : 0;
             if (_kind == Kind.Heavy) _combo = 0;
@@ -76,7 +85,7 @@ namespace TarkovaCola.Client
             float speed = MeleeMacchiato.SwingSpeed(_stab);
             _stab = false;
             try { MeleeMacchiato.OnSwing(Plugin.Me); } catch (Exception e) { Dbg.Throttled("mmswing", 10f, "ERROR", "Macchiato (golpe): " + e.Message); }
-            if (!Plugin.CfgMeleeStyles.Value)
+            if (!Plugin.CfgMeleeStyles.Value || Classify(ctrl.Item) == Kind.Fist)
             {
                 if (speed > 1.01f) ctrl.SetMeleeSpeed(Plugin.Me.Physical.MeleeSpeed * speed);      // sin estilos, Macchiato sigue acelerando
                 return;
@@ -149,6 +158,7 @@ namespace TarkovaCola.Client
         internal static void LateTransform(Player me)
         {
             if (!(me.HandsController is Player.KnifeController)) { _swinging = false; return; }
+            if (Classify(me.HandsController.Item) == Kind.Fist) { _swinging = false; _rollNow = 0f; return; }
             var lift = Plugin.CfgMeleeLift.Value;
             if (!Plugin.CfgMeleeStyles.Value)
             {
