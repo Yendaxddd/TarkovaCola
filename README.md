@@ -1,4 +1,4 @@
-# Tarkova-Cola 3.0.0
+# Tarkova-Cola 3.0.1
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
 Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika, Report issues on SPT Page/Here). Optional: **VisitAPI 1.3.5+** for the storyline.
@@ -6,6 +6,12 @@ Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika,
 > El README del zip (Package/README.md) está en español e inglés.
 
 ---
+
+### Hotfix 3.0.1
+- **APEX Core:** dragging it in the inventory right after picking it up broke the UI. It is now absorbed when you close the inventory.
+- **Perks as injectors:** the "Use" button was greyed out. Fixed by Kaganari (PR #1, thanks!).
+- **Akula push dagger** (and infected hands): no longer use the melee styles; the weapon no longer floats in the air.
+- **Eternal and Classic perks:** at raid start they are checked to still be active, and Deadshot is reapplied to your weapon.
 
 ### What's new in 3.0
 The biggest update so far: 3 new perks, perk machines on the map, the Mystery Box, TEDD, APEX, two Black Ops 7 weapons and perks for enemies and teammates. The Black Ops 6/7 models are shipped compiled only, for playing.
