@@ -21,7 +21,7 @@ namespace TarkovaCola.Server
         public string Name { get; init; } = "Tarkova-Cola";
         public string Author { get; init; } = "Yendaxddd";
         public List<string> Contributors { get; init; } = new List<string>();
-        public SptVersion Version { get; init; } = new SptVersion(3, 0, 0);
+        public SptVersion Version { get; init; } = new SptVersion(3, 0, 1);
         public SptRange SptVersion { get; init; } = new SptRange("~4.1.0");
         public bool HasPrepatcher { get; init; } = false;
         public List<string> Incompatibilities { get; init; } = new List<string>();
@@ -48,6 +48,7 @@ namespace TarkovaCola.Server
         internal const string TarCola = "57514643245977207f2c2d09";     // lata base que se clona
         internal const string Propital = "5c0e530286f7747fa1419862";    // inyector base (modo inyectores)
         internal static bool InjectorsApplied;                          // como se crearon los objetos en este arranque
+        internal const string BuffsName = "Buffs_TarkovaCola";
         internal const string GpCoin = "5d235b4d86f7742e017bc88a";      // GP Coin
         internal const double GpCoinRoubles = 7500;                     // valor de 1 GP Coin en el handbook
 
@@ -265,16 +266,20 @@ namespace TarkovaCola.Server
         private readonly CustomItemService _items;
         private readonly TemplateTable _templates;
         private readonly TradersTable _traders;
+        private readonly GlobalTable _globals;
 
-        public TarkovaColaMod(CustomItemService items, TemplateTable templates, TradersTable traders)
+        public TarkovaColaMod(CustomItemService items, TemplateTable templates, TradersTable traders, GlobalTable globals)
         {
             _items = items;
             _templates = templates;
             _traders = traders;
+            _globals = globals;
         }
 
         public Task OnLoadAsync(CancellationToken cancellationToken)
         {
+            try { _globals.Configuration.Health.Effects.Stimulator.Buffs[Perks.BuffsName] = new List<Buff>(); }
+            catch (Exception e) { Console.WriteLine("[Tarkova-Cola] ERROR registrando " + Perks.BuffsName + ": " + e); }
             Perks.InjectorsApplied = Settings.Current.Injectors;
             if (Perks.InjectorsApplied) Console.WriteLine("[Tarkova-Cola] modo inyectores: las perks se crean como estimulantes");
             foreach (var perk in Perks.All)
@@ -299,7 +304,7 @@ namespace TarkovaCola.Server
                     Width = 1,
                     Height = 1,
                     // un estimulante sin efectos propios: lo que hace lo pone el cliente al usarlo (igual que la lata)
-                    StimulatorBuffs = "",
+                    StimulatorBuffs = Perks.BuffsName,
                     EffectsHealth = new Dictionary<HealthFactor, EffectsHealthProperties>(),
                     EffectsDamage = new Dictionary<DamageEffectType, EffectsDamageProperties>(),
                     Prefab = new Prefab { Path = perk.Bundle.Replace(".bundle", "_inj.bundle"), Rcid = "" },

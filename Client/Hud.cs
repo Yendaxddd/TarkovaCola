@@ -25,6 +25,7 @@ namespace TarkovaCola.Client
 
         private static bool _escOpen;
         private static bool _menuOpen;        // hay una pantalla del juego abierta (inventario, tareas, mapa, ESC...): el HUD no se dibuja encima
+        internal static bool MenuOpen { get { return _menuOpen; } }
         private static float _escOpenedAt;
         private static object _lastScreen;
 

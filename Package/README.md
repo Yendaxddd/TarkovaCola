@@ -1,4 +1,4 @@
-# Tarkova-Cola 3.0.0
+# Tarkova-Cola 3.0.1
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -8,6 +8,12 @@ Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for 
 ---
 
 ## Español
+
+### Hotfix 3.0.1
+- **Núcleo APEX:** arrastrarlo en el inventario justo después de cogerlo rompía la interfaz. Ahora se absorbe al cerrar el inventario.
+- **Perks como inyectores:** el botón "Usar" salía en gris. Arreglado por Kaganari (PR #1, ¡gracias!).
+- **Daga de puño Akula** (y manos de infectado): ya no usan los estilos de cuerpo a cuerpo; el arma ya no flota en el aire.
+- **Perks Eternas y de Classic:** al empezar la raid se comprueba que sigan activas y se reaplica Deadshot en el arma.
 
 ### Novedades de la 3.0
 La actualización más grande hasta ahora: 3 perks nuevas, máquinas de perks en el mapa, la Caja Misteriosa, TEDD, APEX, dos armas de Black Ops 7 y perks para enemigos y compañeros. Los modelos de Black Ops 6/7 vienen solo compilados, para jugar.
@@ -178,6 +184,12 @@ Borra las carpetas `TarkovaCola` (y el pack de VisitAPI). Si te quedan perks en 
 ---
 
 ## English
+
+### Hotfix 3.0.1
+- **APEX Core:** dragging it in the inventory right after picking it up broke the UI. It is now absorbed when you close the inventory.
+- **Perks as injectors:** the "Use" button was greyed out. Fixed by Kaganari (PR #1, thanks!).
+- **Akula push dagger** (and infected hands): no longer use the melee styles; the weapon no longer floats in the air.
+- **Eternal and Classic perks:** at raid start they are checked to still be active, and Deadshot is reapplied to your weapon.
 
 ### What's new in 3.0
 The biggest update so far: 3 new perks, perk machines on the map, the Mystery Box, TEDD, APEX, two Black Ops 7 weapons and perks for enemies and teammates. The Black Ops 6/7 models are shipped compiled only, for playing.

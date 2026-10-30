@@ -44,6 +44,13 @@ namespace TarkovaCola.Client
             return L.F("notice.deadshot.sub", Mathf.RoundToInt(BaseAim * 100f * power), Mathf.RoundToInt(BaseSway * 100f * power));
         }
 
+        // perk activa sin beberla (eterna o de Classic, desde el principio de la raid): lo mismo que al beber, sin el logro
+        internal static void Reapply(Player me)
+        {
+            RefreshWeapon(me);
+            if (Perk.Has("dd_aim")) me.ProceduralWeaponAnimation.WalkEffectorEnabled = false;
+        }
+
         internal static void OnDrink(ActiveHealthController health)
         {
             Achievements.Unlock("dd_fresh");
