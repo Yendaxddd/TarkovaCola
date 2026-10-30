@@ -117,6 +117,8 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- marcador en pantalla (distancia y tiempo)
+        private static Camera _logged;
+
         internal static Camera Cam()
         {
             if (_cam != null && _cam.enabled && _cam.gameObject.activeInHierarchy) return _cam;
@@ -124,7 +126,7 @@ namespace TarkovaCola.Client
             try { if (EFT.CameraControl.CameraManager.Exist) c = EFT.CameraControl.CameraManager.Instance.Camera; } catch { }      // la camara del jugador ("FPS Camera")
             if (c == null) c = Camera.allCameras.FirstOrDefault(x => x.enabled && x.name.IndexOf("FPS", System.StringComparison.OrdinalIgnoreCase) >= 0);
             if (c == null) c = Camera.main;
-            if (c != null) Dbg.Log("POWERUP", "camara: " + c.name + " (fov " + c.fieldOfView.ToString("0") + ")");
+            if (c != null && c != _logged) { _logged = c; Dbg.Log("POWERUP", "camara: " + c.name + " (fov " + c.fieldOfView.ToString("0") + ")"); }   // solo si cambia (se pide cada fotograma)
             _cam = c;
             return c;
         }

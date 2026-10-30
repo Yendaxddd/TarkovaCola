@@ -59,11 +59,22 @@ namespace TarkovaCola.Client
             catch (Exception e) { return "desconocido (" + e.Message + ")"; }
         }
 
-        private static IEnumerator Spawn(JObject post, int raid)
+        // Bots sueltos para otras cosas del mod (pruebas de TEDD): sin equipo de mision; onSpawn recibe cada bot al aparecer
+        internal static void SpawnBots(string tag, string role, int count, Vector3 at, float radius, Action<BotOwner> onSpawn)
+        {
+            var post = new JObject
+            {
+                ["tag"] = tag, ["role"] = role, ["difficulty"] = "normal", ["max"] = count, ["radius"] = radius, ["noEquip"] = true,
+                ["at"] = new JObject { ["x"] = at.x, ["y"] = at.y, ["z"] = at.z },
+            };
+            Plugin.Instance.StartCoroutine(Spawn(post, _raid, onSpawn));
+        }
+
+        private static IEnumerator Spawn(JObject post, int raid, Action<BotOwner> onSpawn = null)
         {
             var tc = post["tc"] as JObject;
             int mission = tc != null ? ((int?)tc["mission"] ?? 0) : 0;
-            string tag = "mision " + mission + (tc != null && (bool?)tc["boss"] == true ? " (JEFE)" : "") + ": ";
+            string tag = post["tag"] != null ? (string)post["tag"] + ": " : "mision " + mission + (tc != null && (bool?)tc["boss"] == true ? " (JEFE)" : "") + ": ";
             float t0 = Time.realtimeSinceStartup;
 
             // 1) esperar a que el juego y el sistema de bots esten listos
@@ -174,12 +185,13 @@ namespace TarkovaCola.Client
             //    grupo (el juego crea un bot por cada perfil mientras queden posiciones) y el contador de "apareciendo" sube antes.
             while (data.Profiles.Count > points.Count) data.RemoveProfile(data.Profiles[data.Profiles.Count - 1]);     // perfiles de sobra
             int toSpawn = data.Profiles.Count;
-            QuestGuards.Equip(data, post);
+            if ((bool?)post["noEquip"] != true) QuestGuards.Equip(data, post);
             for (int i = 0; i < toSpawn; i++) data.AddPosition(points[i], anchor.core);
             try
             {
                 spawner._inSpawnProcess += toSpawn;
-                spawner.method_10(anchor.zone, data, Hold, spawner.GetCancelToken());
+                spawner.method_10(anchor.zone, data, onSpawn != null ? b => { try { onSpawn(b); } catch (Exception e) { Log(tag + "aviso de aparicion: " + e.Message); } } : (Action<BotOwner>)Hold,
+                    spawner.GetCancelToken());
                 Log(tag + toSpawn + "/" + want + " guardias enviados a aparecer (cada uno avisara al llegar a su puesto)");
             }
             catch (Exception e) { Log(tag + "ERROR al activar los guardias: " + e); }

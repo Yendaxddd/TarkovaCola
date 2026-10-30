@@ -21,8 +21,18 @@ namespace TarkovaCola.Client
         internal static readonly Color PanelBg = C(10, 20, 30, 0.92f), Panel2 = C(18, 34, 50, 0.95f), Line = C(120, 190, 225, 0.30f);
 
         private static TMP_FontAsset _font;
-        internal static Sprite WhiteSprite, Circle, Hex;
+        internal static Sprite WhiteSprite, Circle, Hex, Grad, Band, Bubble, Glow, Vignette;
+        internal static Texture2D Scan;
         private static bool _ready;
+
+        // color de cada perk (el de la luz de su maquina): tinte del fondo y de los acentos
+        private static readonly System.Collections.Generic.Dictionary<string, Color> PerkColors = new System.Collections.Generic.Dictionary<string, Color>
+        {
+            ["speedcola"] = C(77, 230, 110), ["staminup"] = C(255, 170, 60), ["juggernog"] = C(255, 70, 60), ["phdflopper"] = C(190, 105, 255),
+            ["widowswine"] = C(255, 80, 120), ["deadshot"] = C(255, 215, 80), ["bandolier"] = C(150, 190, 70), ["vultureaid"] = C(40, 200, 185),
+            ["meleemacchiato"] = C(205, 140, 80),
+        };
+        internal static Color PerkColor(string id) { Color c; return id != null && PerkColors.TryGetValue(id, out c) ? c : Green; }
 
         internal static Color ClassColor(string cls)
         {
@@ -51,6 +61,30 @@ namespace TarkovaCola.Client
             WhiteSprite = Sprite.Create(w, new Rect(0, 0, 4, 4), new Vector2(.5f, .5f), 100f);
             Circle = MakeShape(128, false);
             Hex = MakeShape(128, true);
+            Grad = MakeTex(4, 64, (u, v) => v * v);                                                     // claro arriba, nada abajo
+            Band = MakeTex(64, 4, (u, v) => Mathf.Pow(Mathf.Sin(u * Mathf.PI), 2f));                   // banda de brillo
+            Glow = MakeTex(128, 128, (u, v) => { float d = Vector2.Distance(new Vector2(u, v), new Vector2(.5f, .5f)) * 2f; return Mathf.Pow(Mathf.Clamp01(1f - d), 2.2f); });
+            Vignette = MakeTex(128, 128, (u, v) => { float d = Vector2.Distance(new Vector2(u, v), new Vector2(.5f, .5f)) * 1.42f; return Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - 0.45f) / 0.55f)); });
+            Bubble = MakeTex(64, 64, (u, v) =>
+            {
+                float d = Vector2.Distance(new Vector2(u, v), new Vector2(.5f, .5f)) * 2f;
+                float rim = Mathf.Clamp01(1f - Mathf.Abs(d - 0.86f) * 9f), fill = d < 0.9f ? 0.18f : 0f;
+                float spec = Mathf.Clamp01(1f - Vector2.Distance(new Vector2(u, v), new Vector2(.36f, .66f)) * 7f);
+                return Mathf.Max(Mathf.Max(rim, fill), spec);
+            });
+            // lineas de monitor (se repite; UiScan las hace bajar)
+            Scan = new Texture2D(1, 4, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Point };
+            Scan.SetPixels(new[] { new Color(1, 1, 1, 0.05f), Color.clear, Color.clear, Color.clear }); Scan.Apply();
+        }
+
+        // sprite blanco con alfa = f(u, v) (u, v en 0..1, v hacia arriba)
+        private static Sprite MakeTex(int w, int h, Func<float, float, float> alpha)
+        {
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var px = new Color[w * h];
+            for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) px[y * w + x] = new Color(1, 1, 1, Mathf.Clamp01(alpha((x + .5f) / w, (y + .5f) / h)));
+            tex.SetPixels(px); tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(.5f, .5f), 100f);
         }
 
         // Circulo o hexagono con bordes suavizados (mismo hexagono que la maqueta web).
@@ -137,12 +171,25 @@ namespace TarkovaCola.Client
         {
             var back = Img(parent, "Panel", bg);
             Place(back.rectTransform, x, y, w, h);
+            // relieve: un poco de luz arriba que se apaga hacia abajo (va primero: el contenido queda encima)
+            if (bg.a > 0.05f && h >= 24f) { var sheen = Img(back.transform, "Sheen", new Color(1f, 1f, 1f, 0.055f), Grad); Stretch(sheen.rectTransform); }
             if (border.a > 0f)
             {
                 Place(Img(back.transform, "bt", border).rectTransform, 0, 0, w, bw);
                 Place(Img(back.transform, "bb", border).rectTransform, 0, h - bw, w, bw);
                 Place(Img(back.transform, "bl", border).rectTransform, 0, 0, bw, h);
                 Place(Img(back.transform, "br", border).rectTransform, w - bw, 0, bw, h);
+                // esquinas en escuadra, mas vivas que el borde (estilo CoD/EFT), en tarjetas de cierto tamano
+                if (w >= 100f && h >= 44f)
+                {
+                    var cc = new Color(border.r, border.g, border.b, Mathf.Min(1f, border.a * 2.4f + 0.2f));
+                    float L = Mathf.Min(16f, Mathf.Min(w, h) / 4f), t = bw + 1f;
+                    foreach (var (cx, cy, sx, sy) in new[] { (0f, 0f, 1f, 1f), (w, 0f, -1f, 1f), (0f, h, 1f, -1f), (w, h, -1f, -1f) })
+                    {
+                        Place(Img(back.transform, "c", cc).rectTransform, sx > 0 ? cx : cx - L, sy > 0 ? cy : cy - t, L, t);
+                        Place(Img(back.transform, "c", cc).rectTransform, sx > 0 ? cx : cx - t, sy > 0 ? cy : cy - L, t, L);
+                    }
+                }
             }
             return back;
         }
@@ -152,6 +199,11 @@ namespace TarkovaCola.Client
         {
             var root = Rect(parent, "Badge");
             Place(root, cx - size / 2f, cy - size / 2f, size, size);
+            // halo del color del anillo, respirando despacio
+            var halo = Img(root, "Halo", new Color(ring.r, ring.g, ring.b, 0.25f), Glow);
+            halo.rectTransform.anchorMin = Vector2.zero; halo.rectTransform.anchorMax = Vector2.one;
+            halo.rectTransform.offsetMin = new Vector2(-size * 0.28f, -size * 0.28f); halo.rectTransform.offsetMax = new Vector2(size * 0.28f, size * 0.28f);
+            var pulse = halo.gameObject.AddComponent<UiPulse>(); pulse.Target = halo; pulse.Min = 0.08f; pulse.Max = 0.3f; pulse.Speed = 1.6f; pulse.Phase = cx * 0.013f + cy * 0.007f;
             var sprite = hex ? Hex : Circle;
             var outer = Img(root, "Ring", ring, sprite); Stretch(outer.rectTransform);
             var inner = Img(root, "Fill", C(12, 22, 32), sprite);
@@ -188,24 +240,34 @@ namespace TarkovaCola.Client
         internal Graphic Target;
         internal Color Normal, Hover;
         internal bool Enabled = true;
+        private bool _over;
+        private float _flash;
 
         public void OnPointerClick(PointerEventData e)
         {
             if (!Enabled || e.button != PointerEventData.InputButton.Left) return;
             UiKit.Sound(EUISoundType.ButtonClick);
+            _flash = 1f;                                                           // destello al pulsar
             if (OnClick != null) OnClick();
         }
 
         public void OnPointerEnter(PointerEventData e)
         {
             if (!Enabled) return;
-            if (Target != null) Target.color = Hover;
+            _over = true;
+            UiShine.On(transform).Play();                                          // un brillo cruza el boton
             UiKit.Sound(EUISoundType.ButtonOver);
         }
 
-        public void OnPointerExit(PointerEventData e)
+        public void OnPointerExit(PointerEventData e) { _over = false; }
+
+        // el color pasa suavemente de normal a resaltado (antes cambiaba de golpe)
+        private void Update()
         {
-            if (Target != null) Target.color = Normal;
+            if (Target == null) return;
+            var to = _over && Enabled ? Hover : Normal;
+            if (_flash > 0f) { to = Color.Lerp(to, new Color(Hover.r, Hover.g, Hover.b, Mathf.Min(1f, Hover.a + 0.25f)), _flash); _flash = Mathf.Max(0f, _flash - Time.unscaledDeltaTime * 4f); }
+            Target.color = Color.Lerp(Target.color, to, 1f - Mathf.Exp(-16f * Time.unscaledDeltaTime));
         }
 
         // Convierte un rectangulo en boton: un Image transparente que recibe el raton.

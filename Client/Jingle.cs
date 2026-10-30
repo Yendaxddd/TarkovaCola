@@ -35,11 +35,18 @@ namespace TarkovaCola.Client
         // Cada uno suena en su propia fuente para poder cortarlo sin cortar lo demas: a los 'maxSeconds' se desvanece en medio segundo.
         public static void Sfx(string file, float maxSeconds)
         {
-            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgJingleVolume.Value, maxSeconds));
+            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgJingleVolume.Value, maxSeconds, null, Vector3.zero));
         }
 
-        private static IEnumerator SfxRoutine(string file, float volume, float maxSeconds)
+        // Igual pero en 3D, sonando desde un punto del mapa (y siguiendo a 'follow' si se da). Si falta el archivo, no suena nada.
+        public static void At(string file, Vector3 pos, float maxSeconds, Transform follow = null)
         {
+            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgJingleVolume.Value, maxSeconds, follow, pos));
+        }
+
+        private static IEnumerator SfxRoutine(string file, float volume, float maxSeconds, Transform follow, Vector3 pos)
+        {
+            bool spatial = follow != null || pos != Vector3.zero;
             if (!Valid(file))
             {
                 if (_loading.Add(file)) yield return Plugin.Instance.StartCoroutine(Load(file, 0f, 0f, false));
@@ -48,9 +55,12 @@ namespace TarkovaCola.Client
             AudioClip clip;
             if (!_clips.TryGetValue(file, out clip) || clip == null) yield break;
             var go = new GameObject("TarkovaCola_Sfx");
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            if (!spatial) UnityEngine.Object.DontDestroyOnLoad(go);
+            else if (follow != null) { go.transform.SetParent(follow, false); }
+            else go.transform.position = pos;
             var src = go.AddComponent<AudioSource>();
-            src.spatialBlend = 0f; src.playOnAwake = false; src.loop = false; src.priority = 40;
+            src.spatialBlend = spatial ? 1f : 0f; src.playOnAwake = false; src.loop = false; src.priority = 40;
+            if (spatial) { src.rolloffMode = AudioRolloffMode.Linear; src.minDistance = 3f; src.maxDistance = 45f; src.dopplerLevel = 0f; }
             try { if (Singleton<BetterAudio>.Instantiated) src.outputAudioMixerGroup = Singleton<BetterAudio>.Instance.MasterMixerGroup; } catch { }
             src.clip = clip; src.volume = Mathf.Clamp01(volume);
             src.Play();

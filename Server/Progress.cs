@@ -67,7 +67,7 @@ namespace TarkovaCola.Server
     [Injectable(InjectionType.Transient, int.MaxValue, TypePriority = 400000)]
     public class TarkovaColaRouter : StaticRouter
     {
-        public TarkovaColaRouter(JsonUtil jsonUtil, HttpResponseUtil http, PerkStore store, AchievementStore ach, RefundStore refund)
+        public TarkovaColaRouter(JsonUtil jsonUtil, HttpResponseUtil http, PerkStore store, AchievementStore ach, RefundStore refund, Reroll reroll)
             : base(jsonUtil, new List<RouteAction>
             {
                 new RouteAction<PerkRequest>("/tarkovacola/state/get",
@@ -101,6 +101,14 @@ namespace TarkovaCola.Server
                         return http.NoBody(new PerkResponse { Json = "ok" });
                     }),
 
+                // maquinas de perks en los mapas (las lee el cliente; el editor guarda la lista entera)
+                new RouteAction<PerkRequest>("/tarkovacola/machines/get",
+                    async (url, info, sessionId, output, ct) =>
+                        http.NoBody(new PerkResponse { Json = Machines.Read() })),
+                new RouteAction<MachinesRequest>("/tarkovacola/machines/save",
+                    async (url, info, sessionId, output, ct) =>
+                        http.NoBody(new PerkResponse { Json = Machines.Write(info?.Json) ? "ok" : "no" })),
+
                 // opcion secreta de F12: Therapist vende "le creatura"
                 new RouteAction<JrRequest>("/tarkovacola/jr",
                     async (url, info, sessionId, output, ct) =>
@@ -108,6 +116,19 @@ namespace TarkovaCola.Server
                         Creatura.SetForSale(info != null && info.On);
                         return http.NoBody(new PerkResponse { Json = "ok" });
                     }),
+
+                // opcion de F12: perks como inyectores. Responde "now" con lo que esta aplicado ahora y si hay que reiniciar
+                new RouteAction<InjectorsRequest>("/tarkovacola/injectors",
+                    async (url, info, sessionId, output, ct) =>
+                    {
+                        Settings.SetInjectors(info != null && info.On);
+                        return http.NoBody(new PerkResponse { Json = (Perks.InjectorsApplied ? "inj" : "can") });
+                    }),
+
+                // Vulture Aid: re-roll de un contenedor
+                new RouteAction<RerollRequest>("/tarkovacola/reroll",
+                    async (url, info, sessionId, output, ct) =>
+                        http.NoBody(new PerkResponse { Json = reroll.Roll(info) })),
 
                 new RouteAction<AchRequest>("/tarkovacola/ach/claim",
                     async (url, info, sessionId, output, ct) =>

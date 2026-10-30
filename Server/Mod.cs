@@ -21,7 +21,7 @@ namespace TarkovaCola.Server
         public string Name { get; init; } = "Tarkova-Cola";
         public string Author { get; init; } = "Yendaxddd";
         public List<string> Contributors { get; init; } = new List<string>();
-        public SptVersion Version { get; init; } = new SptVersion(2, 2, 1);
+        public SptVersion Version { get; init; } = new SptVersion(3, 0, 0);
         public SptRange SptVersion { get; init; } = new SptRange("~4.1.0");
         public bool HasPrepatcher { get; init; } = false;
         public List<string> Incompatibilities { get; init; } = new List<string>();
@@ -46,6 +46,8 @@ namespace TarkovaCola.Server
     internal static class Perks
     {
         internal const string TarCola = "57514643245977207f2c2d09";     // lata base que se clona
+        internal const string Propital = "5c0e530286f7747fa1419862";    // inyector base (modo inyectores)
+        internal static bool InjectorsApplied;                          // como se crearon los objetos en este arranque
         internal const string GpCoin = "5d235b4d86f7742e017bc88a";      // GP Coin
         internal const double GpCoinRoubles = 7500;                     // valor de 1 GP Coin en el handbook
 
@@ -56,6 +58,9 @@ namespace TarkovaCola.Server
         internal const string PhdFlopperId = "6a1c00000000000000000c04";
         internal const string WidowsWineId = "6a1c00000000000000000c05";
         internal const string DeadshotId = "6a1c00000000000000000c06";
+        internal const string BandolierId = "6a1c00000000000000000c07";
+        internal const string VultureAidId = "6a1c00000000000000000c08";
+        internal const string MeleeMacchiatoId = "6a1c00000000000000000c09";
 
         internal static readonly PerkDef SpeedCola = new PerkDef
         {
@@ -185,7 +190,72 @@ namespace TarkovaCola.Server
                 "Apuntas un 15% más rápido y el balanceo del arma baja un 25% el resto de la raid.",
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };
+        internal static readonly PerkDef Bandolier = new PerkDef
+        {
+            Id = "bandolier",
+            ItemId = BandolierId,
+            TraderItemId = "6a1c00000000000000000d07",
+            ItemName = "tarkovacola_bandolier",
+            NameEn = "Bandolier Bandit", NameEs = "Bandolier Bandit", ShortName = "Bandolier",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/bandolier.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like gunpowder, leather and a pocketful of spare change that turned out to be bullets. " +
+                "Your magazines suddenly feel lonely when they are not full, and your fingers know exactly where every loose round is hiding. " +
+                "Side effects may include: jingling when you walk, counting rounds in your sleep, and hugging ammo crates a little too long. " +
+                "Drink it! Never run dry again!\n\n" +
+                "Magazines in your rig and pockets refill 1 round every 2 seconds from loose ammo you carry, while you are not shooting.",
+            DescEs =
+                "Perk-a-cola: Sabe a pólvora, cuero y a un bolsillo lleno de monedas que resultaron ser balas. " +
+                "De pronto tus cargadores se sienten solos cuando no están llenos, y tus dedos saben dónde se esconde cada bala suelta. " +
+                "Efectos secundarios: tintinear al caminar, contar balas en sueños y abrazar cajas de munición un poco más de la cuenta. " +
+                "¡Bébela! ¡No te quedes seco nunca más!\n\n" +
+                "Los cargadores del chaleco y los bolsillos se rellenan 1 bala cada 2 segundos con la munición suelta que llevas, mientras no disparas.",
+        };
+
+        internal static readonly PerkDef VultureAid = new PerkDef
+        {
+            Id = "vultureaid",
+            ItemId = VultureAidId,
+            TraderItemId = "6a1c00000000000000000d08",
+            ItemName = "tarkovacola_vultureaid",
+            NameEn = "Vulture Aid Elixir", NameEs = "Vulture Aid Elixir", ShortName = "Vulture",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/vultureaid.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like old coins, wet cardboard and somebody else's lunch. You can smell a stash through three walls and a locked door. " +
+                "Side effects may include: circling bodies before they hit the ground, an unhealthy interest in jackets, and calling everything \"mine\". " +
+                "Drink it! One man's corpse is another man's treasure!\n\n" +
+                "Unsearched containers and bodies with valuables glow through walls within 15 m for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a monedas viejas, cartón mojado y al almuerzo de otro. Hueles un alijo a través de tres paredes y una puerta cerrada. " +
+                "Efectos secundarios: dar vueltas alrededor de los cuerpos antes de que caigan, un interés poco sano por las chaquetas y llamar \"mío\" a todo. " +
+                "¡Bébela! ¡El cadáver de uno es el tesoro de otro!\n\n" +
+                "Los contenedores y cuerpos sin registrar con objetos de valor brillan a través de las paredes a menos de 15 m el resto de la raid.",
+        };
+
+        internal static readonly PerkDef MeleeMacchiato = new PerkDef
+        {
+            Id = "meleemacchiato",
+            ItemId = MeleeMacchiatoId,
+            TraderItemId = "6a1c00000000000000000d09",
+            ItemName = "tarkovacola_meleemacchiato",
+            NameEn = "Melee Macchiato", NameEs = "Melee Macchiato", ShortName = "Macchiato",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/meleemacchiato.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like burnt espresso, brass knuckles and a bad attitude. Guns suddenly feel like a coward's hobby. " +
+                "Side effects may include: bringing a knife to a gunfight on purpose, punching doors open, and growling at people who reload. " +
+                "Drink it! Get up close and personal!\n\n" +
+                "Melee damage x2 and melee attacks 30% faster for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a espresso quemado, nudilleras y mala actitud. De pronto las armas de fuego parecen un pasatiempo de cobardes. " +
+                "Efectos secundarios: llevar un cuchillo a un tiroteo a propósito, abrir puertas a puñetazos y gruñir a quien recarga. " +
+                "¡Bébela! ¡De cerca y en persona!\n\n" +
+                "Daño cuerpo a cuerpo x2 y golpes un 30% más rápidos el resto de la raid.",
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot, Bandolier, VultureAid, MeleeMacchiato };
     }
 
     // Fase 1: crea el item Speed Cola (clon de TarCola) y lo vende en Therapist (LL1).
@@ -205,6 +275,8 @@ namespace TarkovaCola.Server
 
         public Task OnLoadAsync(CancellationToken cancellationToken)
         {
+            Perks.InjectorsApplied = Settings.Current.Injectors;
+            if (Perks.InjectorsApplied) Console.WriteLine("[Tarkova-Cola] modo inyectores: las perks se crean como estimulantes");
             foreach (var perk in Perks.All)
             {
                 try { CreatePerk(perk); }
@@ -213,28 +285,43 @@ namespace TarkovaCola.Server
             return Task.CompletedTask;
         }
 
-        // Crea el item de una perk (clon de TarCola) y lo pone en venta en Therapist (LL1).
+        // Crea el item de una perk (clon de TarCola, o del Propital en modo inyectores) y lo pone en venta en Therapist (LL1).
+        // El id no cambia entre modos: las perks que ya tengas en el alijo pasan a ser inyectores (o latas) al reiniciar.
         private void CreatePerk(PerkDef perk)
         {
-            var baseItem = _templates.Items[new MongoId(Perks.TarCola)];
+            bool inj = Perks.InjectorsApplied;
+            string baseTpl = inj ? Perks.Propital : Perks.TarCola;
+            var baseItem = _templates.Items[new MongoId(baseTpl)];
             double roubles = perk.GpPrice * Perks.GpCoinRoubles;
-            _items.CreateItemFromClone(new NewItemFromCloneDetails
-            {
-                ItemTplToClone = new MongoId(Perks.TarCola),
-                ParentId = baseItem.Parent,
-                NewId = new MongoId(perk.ItemId),
-                NewItemName = perk.ItemName,
-                OverrideProperties = new TemplateItemProperties
+            var props = inj
+                ? new TemplateItemProperties
+                {
+                    Width = 1,
+                    Height = 1,
+                    // un estimulante sin efectos propios: lo que hace lo pone el cliente al usarlo (igual que la lata)
+                    StimulatorBuffs = "",
+                    EffectsHealth = new Dictionary<HealthFactor, EffectsHealthProperties>(),
+                    EffectsDamage = new Dictionary<DamageEffectType, EffectsDamageProperties>(),
+                    Prefab = new Prefab { Path = perk.Bundle.Replace(".bundle", "_inj.bundle"), Rcid = "" },
+                }
+                : new TemplateItemProperties
                 {
                     Width = 1,
                     Height = 2,      // ocupa 1x2 casillas en el inventario (la TarCola original es 1x1)
                     EffectsHealth = BuildEffects(baseItem.Properties.EffectsHealth, hydration: 50, energy: 0),
                     // Modelo 3D propio (ground/inventario/icono). UsePrefab (en mano) sigue siendo el de la TarCola.
                     Prefab = new Prefab { Path = perk.Bundle, Rcid = "" },
-                },
+                };
+            _items.CreateItemFromClone(new NewItemFromCloneDetails
+            {
+                ItemTplToClone = new MongoId(baseTpl),
+                ParentId = baseItem.Parent,
+                NewId = new MongoId(perk.ItemId),
+                NewItemName = perk.ItemName,
+                OverrideProperties = props,
                 FleaPriceRoubles = roubles,
                 HandbookPriceRoubles = roubles,
-                HandbookParentId = "5b47574386f77428ca22b335", // handbook: Drinks
+                HandbookParentId = inj ? "5b47574386f77428ca22b33a" : "5b47574386f77428ca22b335", // handbook: Stimulants / Drinks
                 Locales = new Dictionary<string, LocaleDetails>
                 {
                     ["en"] = new LocaleDetails { Name = perk.NameEn, ShortName = perk.ShortName, Description = perk.DescEn },

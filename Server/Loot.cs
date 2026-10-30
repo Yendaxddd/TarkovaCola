@@ -44,6 +44,13 @@ namespace TarkovaCola.Server
         public double PmcChance { get; set; } = 0.10;         // PMC con vida
         public double ScavChance { get; set; } = 0.03;        // Scavs
         public double RogueChance { get; set; } = 0.12;       // Rogues
+        // Nucleo APEX (Server/Apex.cs): raro
+        public double ApexSafe { get; set; } = 0.04;          // cajas fuertes
+        public double ApexCache { get; set; } = 0.02;         // alijos enterrados y barriles
+        public double ApexWeaponBox { get; set; } = 0.01;     // cajas de armas
+        public double ApexPmcBody { get; set; } = 0.02;       // cuerpos de PMC del mapa
+        public double ApexBoss { get; set; } = 0.20;          // jefes (no sus escoltas)
+        public double ApexPmc { get; set; } = 0.01;           // PMC con vida
     }
 
     internal static class LootContainers
@@ -138,6 +145,11 @@ namespace TarkovaCola.Server
                 (LootContainers.PmcBody, all, s.PmcBody),
                 (LootContainers.Safe, all, s.Safe),
             };
+            var apexRules = new (string[] Containers, double Chance)[]
+            {
+                (LootContainers.Safe, s.ApexSafe), (LootContainers.Cache, s.ApexCache),
+                (LootContainers.WeaponBox, s.ApexWeaponBox), (LootContainers.PmcBody, s.ApexPmcBody),
+            };
             int maps = 0;
             foreach (var prop in typeof(LocationTable).GetProperties())
             {
@@ -151,6 +163,9 @@ namespace TarkovaCola.Server
                     foreach (var rule in rules)
                         foreach (var container in rule.Containers)
                             Add(table, container, rule.Perks, rule.Total);
+                    foreach (var apex in apexRules)
+                        foreach (var container in apex.Containers)
+                            AddTpl(table, container, Apex.CoreId, apex.Chance);
                     return table;
                 });
             }
@@ -201,6 +216,19 @@ namespace TarkovaCola.Server
             }
         }
 
+        // Un objeto suelto (el nucleo APEX) con probabilidad 'p' por objeto sacado del contenedor
+        private static void AddTpl(Dictionary<MongoId, StaticLootDetails> table, string container, string tpl, double p)
+        {
+            if (p <= 0) return;
+            if (!table.TryGetValue(new MongoId(container), out var details) || details?.ItemDistribution == null) return;
+            var id = new MongoId(tpl);
+            var list = details.ItemDistribution.Where(i => i.Tpl != id).ToList();
+            double sum = list.Sum(i => i.RelativeProbability ?? 0);
+            if (sum <= 0) return;
+            list.Add(new ItemDistribution { Tpl = id, RelativeProbability = (float)Weight(sum, Math.Min(0.5, p)) });
+            details.ItemDistribution = list;
+        }
+
         // Anade las perks al reparto del contenedor: entre todas suman 'total' de probabilidad por objeto sacado.
         private static void Add(Dictionary<MongoId, StaticLootDetails> table, string container, PerkDef[] perks, double total)
         {
@@ -237,6 +265,14 @@ namespace TarkovaCola.Server
                 else if (botGenerationDetails.IsPmc) count = Roll(s.PmcChance);
                 else if (role == "exusec") count = Roll(s.RogueChance);
                 else if (Scavs.Contains(role)) count = Roll(s.ScavChance);
+                // nucleo APEX: jefes (no escoltas) y, muy pocas veces, PMC
+                bool bossOnly = role.StartsWith("boss") && role != "bosstest";
+                if (LootContainers.BotHelper != null && Roll(bossOnly ? s.ApexBoss : botGenerationDetails.IsPmc ? s.ApexPmc : 0) > 0)
+                {
+                    var cid = new MongoId(); var ctpl = new MongoId(Apex.CoreId);
+                    var r = LootContainers.BotHelper.AddItemWithChildrenToEquipmentSlot(botId, Slots, cid, ctpl, new List<Item> { new Item { Id = cid, Template = ctpl } }, botInventory);
+                    if (r != ItemAddedResult.SUCCESS) Console.WriteLine("[Tarkova-Cola] No cupo el nucleo APEX en " + role + ": " + r);
+                }
                 if (count <= 0 || LootContainers.BotHelper == null) return;
 
                 var pool = Perks.All.OrderBy(_ => LootContainers.Rng.Next()).Take(count);

@@ -173,7 +173,8 @@ namespace TarkovaCola.Client
             }
         }
 
-        private static void Bomblet(ThrowWeap w, Vector3 pos, string profileId, Item original)
+        // (tambien la usa la Caida explosiva de PHD Flopper)
+        internal static void Bomblet(ThrowWeap w, Vector3 pos, string profileId, Item original)
         {
             var tpl = w.Template as ThrowWeapTemplate;
             if (tpl == null) return;

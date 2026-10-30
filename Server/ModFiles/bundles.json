@@ -23,6 +23,124 @@
     {
       "key": "assets/content/items/consumables/tarkovacola/deadshot.bundle",
       "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/bandolier.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/vultureaid.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/meleemacchiato.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/speedcola_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/staminup_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/juggernog_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/phdflopper_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/widowswine_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/deadshot_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/bandolier_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/vultureaid_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/meleemacchiato_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mk35_barrel.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mk35_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mk35_pgrip.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mk35_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mk35_upper.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vmp_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vmp_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vmp_upper.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mk35_sight_rear.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vmp_sight_rear.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
     }
   ]
 }

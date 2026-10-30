@@ -269,14 +269,16 @@ namespace TarkovaCola.Client
             return typeof(Player).Assembly.GetTypes()
                 .Where(t => typeof(Player).IsAssignableFrom(t))
                 .SelectMany(t => t.GetMethods(flags))
-                .Where(m => m.Name == "Proceed" && !m.IsAbstract && m.GetParameters().Length >= 4 && m.GetParameters()[0].ParameterType == typeof(EFT.InventoryLogic.FoodDrink));
+                .Where(m => m.Name == "Proceed" && !m.IsAbstract && m.GetParameters().Length >= 4
+                            && (m.GetParameters()[0].ParameterType == typeof(EFT.InventoryLogic.FoodDrink) || m.GetParameters()[0].ParameterType == typeof(EFT.InventoryLogic.Meds)));   // lata o inyector
         }
 
         [HarmonyPrefix]
-        private static bool Prefix(Player __instance, EFT.InventoryLogic.FoodDrink foodDrink, Callback<IMedsController> callback)
+        private static bool Prefix(Player __instance, EFT.InventoryLogic.Item __0, Callback<IMedsController> callback)
         {
             try
             {
+                var foodDrink = __0;
                 if (!Util.IsMe(__instance) || foodDrink == null) return true;
                 if (ClassicMode.Enabled && !Plugin.CfgClassicBlock.Value) return true;      // (el bloqueo de Classic se puede apagar en F12)
                 var def = Perks.ByItem(foodDrink.StringTemplateId);

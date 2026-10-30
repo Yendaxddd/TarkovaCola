@@ -42,6 +42,7 @@ namespace TarkovaCola.Client
                 Migrate();
                 Story.SyncSales();                               // opcion de depuracion de ventas (F12)
                 Creatura.SyncSale();                             // opcion secreta (F12)
+                InjectorMode.Sync(false);                        // perks como inyectores (F12)
             }
             catch (Exception e)
             {

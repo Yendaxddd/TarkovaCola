@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EFT;
+using EFT.InventoryLogic;
 using UnityEngine;
 
 namespace TarkovaCola.Client
@@ -22,24 +23,43 @@ namespace TarkovaCola.Client
         private static GameObject _instance;
         private static readonly List<Renderer> _hidden = new List<Renderer>();
 
-        internal static GameObject Load(PerkDef perk)
+        internal const float InjectorRefHeight = 0.15f;      // largo del inyector de BO6 (UnityBundle BuildBo6.InjectorLength)
+
+        internal static GameObject Instance { get { return _instance; } }
+
+        // la animacion de beber de CoD (CodDrink) lleva su propia lata en la mano izquierda: mientras, esta se esconde
+        internal static void SetHidden(bool hidden)
+        {
+            if (_instance != null) foreach (var r in _instance.GetComponentsInChildren<Renderer>(true)) r.enabled = !hidden;
+        }
+
+        // el servidor crea las perks como inyectores si esta activada la opcion de F12; se sabe por el modelo del objeto
+        internal static bool IsInjector(Item item)
+        {
+            var path = item?.Template?.Prefab?.path;
+            return path != null && path.EndsWith("_inj.bundle");
+        }
+
+        internal static GameObject Load(PerkDef perk, bool injector = false)
         {
             GameObject prefab;
-            if (_prefabs.TryGetValue(perk.Id, out prefab)) return prefab;
-            if (_failed.Contains(perk.Id)) return null;
+            string key = injector ? perk.Id + "_inj" : perk.Id;
+            if (_prefabs.TryGetValue(key, out prefab)) return prefab;
+            if (_failed.Contains(key)) return null;
             try
             {
-                string path = Path.Combine(Path.GetDirectoryName(typeof(Plugin).Assembly.Location), Path.Combine("assets", perk.HandBundle));
+                string file = injector ? perk.Id + "_inj_hand.bundle" : perk.HandBundle;
+                string path = Path.Combine(Path.GetDirectoryName(typeof(Plugin).Assembly.Location), Path.Combine("assets", file));
                 var bundle = AssetBundle.LoadFromFile(path);
-                if (bundle == null) { Plugin.Log.LogWarning("No se pudo cargar el bundle de la mano: " + path); _failed.Add(perk.Id); return null; }
+                if (bundle == null) { Plugin.Log.LogWarning("No se pudo cargar el bundle de la mano: " + path); _failed.Add(key); return null; }
                 prefab = bundle.LoadAllAssets<GameObject>().FirstOrDefault();
-                if (prefab == null) { Plugin.Log.LogWarning("El bundle de la mano no contiene ningun prefab"); _failed.Add(perk.Id); return null; }
-                _bundles[perk.Id] = bundle;
-                _prefabs[perk.Id] = prefab;
+                if (prefab == null) { Plugin.Log.LogWarning("El bundle de la mano no contiene ningun prefab"); _failed.Add(key); return null; }
+                _bundles[key] = bundle;
+                _prefabs[key] = prefab;
                 Dbg.Log("MANO", "bundle de la mano cargado: " + prefab.name);
                 return prefab;
             }
-            catch (System.Exception e) { Plugin.Log.LogError("Error cargando el modelo de la mano: " + e); _failed.Add(perk.Id); return null; }
+            catch (System.Exception e) { Plugin.Log.LogError("Error cargando el modelo de la mano: " + e); _failed.Add(key); return null; }
         }
 
         // Se llama cada frame con el controlador de manos actual (barato: sale enseguida si no es la Speed Cola).
@@ -63,15 +83,16 @@ namespace TarkovaCola.Client
             if (root == null) return;
             int id = root.GetInstanceID();
             if (id == _doneId) return;
-            var prefab = Load(perk);
+            bool inj = IsInjector(item);
+            var prefab = Load(perk, inj);
             if (prefab == null) { _doneId = id; return; }
 
             // el modelo puede tardar unos frames en aparecer: reintenta hasta ~2 s
-            if (!Apply(root, perk, prefab) && ++_tries < 120) return;
+            if (!Apply(root, inj ? InjectorRefHeight : perk.HandRefHeight, prefab) && ++_tries < 120) return;
             _doneId = id;
         }
 
-        private static bool Apply(GameObject root, PerkDef perk, GameObject prefab)
+        private static bool Apply(GameObject root, float refHeight, GameObject prefab)
         {
             var filters = root.GetComponentsInChildren<MeshFilter>(false)
                 .Where(f => f.sharedMesh != null && f.GetComponent<MeshRenderer>() != null && f.GetComponent<MeshRenderer>().enabled
@@ -98,7 +119,7 @@ namespace TarkovaCola.Client
             foreach (var c in _instance.GetComponentsInChildren<Collider>(true)) Object.Destroy(c);
             SetLayer(_instance, reference.gameObject.layer);
             _instance.transform.localRotation = Quaternion.FromToRotation(Vector3.up, up);
-            _instance.transform.localScale = Vector3.one * (height / perk.HandRefHeight) * Plugin.CfgHandScale.Value;     // altura real del modelo propio (Speed Cola: 0.122 m)
+            _instance.transform.localScale = Vector3.one * (height / refHeight) * Plugin.CfgHandScale.Value;     // altura real del modelo propio (Speed Cola: 0.122 m)
             _instance.transform.localPosition = bounds.center;
 
             foreach (var f in filters)

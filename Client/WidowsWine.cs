@@ -44,6 +44,7 @@ namespace TarkovaCola.Client
 
         // granadas lanzadas por el jugador que aun existen
         private static readonly List<Grenade> _mine = new List<Grenade>();
+        internal static List<Grenade> Mine { get { return _mine; } }               // (APEX de Widow's Wine)
         private static readonly HashSet<int> _announced = new HashSet<int>();
         private static readonly Dictionary<string, float> _until = new Dictionary<string, float>();                  // enemigo -> hasta cuando esta atrapado
         private static readonly Dictionary<int, HashSet<string>> _perGrenade = new Dictionary<int, HashSet<string>>();   // enemigos distintos por granada
@@ -112,6 +113,7 @@ namespace TarkovaCola.Client
             int key = g != null ? g.GetInstanceID() : 0;
             int n = Web(pos, key);
             if (n > 0) WebVfx.Burst(key, pos, WebRadius(), WebSeconds());
+            if (Perk.Has("ww_fuse")) Rev.LayNest(pos);                                // Nido: deja una trampa en el suelo
             Dbg.Log("EFECTO", "Widow's Wine: explosion en " + pos.ToString("F1") + ", " + n + " enemigo(s) atrapado(s)");
             if (key != 0) { _perGrenade.Remove(key); _fuseDone.Remove(key); _announced.Remove(key); }
             if (item != null) { _lastTpl = item.StringTemplateId; _lastTime = Time.time; _lastRefunded = false; }
@@ -150,8 +152,9 @@ namespace TarkovaCola.Client
                 if (mc == null) continue;
                 if (p == me)
                 {
-                    // Entangled: tus propias telarañas tambien te frenan a ti (con otra causa, para que Terrain Walker no lo anule)
-                    if (Perk.Has("dw_tangled")) mc.ChangeSpeedLimit(TangledLeft * mc.MaxSpeed, Player.ESpeedLimit.Shot, secs);
+                    // Entangled / Telarana enredosa (el doble): tus propias telarañas tambien te frenan a ti (con otra causa, para que Terrain Walker no lo anule)
+                    if (Perk.Has("dw_dry")) mc.ChangeSpeedLimit(Rev.WebSelfLeft * mc.MaxSpeed, Player.ESpeedLimit.Shot, secs);
+                    else if (Perk.Has("dw_tangled")) mc.ChangeSpeedLimit(TangledLeft * mc.MaxSpeed, Player.ESpeedLimit.Shot, secs);
                     continue;
                 }
                 mc.ChangeSpeedLimit(speedLeft * mc.MaxSpeed, Player.ESpeedLimit.Swamp, secs);
