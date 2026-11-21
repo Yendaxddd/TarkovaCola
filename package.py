@@ -24,6 +24,7 @@ def build(project):
 
 
 def add(z, src, arc):
+    if ".bak" in str(src.name if hasattr(src, "name") else src): return   # copias de seguridad locales
     z.write(src, arc.replace("\\", "/"))       # rutas con '/', como esperan todos los descompresores
 
 

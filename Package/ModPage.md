@@ -23,7 +23,6 @@ Drink a perk in raid and it stays active until the raid ends. Level each perk up
   - **Modern**: full progression with augments and drawbacks. Drink a perk you already have and it becomes an **Eternal Perk** (blue outline): it stays with you between raids, loses a drawback and comes back by mail if you die.
   - **Classic**: no Research and no drawbacks. Up to 4 perks plus 1 **modifier** (reduced effect), each with a random minor augment. **Your perks stay with you until you die.** Every raid brings an optional challenge that grants a second augment.
 - **Random Perk power-up**: kills can drop a floating bottle (4%, once per raid, 60 s to grab it), with announcer voice.
-- **15 Synergies**, one for every pair of perks: a small bonus when you carry both. Unlock them with their own challenge, and equip one at a time.
 - **The Bottlers storyline** (needs **VisitAPI**): 10 quests from Skier and Therapist about a crew of ex-PMCs who got their hands on the Perk-a-Colas. The guards really drink their perks, and you can see their icons over their heads. The final quest pits you against **the Bartender**, who carries every perk.
 - **Crafting**: brew perks in the hideout **Nutrition Unit** (recipes unlocked through the storyline).
 - **100 native EFT achievements** (Profile > Achievements), rewards by mail.
@@ -34,7 +33,7 @@ Drink a perk in raid and it stays active until the raid ends. Level each perk up
 1. Get a perk: buy it from **Therapist** (loyalty level 1, **7 GP Coin**), find it in raid (ammo crates, safes, Rogues and Killa) or craft it.
 2. Drink it in raid.
 3. Earn XP in raid (+25% while the perk is active) to level it up (max level 5).
-4. Open **RESEARCH** in the main menu (bottom bar, next to Handbook, or press **F9**) to see your progress, equip augments and drawbacks, pick a synergy and switch modes.
+4. Open **RESEARCH** in the main menu (bottom bar, next to Handbook, or press **F9**) to see your progress, equip augments and drawbacks and switch modes.
 5. Press **ESC** in raid to see your level and pending challenges.
 
 **Requirements**
@@ -156,27 +155,6 @@ Complete a challenge to unlock an **augment** and its linked **drawback**. You c
 | 5 | **Extra Slot** (Special): You can carry 2 minor augments (1 by default). | Kill 1 boss with Deadshot active. | — |
 
 
-### Synergies
-
-Carry both perks of a pair to activate its synergy. Unlock each one with its challenge (it only advances with both perks active) and equip **one** at a time in the **SYNERGY** tab of Research. In Classic mode, if one of the two perks is your modifier, the bonus is smaller.
-
-| Perks | Synergy | Bonus | Unlock challenge |
-| ----- | ------- | ----- | ---------------- |
-| Speed Cola + Stamin-Up | **Cardio** | You draw and swap weapons 12% faster and sprinting uses 5% less stamina. | Sprint 3 km with Speed Cola and Stamin-Up active. |
-| Speed Cola + Juggernog | **Combat Medic** | Healing with medical items is 15% faster. | Use 10 medical items with Speed Cola and Juggernog active. |
-| Speed Cola + PHD Flopper | **Blast Reload** | When PHD Flopper cancels an explosion or a fall, you reload 20% faster for 6 s. | Absorb 5 explosions or falls with Speed Cola and PHD Flopper active. |
-| Speed Cola + Widow's Wine | **Quick Pin** | You throw grenades 15% faster. | Throw 10 grenades with Speed Cola and Widow's Wine active. |
-| Speed Cola + Deadshot | **Hair Trigger** | You aim down sights 8% faster. | Kill 15 enemies while aiming, with Speed Cola and Deadshot active. |
-| Stamin-Up + Juggernog | **Tank** | You carry 5% less weight. | Sprint 2 km with Stamin-Up and Juggernog active. |
-| Stamin-Up + PHD Flopper | **Bounce Back** | When PHD Flopper cancels an explosion or a fall, you recover 15% stamina. | Absorb 8 explosions or falls with Stamin-Up and PHD Flopper active. |
-| Stamin-Up + Widow's Wine | **Getaway** | Throwing a grenade restores 10% stamina. | Throw 10 grenades with Stamin-Up and Widow's Wine active. |
-| Stamin-Up + Deadshot | **Runner's Breath** | You hold your breath 15% longer. | Hold your breath while aiming 20 times, with Stamin-Up and Deadshot active. |
-| Juggernog + PHD Flopper | **Shock Shield** | When PHD Flopper cancels an explosion or a fall, you take 10% less damage for 5 s. | Absorb 5 explosions or falls with Juggernog and PHD Flopper active. |
-| Juggernog + Widow's Wine | **Steel Web** | You take 3% less damage. | Kill 5 enemies caught in your web with Juggernog and Widow's Wine active. |
-| Juggernog + Deadshot | **Iron Sights** | While aiming you take 5% less damage. | Kill 10 armored enemies with Juggernog and Deadshot active. |
-| PHD Flopper + Widow's Wine | **Blast Web** | Your webs cover a 20% larger radius. | Web 15 enemies with PHD Flopper and Widow's Wine active. |
-| PHD Flopper + Deadshot | **Death From Above** | When PHD Flopper cancels an explosion or a fall, weapon sway drops 40% for 5 s. | Kill 3 enemies within 10 s of absorbing an explosion or fall, with PHD Flopper and Deadshot active. |
-| Widow's Wine + Deadshot | **Spider Eye** | You deal 10% more damage to enemies caught in your web. | Kill 8 enemies caught in your web, with Widow's Wine and Deadshot active. |
 
 ### Storyline
 
