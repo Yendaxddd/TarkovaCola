@@ -32,6 +32,8 @@ namespace TarkovaCola.Client
         private static readonly Dictionary<string, Player> _players = new Dictionary<string, Player>();
         private static readonly Dictionary<object, string[]> _byObj = new Dictionary<object, string[]>();     // SkillManager / Physical -> perks
         private static readonly HashSet<string> _bosses = new HashSet<string>();
+        private static readonly Dictionary<string, string> _carriers = new Dictionary<string, string>();   // perfil -> objeto de mision que lleva
+        private static readonly HashSet<string> _checkedDead = new HashSet<string>();
         private static float _nextWeb;
 
         internal const float JugMult = 0.67f, ReloadMult = 1.5f, StaminaMult = 1.5f, Penetration = 1.3f;
@@ -47,6 +49,7 @@ namespace TarkovaCola.Client
             return profileId != null && _perks.TryGetValue(profileId, out list) && Array.IndexOf(list, perk) >= 0;
         }
         internal static bool Has(Player p, string perk) { return p != null && Has(p.ProfileId, perk); }
+        internal static string[] PerksOf(string profileId) { string[] l; return profileId != null && _perks.TryGetValue(profileId, out l) ? l : new string[0]; }
         internal static bool HasObj(object o, string perk)
         {
             string[] list;
@@ -55,7 +58,7 @@ namespace TarkovaCola.Client
 
         internal static void OnRaidStart()
         {
-            _perks.Clear(); _players.Clear(); _byObj.Clear(); _bosses.Clear(); _posts = null; _nextWeb = 0f;
+            _perks.Clear(); _players.Clear(); _byObj.Clear(); _bosses.Clear(); _carriers.Clear(); _checkedDead.Clear(); _posts = null; _nextWeb = 0f;
             try
             {
                 var resp = JObject.Parse(RequestHandler.PostJson("/tarkovacola/quest/posts", "{}"));
@@ -87,9 +90,70 @@ namespace TarkovaCola.Client
                 if (isBoss) _bosses.Add(p.Id);
                 int given = 0;
                 foreach (var id in perks) if (Give(p, Perks.Get(id).ItemTpl)) given++;
-                bool carry = item != null && i == carrier && Give(p, item);
                 GuardSpawner.Log((isBoss ? "JEFE " : "guardia ") + (i + 1) + "/" + profiles.Count + " (" + p.Info.Nickname + ", " + p.Info.Settings.Role + "): perks " + string.Join("+", perks) +
-                                 ", " + given + "/" + perks.Length + " botella(s)" + (item != null && i == carrier ? ", objeto de mision " + (carry ? "SI" : "NO (no cabia)") : ""));
+                                 ", " + given + "/" + perks.Length + " botella(s)");
+            }
+            if (item == null) return;
+            // el objeto de mision: primero el elegido, si no cabe cualquier otro del grupo y, si no cabe en ninguno, se le hace sitio
+            // al elegido quitandole lo de menos valor (antes, si no cabia, la mision se quedaba sin objeto)
+            var order = new List<Profile> { profiles[carrier] };
+            order.AddRange(profiles.Where((x, k) => k != carrier));
+            Profile got = order.FirstOrDefault(x => Give(x, item));
+            if (got == null && MakeRoom(profiles[carrier]) && Give(profiles[carrier], item)) got = profiles[carrier];
+            if (got != null) _carriers[got.Id] = item;
+            GuardSpawner.Log("objeto de mision " + item + ": " + (got != null ? "lo lleva " + got.Info.Nickname : "ERROR: no se pudo meter a ningun guardia"));
+        }
+
+        // Quita el objeto de menos valor de la mochila, el chaleco o los bolsillos del bot para dejar sitio
+        private static bool MakeRoom(Profile profile)
+        {
+            try
+            {
+                var equipment = profile.Inventory.Equipment;
+                Item worst = null; int worstValue = int.MaxValue;
+                foreach (var slot in new[] { EquipmentSlot.Backpack, EquipmentSlot.TacticalVest, EquipmentSlot.Pockets })
+                {
+                    var container = equipment.GetSlot(slot).ContainedItem as CompoundItem;
+                    if (container == null) continue;
+                    foreach (var grid in container.Grids)
+                        foreach (var it in grid.Items)
+                        {
+                            if (it.QuestItem) continue;
+                            int v = NewPerkUtil.Price(it);
+                            if (v < worstValue) { worst = it; worstValue = v; }
+                        }
+                }
+                if (worst == null) return false;
+                foreach (var slot in new[] { EquipmentSlot.Backpack, EquipmentSlot.TacticalVest, EquipmentSlot.Pockets })
+                {
+                    var container = equipment.GetSlot(slot).ContainedItem as CompoundItem;
+                    if (container == null) continue;
+                    foreach (var grid in container.Grids)
+                        if (grid.Items.Contains(worst))
+                        {
+                            bool ok = grid.RemoveWithoutRestrictions(worst).Succeeded;
+                            GuardSpawner.Log("sitio para el objeto de mision: quitado " + worst.ShortName.Localized() + " (" + (ok ? "ok" : "fallo") + ")");
+                            return ok;
+                        }
+                }
+                return false;
+            }
+            catch (Exception e) { GuardSpawner.Log("no se pudo hacer sitio para el objeto de mision: " + e.Message); return false; }
+        }
+
+        // Un portador muerto debe tener el objeto encima: si algun mod se lo ha quitado (o se perdio), se le vuelve a meter
+        private static void CheckCarriers()
+        {
+            if (_carriers.Count == 0) return;
+            foreach (var kv in _carriers)
+            {
+                Player p;
+                if (_checkedDead.Contains(kv.Key) || !_players.TryGetValue(kv.Key, out p) || p == null || p.HealthController == null || p.HealthController.IsAlive) continue;
+                _checkedDead.Add(kv.Key);
+                bool has = p.Profile.Inventory.GetPlayerItems(EPlayerItems.Equipment).Any(x => x.StringTemplateId == kv.Value);
+                if (has) { GuardSpawner.Log("portador muerto (" + p.Profile.Info.Nickname + "): lleva el objeto de mision"); continue; }
+                bool ok = Give(p.Profile, kv.Value) || (MakeRoom(p.Profile) && Give(p.Profile, kv.Value));
+                GuardSpawner.Log("portador muerto (" + p.Profile.Info.Nickname + ") SIN el objeto de mision: " + (ok ? "devuelto a su cuerpo" : "ERROR: no se pudo devolver"));
             }
         }
 
@@ -113,6 +177,7 @@ namespace TarkovaCola.Client
             {
                 var item = Singleton<ItemFactory>.Instance.CreateItem(Guid.NewGuid().ToString("N").Substring(0, 24), tpl, null);
                 if (item == null) return false;
+                item.SpawnedInSession = true;                                     // encontrado en raid (la mision pide FIR)
                 var equipment = profile.Inventory.Equipment;
                 foreach (var slot in new[] { EquipmentSlot.Backpack, EquipmentSlot.TacticalVest, EquipmentSlot.Pockets })
                 {
@@ -154,7 +219,7 @@ namespace TarkovaCola.Client
             _nextWeb = Time.time + WebSeconds + 1f;
             var mc = me.MovementContext;
             if (mc != null) mc.ChangeSpeedLimit(WebSlow * mc.MaxSpeed, Player.ESpeedLimit.Swamp, WebSeconds);
-            WebVfx.OnVictim(me.Position, WebSeconds);
+            WebVfx.OnVictim(me, WebSeconds);
             Dbg.Log("MISION", "un Embotellador con Widow's Wine te ha atrapado");
         }
 
@@ -164,6 +229,7 @@ namespace TarkovaCola.Client
         internal static void DrawIcons(float scale)
         {
             if (_players.Count == 0) return;
+            if (Event.current == null || Event.current.type == EventType.Repaint) CheckCarriers();
             var me = Plugin.Me;
             var cam = Powerup.Cam();
             if (me == null || cam == null) return;

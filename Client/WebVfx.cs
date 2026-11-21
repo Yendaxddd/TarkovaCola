@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EFT;
 using UnityEngine;
 
 namespace TarkovaCola.Client
@@ -16,7 +17,7 @@ namespace TarkovaCola.Client
 
         internal static void OnRaidStart()
         {
-            _burst.Clear();
+            _burst.Clear(); _victims.Clear();
             if (Plugin.CfgWebVfx.Value && !_failed)                     // la textura se dibuja al cargar la raid, no en mitad de un combate
                 try { Build(); } catch (Exception e) { _failed = true; Plugin.Log.LogWarning("Widow's Wine: efecto de telarana: " + e.Message); }
         }
@@ -28,15 +29,44 @@ namespace TarkovaCola.Client
             Spawn(pos, radius * 2f, seconds, true);
         }
 
-        // Telarana pequena bajo un enemigo atrapado
-        internal static void OnVictim(Vector3 pos, float seconds)
+        // Telarana pequena bajo un enemigo atrapado: le sigue los pies mientras dure (antes se quedaba en el sitio donde lo atrapo)
+        private class Victim { public Player P; public GameObject Go; public float Until; }
+        private static readonly Dictionary<string, Victim> _victims = new Dictionary<string, Victim>();
+
+        internal static void OnVictim(Player p, float seconds)
         {
-            Spawn(pos, 2.4f, seconds, false);
+            if (p == null) return;
+            float now = Time.time;
+            Victim v;
+            if (_victims.TryGetValue(p.ProfileId, out v) && v.Go != null && v.Until - now > 1.5f) { return; }
+            if (v != null && v.Go != null) UnityEngine.Object.Destroy(v.Go);
+            var go = Spawn(p.Position, 2.4f, seconds, false, true);
+            if (go != null) _victims[p.ProfileId] = new Victim { P = p, Go = go, Until = now + seconds };
         }
 
-        private static void Spawn(Vector3 pos, float size, float seconds, bool big)
+        // cada fotograma: las telaranas de los atrapados siguen a su enemigo
+        internal static void Tick()
         {
-            if (_failed || !Plugin.CfgWebVfx.Value) return;
+            if (_victims.Count == 0) return;
+            float now = Time.time;
+            List<string> gone = null;
+            foreach (var kv in _victims)
+            {
+                var v = kv.Value;
+                if (v.Go == null || now > v.Until || v.P == null || v.P.HealthController == null || !v.P.HealthController.IsAlive)
+                {
+                    if (v.Go != null && (v.P == null || v.P.HealthController == null || !v.P.HealthController.IsAlive)) UnityEngine.Object.Destroy(v.Go);
+                    (gone ?? (gone = new List<string>())).Add(kv.Key);
+                    continue;
+                }
+                v.Go.transform.position = Ground(v.P.Position) + Vector3.up * 0.05f;
+            }
+            if (gone != null) foreach (var k in gone) _victims.Remove(k);
+        }
+
+        private static GameObject Spawn(Vector3 pos, float size, float seconds, bool big, bool follow = false)
+        {
+            if (_failed || !Plugin.CfgWebVfx.Value) return null;
             try
             {
                 Build();
@@ -50,7 +80,7 @@ namespace TarkovaCola.Client
                 main.startSize = size;
                 main.startRotation = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
                 main.startColor = Color.white;
-                main.simulationSpace = ParticleSystemSimulationSpace.World;
+                main.simulationSpace = follow ? ParticleSystemSimulationSpace.Local : ParticleSystemSimulationSpace.World;
                 main.maxParticles = 2;
                 var em = ps.emission; em.rateOverTime = 0f; em.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
                 var shape = ps.shape; shape.enabled = false;
@@ -68,11 +98,13 @@ namespace TarkovaCola.Client
 
                 if (big) Glow(root.transform, size);
                 UnityEngine.Object.Destroy(root, seconds + 0.5f);
+                return root;
             }
             catch (Exception e)
             {
                 _failed = true;                     // solo es cosmetico: si falla no se reintenta
                 Plugin.Log.LogWarning("Widow's Wine: no se pudo crear el efecto de telarana: " + e.Message);
+                return null;
             }
         }
 

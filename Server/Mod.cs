@@ -21,7 +21,7 @@ namespace TarkovaCola.Server
         public string Name { get; init; } = "Tarkova-Cola";
         public string Author { get; init; } = "Yendaxddd";
         public List<string> Contributors { get; init; } = new List<string>();
-        public SptVersion Version { get; init; } = new SptVersion(3, 0, 1);
+        public SptVersion Version { get; init; } = new SptVersion(4, 0, 0);
         public SptRange SptVersion { get; init; } = new SptRange("~4.1.0");
         public bool HasPrepatcher { get; init; } = false;
         public List<string> Incompatibilities { get; init; } = new List<string>();
@@ -62,6 +62,13 @@ namespace TarkovaCola.Server
         internal const string BandolierId = "6a1c00000000000000000c07";
         internal const string VultureAidId = "6a1c00000000000000000c08";
         internal const string MeleeMacchiatoId = "6a1c00000000000000000c09";
+        // perks finales (3.1)
+        internal const string QuickReviveId = "6a1c00000000000000000c0a";
+        internal const string MuleKickId = "6a1c00000000000000000c0b";
+        internal const string ElectricCherryId = "6a1c00000000000000000c0c";
+        internal const string DeathPerceptionId = "6a1c00000000000000000c0d";
+        internal const string TombstoneId = "6a1c00000000000000000c0e";
+        internal const string DoubleTapId = "6a1c00000000000000000c0f";
 
         internal static readonly PerkDef SpeedCola = new PerkDef
         {
@@ -256,7 +263,110 @@ namespace TarkovaCola.Server
                 "Daño cuerpo a cuerpo x2 y golpes un 30% más rápidos el resto de la raid.",
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot, Bandolier, VultureAid, MeleeMacchiato };
+        internal static readonly PerkDef QuickRevive = new PerkDef
+        {
+            Id = "quickrevive",
+            ItemId = QuickReviveId,
+            TraderItemId = "6a1c00000000000000000d0a",
+            ItemName = "tarkovacola_quickrevive",
+            NameEn = "Quick Revive", NameEs = "Quick Revive", ShortName = "Revive",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/quickrevive.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like cherry cough drops and a second opinion. Your wounds start closing before you finish complaining about them. Side effects may include: shrugging off bullets, telling medics to relax, and an unshakable feeling that you've done this before. Drink it! Get back up!\n\n" +
+                "After 8 s without taking damage, you regenerate 1 HP per second (also while sprinting) for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a caramelo de cereza para la tos y a una segunda opinión. Tus heridas empiezan a cerrarse antes de que acabes de quejarte. Efectos secundarios: ignorar balazos, decirle al médico que se relaje y la sensación de que esto ya lo has vivido. ¡Bébela! ¡Levántate!\n\n" +
+                "Tras 8 s sin recibir daño, regeneras 1 PV por segundo (también esprintando) el resto de la raid.",
+        };
+
+        internal static readonly PerkDef MuleKick = new PerkDef
+        {
+            Id = "mulekick",
+            ItemId = MuleKickId,
+            TraderItemId = "6a1c00000000000000000d0b",
+            ItemName = "tarkovacola_mulekick",
+            NameEn = "Mule Kick", NameEs = "Mule Kick", ShortName = "Mule",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/mulekick.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like hay, gun oil and stubbornness. Your back suddenly insists it can carry one more rifle. Side effects may include: kicking doors you could have opened, refusing to drop anything, and hee-hawing at reload time. Drink it! Three is better than two!\n\n" +
+                "Unlocks a 3rd weapon slot (any primary) for the rest of the raid. Scroll to it with the mouse wheel; swapping to or from it is 50% faster.",
+            DescEs =
+                "Perk-a-cola: Sabe a heno, aceite de armas y cabezonería. Tu espalda de pronto insiste en que puede con un fusil más. Efectos secundarios: patear puertas que podías abrir, negarte a soltar nada y rebuznar al recargar. ¡Bébela! ¡Tres mejor que dos!\n\n" +
+                "Desbloquea una 3.ª ranura de arma (cualquier principal) el resto de la raid. Se saca con la rueda del ratón; cambiar a ella o desde ella es un 50% más rápido.",
+        };
+
+        internal static readonly PerkDef ElectricCherry = new PerkDef
+        {
+            Id = "electriccherry",
+            ItemId = ElectricCherryId,
+            TraderItemId = "6a1c00000000000000000d0c",
+            ItemName = "tarkovacola_electriccherry",
+            NameEn = "Electric Cherry", NameEs = "Electric Cherry", ShortName = "Cherry",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/electriccherry.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like cherry, copper and licking a 9-volt battery. Every empty magazine charges you up like a storm in a bottle. Side effects may include: static hair, sparks when you shake hands, and reloading things that are already full. Drink it! Feel the spark!\n\n" +
+                "When a reload finishes, you get an electric boost to your sprint speed for 1 s: the emptier the magazine was, the bigger it is (up to +250%).",
+            DescEs =
+                "Perk-a-cola: Sabe a cereza, cobre y a lamer una pila de 9 voltios. Cada cargador vacío te carga como una tormenta embotellada. Efectos secundarios: pelo de punta, chispazos al dar la mano y recargar cosas que ya están llenas. ¡Bébela! ¡Siente la chispa!\n\n" +
+                "Al terminar una recarga, ganas un impulso eléctrico de velocidad al esprintar durante 1 s: cuanto más vacío estaba el cargador, mayor (hasta +250%).",
+        };
+
+        internal static readonly PerkDef DeathPerception = new PerkDef
+        {
+            Id = "deathperception",
+            ItemId = DeathPerceptionId,
+            TraderItemId = "6a1c00000000000000000d0d",
+            ItemName = "tarkovacola_deathperception",
+            NameEn = "Death Perception", NameEs = "Death Perception", ShortName = "Perception",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/deathperception.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like carrots, bad omens and staring into the dark for too long. The shadows stop hiding things from you. Side effects may include: not blinking, saying 'I see you' out loud, and unsettling your teammates. Drink it! Nothing hides from you!\n\n" +
+                "You see better in the dark, and enemies you see within 20 m stay marked until you lose sight of them, for the rest of the raid.",
+            DescEs =
+                "Perk-a-cola: Sabe a zanahoria, malos presagios y a mirar la oscuridad demasiado rato. Las sombras dejan de esconderte cosas. Efectos secundarios: no parpadear, decir 'te veo' en voz alta e incomodar a tu equipo. ¡Bébela! ¡Nada se te esconde!\n\n" +
+                "Ves mejor en la oscuridad, y los enemigos que ves a menos de 20 m quedan marcados hasta que los pierdes de vista, el resto de la raid.",
+        };
+
+        internal static readonly PerkDef Tombstone = new PerkDef
+        {
+            Id = "tombstone",
+            ItemId = TombstoneId,
+            TraderItemId = "6a1c00000000000000000d0e",
+            ItemName = "tarkovacola_tombstone",
+            NameEn = "Tombstone Soda", NameEs = "Tombstone Soda", ShortName = "Tombstone",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/tombstone.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like root beer brewed in a crypt. When things go south, a part of you simply... steps out. Side effects may include: leaving gravestones around, being mistaken for a ghost, and a deep respect for cemeteries. Drink it! Death is just a detour!\n\n" +
+                "When a hit leaves you below 25% of your total HP, you leave a decoy tombstone behind and become a specter for 4 s: bots lose you and shoot the tombstone, and you move 30% faster but can't shoot. Every 3 minutes at most.",
+            DescEs =
+                "Perk-a-cola: Sabe a cerveza de raíz fermentada en una cripta. Cuando todo se tuerce, una parte de ti simplemente... se aparta. Efectos secundarios: dejar lápidas por ahí, que te confundan con un fantasma y un profundo respeto por los cementerios. ¡Bébela! ¡La muerte es solo un desvío!\n\n" +
+                "Cuando un golpe te deja por debajo del 25% de tu vida total, dejas una lápida señuelo y te vuelves espectro 4 s: los bots te pierden y disparan a la lápida, y te mueves un 30% más rápido pero no puedes disparar. Como mucho cada 3 minutos.",
+        };
+
+        internal static readonly PerkDef DoubleTap = new PerkDef
+        {
+            Id = "doubletap",
+            ItemId = DoubleTapId,
+            TraderItemId = "6a1c00000000000000000d0f",
+            ItemName = "tarkovacola_doubletap",
+            NameEn = "Double Tap Root Beer", NameEs = "Double Tap Root Beer", ShortName = "Double Tap",
+            GpPrice = 7,
+            Bundle = "assets/content/items/consumables/tarkovacola/doubletap.bundle",
+            DescEn =
+                "Perk-a-cola: Tastes like root beer, brass and a drummer who never misses a beat. Your trigger finger finds a rhythm and refuses to let it go. Side effects may include: tapping on every table, humming to the cyclic rate, and counting in pairs. Drink it! Keep the beat!\n\n" +
+                "Fire rate x1.10, and every consecutive hit within 0.4 s raises it by another 3% (up to +15%). Missing or stopping resets the rhythm.",
+            DescEs =
+                "Perk-a-cola: Sabe a cerveza de raíz, latón y a un batería que nunca pierde el compás. Tu dedo encuentra un ritmo y no lo suelta. Efectos secundarios: tamborilear en todas las mesas, tararear a la cadencia del arma y contar de dos en dos. ¡Bébela! ¡Sigue el ritmo!\n\n" +
+                "Cadencia x1.10, y cada impacto seguido en menos de 0.4 s la sube otro 3% (hasta +15%). Fallar o parar reinicia el ritmo.",
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot, Bandolier, VultureAid, MeleeMacchiato,
+                                                    QuickRevive, MuleKick, ElectricCherry, DeathPerception, Tombstone, DoubleTap };
     }
 
     // Fase 1: crea el item Speed Cola (clon de TarCola) y lo vende en Therapist (LL1).

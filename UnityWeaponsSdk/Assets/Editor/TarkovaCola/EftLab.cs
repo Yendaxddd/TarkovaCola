@@ -46,12 +46,13 @@ namespace TarkovaCola
             foreach (var t in rig.Root.GetComponentsInChildren<Transform>(true)) if (!rig.Bones.ContainsKey(t.name)) rig.Bones[t.name] = t;
             rig.CamAnim = rig.Bones["Camera_animated"];
             // clips: los de la sobreescritura "simple" (los que usa el juego en primera persona) y los del controlador base
-            foreach (var ov in ab.LoadAllAssets<AnimatorOverrideController>())
+            var family = EftBundles.Family(weaponBundle);
+            foreach (var ov in family.SelectMany(b => b.LoadAllAssets<AnimatorOverrideController>()))
             {
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>(); ov.GetOverrides(pairs);
                 foreach (var p in pairs) if (p.Value != null && !rig.Clips.Contains(p.Value)) rig.Clips.Add(p.Value);   // nombre: <clip>_simple.generated
             }
-            foreach (var ctrl in ab.LoadAllAssets<RuntimeAnimatorController>())
+            foreach (var ctrl in family.SelectMany(b => b.LoadAllAssets<RuntimeAnimatorController>()))
                 foreach (var c in ctrl.animationClips) if (c != null && rig.Clips.All(x => x.name != c.name)) rig.Clips.Add(c);
             // apagar LODs lejanos y colisionadores visibles
             foreach (var r in rig.Root.GetComponentsInChildren<Renderer>(true))
@@ -73,7 +74,7 @@ namespace TarkovaCola
         }
 
         // los shaders de EFT dependen de su render; para ver la forma basta con Standard y la textura base
-        private static void Simplify(GameObject go)
+        internal static void Simplify(GameObject go)
         {
             var std = Shader.Find("Standard");
             foreach (var r in go.GetComponentsInChildren<Renderer>(true))

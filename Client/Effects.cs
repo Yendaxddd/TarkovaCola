@@ -21,6 +21,26 @@ namespace TarkovaCola.Client
     internal static class Util
     {
         internal static bool IsMe(Player p) { return p != null && p.IsYourPlayer; }
+
+        // armas "manuales": escopetas de carga tubular, fusiles de cerrojo y revolveres. Speed Cola las acelera con la velocidad del
+        // animador (recarga y cerrojo/corredera x2) en vez del parametro de recarga, que en ellas apenas se notaba.
+        internal static bool Manual(Weapon w)
+        {
+            return w != null && (w is Revolver || w.BoltAction || (w.WeapClass == "shotgun" && w.ReloadMode == Weapon.EReloadMode.InternalMagazine));
+        }
+
+        // velocidad de las armas manuales con Speed Cola (x2; como modificador de Classic, una parte; sin bono si Rev lo quita)
+        internal static float ManualMult
+        {
+            get
+            {
+                if (!Plugin.SpeedColaActive || Perk.ReloadMult <= 1f) return 1f;
+                return 1f + (ManualSpeed - 1f) * Perks.Power("speedcola");
+            }
+        }
+
+        internal const float ManualSpeed = 2f;
+        internal static float LastShot = -99f;                 // ultimo disparo propio (FinalPerks.OnShot)
     }
 
     // ---------- Speed Cola base + Sugar Rush: velocidad de recarga ----------
@@ -29,18 +49,18 @@ namespace TarkovaCola.Client
     internal static class ReloadSpeedPatch
     {
         [HarmonyPostfix]
-        private static void Postfix(SkillManager __instance, SkillManager.WeaponBuffsInfo __result)
+        private static void Postfix(SkillManager __instance, Item weapon, SkillManager.WeaponBuffsInfo __result)
         {
             if (__result == null) return;
-            if (QuestGuards.Any)                                                  // Embotelladores: Speed Cola y Deadshot tambien en ellos
+            if (BotPerks.Any)                                                     // bots y Embotelladores: Speed Cola (recarga x1.5) y Deadshot
             {
-                if (QuestGuards.HasObj(__instance, Perks.SpeedCola.Id)) __result.ReloadSpeed *= QuestGuards.ReloadMult;
-                if (QuestGuards.HasObj(__instance, Deadshot.Id)) __result.AimSpeed += Deadshot.BaseAim;
+                if (BotPerks.HasObj(__instance, Perks.SpeedCola.Id)) __result.ReloadSpeed *= BotPerks.ReloadMult;
+                if (BotPerks.HasObj(__instance, Deadshot.Id)) __result.AimSpeed += Deadshot.BaseAim;
             }
             if (!Perks.AnyActive) return;
             var me = Plugin.Me;
             if (me == null || me.Skills != __instance) return;
-            if (Plugin.SpeedColaActive) __result.ReloadSpeed *= Perk.ReloadMult;
+            if (Plugin.SpeedColaActive && !Util.Manual(weapon as Weapon)) __result.ReloadSpeed *= Perk.ReloadMult;     // manuales: PerkFx.UpdateAnim
             if (Perk.Has("va_d_myopia")) __result.AimSpeed -= VultureAid.MyopiaAim;
             if (Deadshot.Active)                                                  // Deadshot: apuntar mas rapido y menos retroceso
             {
@@ -98,7 +118,7 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(Player.FirearmController __instance, bool __result)
         {
-            if (!__result || !Util.IsMe(__instance._player)) return;
+            if (!__result || !Util.IsMe(__instance._player) || !Plugin.SpeedColaActive) return;
             Dbg.Log("DESAFIO", "cargador del arma revisado");
             PerkService.AddProgress("a_check");
         }
@@ -248,6 +268,40 @@ namespace TarkovaCola.Client
         }
     }
 
+    // ---------- Speed Cola: escopetas de carga tubular meten 2 cartuchos por insercion ----------
+    [HarmonyPatch]
+    internal static class TwoShellsPatch
+    {
+        [HarmonyTargetMethods]
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            return typeof(Player.FirearmController).Assembly.GetTypes()
+                .Where(t => typeof(Player.FirearmController.ReloadInternalMagBase).IsAssignableFrom(t) && !typeof(Player.FirearmController.ReloadCylinderMagOperation).IsAssignableFrom(t))
+                .SelectMany(t => t.GetMethods(flags))
+                .Where(m => m.Name == "AddAmmoToMag" && m.GetParameters().Length == 0 && !m.IsAbstract);
+        }
+
+        // el ultimo: TacticalReload (7Bpencil) tambien suma aqui cartuchos extra en la Benelli M3; asi se mira el cupo con lo suyo ya sumado
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.Last)]
+        private static void Prefix(Player.FirearmController.ReloadInternalMagBase __instance)
+        {
+            if (Util.ManualMult <= 1f) return;
+            var me = Plugin.Me;
+            var w = me != null && me.HandsController != null ? me.HandsController.Item as Weapon : null;
+            var mag = __instance._magazine;
+            var pack = __instance._ammoPack;
+            if (mag == null || pack == null || w == null || w.WeapClass != "shotgun" || !ReferenceEquals(w.GetCurrentMagazine(), mag)) return;
+            // el juego suma 1 despues; nosotros 1 mas si cabe y quedan balas
+            if (pack.AmmoCount - __instance.AmmoToLoadIntoMag >= 2 && mag.Count + __instance.AmmoToLoadIntoMag + 2 <= mag.MaxCount)
+            {
+                __instance.AmmoToLoadIntoMag++;
+                Dbg.Throttled("twoshells", 5f, "RELOAD", "Speed Cola: 2 cartuchos por insercion");
+            }
+        }
+    }
+
     // ---------- Overpressure: cada 4.o cargador pierde todas las balas al recargar (vuelven al inventario) ----------
     [HarmonyPatch]
     internal static class OverpressurePatch
@@ -276,6 +330,14 @@ namespace TarkovaCola.Client
             Perk.ReloadCount++;
             Dbg.Log("RECARGA", "cambio de cargador #" + Perk.ReloadCount + " (" + magazine.Count + " balas)");
             Rev.OnReloadStart(__instance);                  // Recarga en caliente, A medias
+            FinalPerks.OnReloadStart(__instance);           // Electric Cherry
+            // Recarga ruidosa (d_slurp, 3.1): las recargas con el bono de Speed Cola hacen ruido
+            if (Perk.Has("d_slurp"))
+            {
+                var p = __instance._player;
+                Singleton<GlobalEventDispatcher>.Instance.PlaySound(p, p.Position, Perk.SlurpMeters, AISoundType.step);
+                Dbg.Log("EFECTO", "Recarga ruidosa: ruido de " + Perk.SlurpMeters.ToString("0") + " m");
+            }
             if (!Perk.Has("d_over") || Perk.ReloadCount % 4 != 0) return;
 
             Dbg.Log("EFECTO", "Overpressure: el cargador pierde sus " + magazine.Count + " balas");

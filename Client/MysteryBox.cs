@@ -96,8 +96,15 @@ namespace TarkovaCola.Client
                 var it = mod ? f.CreateItem(NewId(), tpl, null) : f.GetPresetItem(tpl);
                 if (it != null) _show.Add(it);
             }
-            // armas de BO7 (Bo7Guns): premio especial, un 15% de las veces que se pide arma
-            if (!mod && !_teddy && Random.value < 0.15f)
+            // premios especiales al pedir arma: armas maravilla de otros mods (10%, si estan instaladas) o armas de BO7 (15%)
+            float roll = Random.value;
+            if (!mod && !_teddy && roll < 0.10f)
+            {
+                var ww = WonderWeapons.Create();
+                if (ww != null) { if (_show.Count > Decoys) _show.RemoveAt(_show.Count - 1); _show.Add(ww); }
+                else roll = 0.2f;                                              // sin armas maravilla: se tira como BO7
+            }
+            if (!mod && !_teddy && roll >= 0.10f && roll < 0.25f)
             {
                 var bo7 = f.GetPresetItem(Random.value < 0.5f ? Bo7Guns.Mk35 : Bo7Guns.Vmp);
                 if (bo7 != null) { if (_show.Count > Decoys) _show.RemoveAt(_show.Count - 1); _show.Add(bo7); }
@@ -375,5 +382,81 @@ namespace TarkovaCola.Client
             }
             return false;
         }
+    }
+    // ============================================================================================
+    //  Armas maravilla de otros mods (Kenner): Ray Gun, Ray Gun Mark II y Wunderwaffe DG-2. No tienen preset ni se venden, asi que la
+    //  caja nunca las veria: se montan aqui cargadas igual que las da su pared de tiza (mismas recamaras, cargador y cargas).
+    //  Solo salen si el mod esta instalado (el juego conoce su plantilla).
+    // ============================================================================================
+    internal static class WonderWeapons
+    {
+        private class Def { public string Name, Gun, Mag, Ammo, ChamberAmmo; public int Shots; }
+
+        private static readonly Def[] All =
+        {
+            // Ray Gun: dos recamaras, una celula llena (10 cargas) en cada una
+            new Def { Name = "Ray Gun", Gun = "6a7e5a71d9a1160000000001", ChamberAmmo = "6a7e5a71d9a11600000000ca" },
+            // Ray Gun Mark II: una carga en la recamara y el cargador de baterias con 20
+            new Def { Name = "Ray Gun Mark II", Gun = "6a7f2b4e8d11530000000001", ChamberAmmo = "6a7f2b4e8d11530000000003", Mag = "6a7f2b4e8d11530000000002", Ammo = "6a7f2b4e8d11530000000003", Shots = 20 },
+            // Wunderwaffe DG-2: una carga en la recamara y la bateria con 2
+            new Def { Name = "Wunderwaffe DG-2", Gun = "6a7f4d6f1b11550000000001", ChamberAmmo = "6a7f4d6f1b11550000000003", Mag = "6a7f4d6f1b11550000000002", Ammo = "6a7f4d6f1b11550000000003", Shots = 2 },
+        };
+
+        private static List<Def> _installed;
+
+        internal static bool Any { get { return Installed().Count > 0; } }
+
+        private static List<Def> Installed()
+        {
+            if (_installed != null) return _installed;
+            _installed = new List<Def>();
+            var f = Singleton<ItemFactory>.Instance;
+            if (f == null) { _installed = null; return new List<Def>(); }
+            foreach (var d in All)
+                if (Known(f, d.Gun) && Known(f, d.ChamberAmmo) && (d.Mag == null || Known(f, d.Mag))) _installed.Add(d);
+            Plugin.Log.LogInfo(_installed.Count > 0 ? "Caja misteriosa: armas maravilla de otros mods: " + string.Join(", ", _installed.Select(d => d.Name).ToArray())
+                                                   : "Caja misteriosa: sin armas maravilla de otros mods");
+            return _installed;
+        }
+
+        private static bool Known(ItemFactory f, string tpl)
+        {
+            try { return f.ItemTemplates.ContainsKey(new MongoID(tpl)); } catch { return false; }
+        }
+
+        internal static Item Create()
+        {
+            var list = Installed();
+            if (list.Count == 0) return null;
+            var d = list[Random.Range(0, list.Count)];
+            try
+            {
+                var f = Singleton<ItemFactory>.Instance;
+                var w = f.CreateItem(NewId(), d.Gun, null) as Weapon;
+                if (w == null) return null;
+                if (w.Chambers != null)
+                    foreach (var ch in w.Chambers)
+                    {
+                        var a = f.CreateItem(NewId(), d.ChamberAmmo, null);
+                        if (a != null) ch.AddWithoutRestrictions(a);
+                    }
+                if (d.Mag != null)
+                {
+                    var mag = f.CreateItem(NewId(), d.Mag, null) as Magazine;
+                    var slot = w.GetMagazineSlot();
+                    if (mag != null && slot != null)
+                    {
+                        var ammo = f.CreateItem(NewId(), d.Ammo, null);
+                        if (ammo != null) { ammo.StackObjectsCount = d.Shots; mag.Cartridges.Add(ammo, false); }
+                        slot.AddWithoutRestrictions(mag);
+                    }
+                }
+                Dbg.Log("CAJA", "arma maravilla: " + d.Name);
+                return w;
+            }
+            catch (System.Exception e) { Dbg.Throttled("wonder", 30f, "ERROR", "Caja misteriosa (" + d.Name + "): " + e.Message); return null; }
+        }
+
+        private static string NewId() { return System.Guid.NewGuid().ToString("N").Substring(0, 24); }
     }
 }

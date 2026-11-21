@@ -24,6 +24,7 @@ namespace TarkovaCola
         {
             ["speedcola"] = "t10_zm_machine_speed_cola_lava_all_fxanim", ["staminup"] = "t10_zm_machine_staminup",
             ["juggernog"] = "t10_zm_machine_juggernog", ["phdflopper"] = "t10_zm_machine_phd_flopper", ["deadshot"] = "t10_zm_machine_deadshot",
+            ["quickrevive"] = "t10_zm_machine_quick_revive", ["deathperception"] = "t10_zm_machine_death_perception",
             ["wunderfizz"] = "sat_zm_machine_wunderfizz_fxanim",     // BO7; va la ultima: usa la escala de las demas en vez de medir 2.2 m
         };
         private static readonly Dictionary<string, string> CanModel = new Dictionary<string, string>
@@ -32,7 +33,10 @@ namespace TarkovaCola
             ["juggernog"] = "offhand_t10_vm_zmb_perk_juggernog_can_static", ["phdflopper"] = "offhand_t10_vm_zmb_perk_phd_flopper_can_static",
             ["deadshot"] = "offhand_t10_vm_zmb_perk_deadshot_can_static",
             ["vultureaid"] = "offhand_t10_vm_zmb_perk_vulture_aid_can_static", ["meleemacchiato"] = "offhand_t10_vm_zmb_perk_melee_macchiato_can_static",
-            ["bandolier"] = "offhand_t10_vm_zmb_perk_can", ["widowswine"] = "offhand_t10_vm_zmb_perk_can",
+            ["bandolier"] = "offhand_tc_bandolier_can", ["widowswine"] = "offhand_tc_widowswine_can",     // sin lata en BO6: malla de Vulture Aid con etiqueta propia (tools/make_can_labels.py)
+            ["quickrevive"] = "offhand_t10_vm_zmb_perk_quick_revive_can_static", ["deathperception"] = "offhand_t10_vm_zmb_perk_death_perception_can",
+            ["doubletap"] = "offhand_t10_vm_zmb_perk_double_tap_can",
+            ["electriccherry"] = "offhand_t10_vm_zmb_perk_elemental_can_static",     // Electric Cherry: la lata de Elemental Pop
         };
 
         public static void Run()
@@ -42,11 +46,14 @@ namespace TarkovaCola
             Directory.CreateDirectory("Assets/Prefabs");
             var machinePrefabs = new List<string>();
             float unit = 0f;                                  // escala comun (metros por unidad del FBX), sacada de la primera maquina
+            bool skipMachines = System.Environment.GetEnvironmentVariable("SKIP_MACHINES") == "1";      // solo latas (sin rehacer machines.bundle)
             foreach (var kv in MachineModel)
             {
+                if (skipMachines) break;
                 try { machinePrefabs.Add(BuildMachine(kv.Key, kv.Value, ref unit)); }
                 catch (System.Exception e) { Debug.LogError("[BO6] maquina " + kv.Key + ": " + e); }
             }
+            if (!skipMachines) {
             if (File.Exists("Assets/Prefabs/machine_widowswine.prefab")) machinePrefabs.Add("Assets/Prefabs/machine_widowswine.prefab");
             try { machinePrefabs.Add(BuildSwitch(unit)); } catch (System.Exception e) { Debug.LogError("[BO6] interruptor: " + e); }
             try { machinePrefabs.Add(BuildBox(unit)); } catch (System.Exception e) { Debug.LogError("[BO6] caja misteriosa: " + e); }
@@ -55,9 +62,13 @@ namespace TarkovaCola
             BuildPipeline.BuildAssetBundles("Build/machines", new[] { new AssetBundleBuild { assetBundleName = "machines.bundle", assetNames = machinePrefabs.ToArray() } },
                 BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.ForceRebuildAssetBundle, BuildTarget.StandaloneWindows64);
             Debug.Log("[BO6] machines.bundle: " + machinePrefabs.Count + " prefabs");
+            }
 
+            // CANS=id,id,... construye solo esas latas
+            var onlyCans = (System.Environment.GetEnvironmentVariable("CANS") ?? "").Split(',').Where(x => x.Length > 0).ToList();
             foreach (var kv in CanModel)
             {
+                if (onlyCans.Count > 0 && !onlyCans.Contains(kv.Key)) continue;
                 try { BuildCan(kv.Key, kv.Value); }
                 catch (System.Exception e) { Debug.LogError("[BO6] lata " + kv.Key + ": " + e); }
             }
@@ -101,9 +112,11 @@ namespace TarkovaCola
             // el nombre que da Unity al material del FBX puede llevar prefijos o sufijos: se busca el que contiene el nombre
             var key = mats.Keys.Where(k => matName.Contains(k) || k.Contains(matName)).OrderByDescending(k => k.Length).FirstOrDefault();
             Dictionary<string, string> tex = key != null ? mats[key] : new Dictionary<string, string>();
-            string path = Dir + model + "/m_" + Regex.Replace(matName, "[^A-Za-z0-9_]", "_") + ".mat";
+            // las latas propias (offhand_tc_*) son copias del modelo de Vulture Aid: sus materiales llevan el nombre del modelo para no llamarse igual
+            string uniq = model.StartsWith("offhand_tc_") ? model.Substring(8) + "_" : "";
+            string path = Dir + model + "/m_" + uniq + Regex.Replace(matName, "[^A-Za-z0-9_]", "_") + ".mat";
             AssetDatabase.DeleteAsset(path);
-            var m = new Material(Shader.Find("Standard")) { name = matName };
+            var m = new Material(Shader.Find("Standard")) { name = uniq + matName };
             string v;
             if (tex.TryGetValue("albedo", out v)) m.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(Dir + model + "/" + v);
             if (tex.TryGetValue("normal", out v)) { m.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(Dir + model + "/" + v)); m.EnableKeyword("_NORMALMAP"); }
@@ -334,10 +347,27 @@ namespace TarkovaCola
         }
 
         // ---------------------------------------------------------------- latas (objeto del juego y modelo en la mano)
-        private static readonly Dictionary<string, Color> CanTint = new Dictionary<string, Color> { ["bandolier"] = new Color(0.45f, 0.55f, 0.25f), ["widowswine"] = new Color(0.55f, 0.12f, 0.2f) };
+        private static readonly Dictionary<string, Color> CanTint = new Dictionary<string, Color>();     // (lata generica tenida: ya no se usa)
+
+        // Las latas usan texturas de 1024 como mucho: con 2048 el icono del inventario se hacia antes de cargarlas y salia blanco
+        internal const int CanTexMax = 1024;
+        private static void CapTextures(string model)
+        {
+            foreach (var f in Directory.GetFiles(Dir + model + "/tex", "*.png"))
+            {
+                var imp = AssetImporter.GetAtPath(f.Replace('\\', '/')) as TextureImporter;
+                if (imp == null || imp.maxTextureSize <= CanTexMax) continue;
+                imp.maxTextureSize = CanTexMax;
+                var ps = imp.GetPlatformTextureSettings("Standalone");
+                if (ps.overridden && ps.maxTextureSize > CanTexMax) { ps.maxTextureSize = CanTexMax; imp.SetPlatformTextureSettings(ps); }
+                imp.SaveAndReimport();
+                Debug.Log("[BO6] textura limitada a " + CanTexMax + ": " + f);
+            }
+        }
 
         private static void BuildCan(string id, string model)
         {
+            CapTextures(model);
             var root = new GameObject(id);
             var visual = Load(model, true); visual.name = "visual";
             // la lata generica (sin perk propia en BO6) se tine con el color de la perk
@@ -383,6 +413,8 @@ namespace TarkovaCola
             ["speedcola"] = new Color(0.25f, 0.85f, 0.3f), ["staminup"] = new Color(1f, 0.75f, 0.15f), ["juggernog"] = new Color(0.9f, 0.15f, 0.12f),
             ["phdflopper"] = new Color(0.55f, 0.25f, 0.9f), ["widowswine"] = new Color(0.55f, 0.08f, 0.2f), ["deadshot"] = new Color(0.35f, 0.35f, 0.38f),
             ["bandolier"] = new Color(0.45f, 0.55f, 0.25f), ["vultureaid"] = new Color(0.15f, 0.65f, 0.6f), ["meleemacchiato"] = new Color(0.5f, 0.3f, 0.15f),
+            ["quickrevive"] = new Color(0.25f, 0.55f, 1f), ["mulekick"] = new Color(0.4f, 0.75f, 0.3f), ["electriccherry"] = new Color(0.2f, 0.7f, 1f),
+            ["deathperception"] = new Color(0.95f, 0.45f, 0.08f), ["tombstone"] = new Color(0.4f, 0.4f, 0.36f), ["doubletap"] = new Color(0.85f, 0.75f, 0.2f),
         };
 
         public static void Injectors()
@@ -448,6 +480,14 @@ namespace TarkovaCola
             }
             Debug.Log("[BO6] inyector " + id + ": " + b.size);
             return path;
+        }
+
+        // vista previa de las latas/botellas y los inyectores de las perks finales
+        public static void PreviewFinal()
+        {
+            string[] ids = (System.Environment.GetEnvironmentVariable("PREVIEW_IDS") ?? "quickrevive,mulekick,electriccherry,deathperception,tombstone,doubletap").Split(',');
+            PreviewRow("final_cans", ids.Select(i => File.Exists("Assets/Prefabs/bo6_can_" + i + ".prefab") ? "Assets/Prefabs/bo6_can_" + i + ".prefab" : "Assets/Prefabs/" + i + ".prefab").ToArray(), 0.09f, 0.2f);
+            PreviewRow("final_inj", ids.Select(i => "Assets/Prefabs/bo6_inj_" + i + ".prefab").ToArray(), 0.09f, 0.18f);
         }
 
         private static void PreviewRow(string file, string[] prefabs, float spacing, float size)

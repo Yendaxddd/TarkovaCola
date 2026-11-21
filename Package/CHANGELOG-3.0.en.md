@@ -89,7 +89,6 @@ A **very strong** effect for each perk. You can only have **one** equipped (Mode
 ## Coming next
 - **Machines, box and TEDD on more maps** (only Factory for now). They are placed with the F12 machine editor.
 - New quests: APEX (3), Mystery Box (1) and TEDD (2).
-- Synergies, achievements and quests for Bandolier, Vulture Aid and Melee Macchiato.
 - Fix the Black Ops drinking animation.
 - Mystery Box sounds.
 - Master of Movement (PHD slide) and a stats tab.

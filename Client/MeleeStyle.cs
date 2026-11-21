@@ -45,6 +45,8 @@ namespace TarkovaCola.Client
         internal static Kind Classify(Item item)
         {
             if (item != null && Fists.Contains(item.StringTemplateId)) return Kind.Fist;
+            // con animaciones de BO7 (Bo7MeleePatch) no se gira ni se mueve nada: como con los punos, solo queda la velocidad de Macchiato
+            if (item != null && Plugin.CfgBo7Melee.Value && Bo7Anims.MeleePrefix(item.StringTemplateId) != null) return Kind.Fist;
             float w = item != null ? item.Template.Weight : 0.2f;
             return w < LightMax ? Kind.Light : (w < MediumMax ? Kind.Medium : Kind.Heavy);
         }
@@ -53,7 +55,6 @@ namespace TarkovaCola.Client
         // Antes de un tajo (desde Idling): decide el paso del combo. Devuelve true si el tajo debe convertirse en estocada.
         internal static bool BeforeSlash(Player.KnifeController ctrl)
         {
-            if (!Plugin.CfgMeleeStyles.Value) return false;
             _kind = Classify(ctrl.Item);
             if (_kind == Kind.Fist) return false;
             bool chained = Time.time - _lastEnd <= ComboWindow * ComboMult;
@@ -85,7 +86,7 @@ namespace TarkovaCola.Client
             float speed = MeleeMacchiato.SwingSpeed(_stab);
             _stab = false;
             try { MeleeMacchiato.OnSwing(Plugin.Me); } catch (Exception e) { Dbg.Throttled("mmswing", 10f, "ERROR", "Macchiato (golpe): " + e.Message); }
-            if (!Plugin.CfgMeleeStyles.Value || Classify(ctrl.Item) == Kind.Fist)
+            if (Classify(ctrl.Item) == Kind.Fist)
             {
                 if (speed > 1.01f) ctrl.SetMeleeSpeed(Plugin.Me.Physical.MeleeSpeed * speed);      // sin estilos, Macchiato sigue acelerando
                 return;
@@ -101,7 +102,7 @@ namespace TarkovaCola.Client
         internal static void OnImpact()
         {
             Ev("impacto (" + (Time.time - _swingStart).ToString("0.00") + " s)");
-            if (Plugin.CfgMeleeStyles.Value && _kind == Kind.Heavy) _shake = 1f;
+            if (_kind == Kind.Heavy) _shake = 1f;
         }
 
         internal static void OnKickEnd()
@@ -115,40 +116,7 @@ namespace TarkovaCola.Client
         private static float _weight, _speed = 1f;
         private static bool _stab;                                     // el golpe que empieza es una estocada (Flash Strike solo acelera el tajo)
         private static bool _chained;
-        private static readonly System.Collections.Generic.List<string> _events = new System.Collections.Generic.List<string>();
-        private static void Ev(string s)
-        {
-            if (!Plugin.CfgMeleeDebug.Value) return;
-            _events.Add(Time.time.ToString("0.00") + "  " + s);
-            if (_events.Count > 12) _events.RemoveAt(0);
-        }
-
-        // una linea con el estado del golpe (la usa la grabacion de clips para escribirla en datos.txt)
-        internal static string Snapshot()
-        {
-            var me = Plugin.Me;
-            if (me == null || !(me.HandsController is Player.KnifeController)) return "-";
-            return _kind + " | golpe " + (_combo + 1) + "/3 | giro " + _roll.ToString("0") + " | vel x" + _speed.ToString("0.00")
-                   + " | " + (_swinging ? "golpeando " + (Time.time - _swingStart).ToString("0.00") + "s" : "quieto")
-                   + " | ventana " + Mathf.Max(0f, ComboWindow * ComboMult - (Time.time - _lastEnd)).ToString("0.00") + "s";
-        }
-
-        internal static void DrawDebug()
-        {
-            if (!Plugin.CfgMeleeDebug.Value || Event.current.type != EventType.Repaint) return;
-            var me = Plugin.Me;
-            if (me == null || !(me.HandsController is Player.KnifeController)) return;
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("CUERPO A CUERPO  (estilos " + (Plugin.CfgMeleeStyles.Value ? "si" : "no") + ", Macchiato " + (MeleeMacchiato.Active ? "si" : "no") + ")");
-            sb.AppendLine("arma: " + _kind + "  " + _weight.ToString("0.00") + " kg");
-            sb.AppendLine("combo: golpe " + (_combo + 1) + "/3" + (_chained ? " (encadenado)" : "") + "  giro " + _roll.ToString("0") + "°  velocidad x" + _speed.ToString("0.00"));
-            sb.AppendLine("golpeando: " + (_swinging ? (Time.time - _swingStart).ToString("0.00") + " s" : "no")
-                          + "  ventana combo: " + Mathf.Max(0f, ComboWindow * ComboMult - (Time.time - _lastEnd)).ToString("0.00") + " s");
-            foreach (var e in _events) sb.AppendLine(e);
-            var r = new Rect(20f, Screen.height * 0.25f, 520f, 300f);
-            GUI.color = new Color(0f, 0f, 0f, 0.6f); GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = Color.white;
-            GUI.Label(new Rect(r.x + 8f, r.y + 6f, r.width - 16f, r.height - 12f), sb.ToString());
-        }
+        private static void Ev(string s) { Dbg.Log("MELEE", s); }
 
         // Melee Macchiato acelera los golpes (y mas adelante alargara la ventana del combo)
         internal static float SpeedMult { get { return MeleeMacchiato.SpeedFactor; } }
@@ -160,12 +128,6 @@ namespace TarkovaCola.Client
             if (!(me.HandsController is Player.KnifeController)) { _swinging = false; return; }
             if (Classify(me.HandsController.Item) == Kind.Fist) { _swinging = false; _rollNow = 0f; return; }
             var lift = Plugin.CfgMeleeLift.Value;
-            if (!Plugin.CfgMeleeStyles.Value)
-            {
-                var r0 = me.PlayerBones != null ? me.PlayerBones.Weapon_Root_Anim : null; var c0 = Powerup.Cam();
-                if (r0 != null && c0 != null) r0.position += c0.transform.up * lift - c0.transform.right * Plugin.CfgMeleeSide.Value;
-                _swinging = false; return;
-            }
             var root = me.PlayerBones != null ? me.PlayerBones.Weapon_Root_Anim : null;
             var cam = Powerup.Cam();
             if (root == null || cam == null) return;
@@ -181,7 +143,7 @@ namespace TarkovaCola.Client
                 _shake = Mathf.Max(0f, _shake - Time.deltaTime * 4f);
             }
             // ligeras: el arma algo mas al centro de la pantalla
-            Vector3 center = (_kind == Kind.Light && Plugin.CfgMeleeCenter.Value ? -cam.transform.right * 0.035f : Vector3.zero) + cam.transform.up * lift - cam.transform.right * Plugin.CfgMeleeSide.Value;
+            Vector3 center = (_kind == Kind.Light ? -cam.transform.right * 0.035f : Vector3.zero) + cam.transform.up * lift - cam.transform.right * Plugin.CfgMeleeSide.Value;
             if (extra == Quaternion.identity && center == Vector3.zero) return;
 
             // el arma gira SOBRE SI MISMA (antes giraba alrededor de la camara y 80 grados la mandaban al borde superior de la pantalla)
@@ -290,7 +252,7 @@ namespace TarkovaCola.Client
             try
             {
                 var me = Plugin.Me;
-                if (me != null && ReferenceEquals(me.ProceduralWeaponAnimation, __instance)) CodDrink.LateTransform(me);     // animacion de beber de CoD
+                // la animacion de beber de BO7 ahora va horneada en clips (Bo7Drink); CodDrink.LateTransform ya no se llama
             }
             catch (Exception e) { Dbg.Throttled("cod_drink", 10f, "ERROR", "animacion de beber de CoD: " + e); }
         }

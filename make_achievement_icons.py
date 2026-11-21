@@ -5,7 +5,8 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "Server" / "ModFiles" / "achievements"
 OUT.mkdir(parents=True, exist_ok=True)
-ICONS = {n: Image.open(ROOT / "Client" / "assets" / (n + "_icon.png")).convert("RGBA") for n in ("speedcola", "staminup", "juggernog", "phdflopper", "widowswine", "deadshot")}
+ICONS = {n: Image.open(ROOT / "Client" / "assets" / (n + "_icon.png")).convert("RGBA") for n in ("speedcola", "staminup", "juggernog", "phdflopper", "widowswine", "deadshot", "bandolier", "vultureaid", "meleemacchiato",
+                                                                                         "quickrevive", "mulekick", "electriccherry", "deathperception", "tombstone", "doubletap")}
 ICONS["research"] = Image.open(ROOT / "Client" / "assets" / "research_icon.png").convert("RGBA")
 
 W, H = 196, 224

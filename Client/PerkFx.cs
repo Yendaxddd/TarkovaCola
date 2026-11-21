@@ -52,9 +52,6 @@ namespace TarkovaCola.Client
         internal const float ChewTime = 1.30f;            // Slow Chewer: comer y beber tarda un 30% mas
         internal const float PatchSpeed = 2.0f;           // Quick Patch: animaciones de curacion x2
         internal const float PitStopBonus = 1.0f;         // Pit Stop: quieto, la estamina se recupera el doble (+100%)
-        internal const float ClankRadius = 12f;           // Clanky Plates
-        internal const float StompRadius = 15f;           // Hard Stomp
-        internal const float StepInterval = 0.5f;
         internal const float QuickSpinnerAnim = 1.4f;     // Quick Spinner: animaciones de granada +40%
         internal const float AnimSpeed = 1.75f;           // Sprint Shooter
 
@@ -64,17 +61,19 @@ namespace TarkovaCola.Client
         internal static float Speed;                      // velocidad del jugador (m/s, suavizada): "se esta moviendo"
         private static bool _wasBreathD;
         internal static float ConcussUntil;
+        internal static float OwnWaveUntil;                // Onda propia (dp_stomp, PHD): balanceo tras una explosion que te alcanza
+        internal const float OwnWaveSway = 1.30f, OwnWaveSeconds = 2f;
         private static bool _hasPos;
         private static Vector3 _lastPos;
-        private static float _travel, _still, _prevStamina = -1f, _nextStep, _next1Hz;
+        private static float _travel, _still, _prevStamina = -1f, _next1Hz;
         private static bool _wasBreath;
         private static IAnimator _sped;
 
         internal static void OnRaidStart()
         {
-            SwayMult = 1f; ConcussUntil = 0f;
-            _hasPos = false; _travel = 0f; _still = 0f; _prevStamina = -1f; _nextStep = 0f; _next1Hz = 0f; _wasBreath = false;
-            if (_sped != null) { _sped.speed = 1f; _sped = null; }
+            SwayMult = 1f; ConcussUntil = 0f; OwnWaveUntil = 0f;
+            _hasPos = false; _travel = 0f; _still = 0f; _prevStamina = -1f; _next1Hz = 0f; _wasBreath = false;
+            if (_sped != null) { try { _sped.speed = 1f; } catch { } _sped = null; }     // el animador puede haberse destruido (cambio de arma, muerte)
             Juggernog.OnRaidStart();
             PhdFlopper.OnRaidStart();
             WidowsWine.OnRaidStart();
@@ -100,6 +99,21 @@ namespace TarkovaCola.Client
 
         // ---------------------------------------------------------------- al beber una perk
         // Recalcula lo que el juego guarda en cache y que depende de las perks activas: capacidad de estamina y de aire, y peso.
+        // F12 "Pausar efectos de perks": lo que se calcula al beber (estamina/aire/peso, bonos de Deadshot en el arma) se recalcula al cambiarla
+        internal static void OnPauseChanged()
+        {
+            try
+            {
+                var me = Plugin.Me;
+                if (me == null) return;
+                RefreshPhysical(me);
+                if (Perks.IsDrunk(Deadshot.Id)) Deadshot.RefreshWeapon(me);
+                if (me.ProceduralWeaponAnimation != null && Perks.IsDrunk(Deadshot.Id) && Perk.Equipped("dd_aim")) me.ProceduralWeaponAnimation.WalkEffectorEnabled = Perks.Paused;
+                Dbg.Log("PAUSA", "efectos de perks " + (Perks.Paused ? "pausados" : "reanudados"));
+            }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Pausa de efectos: " + e.Message); }
+        }
+
         internal static void RefreshPhysical(Player me)
         {
             var phys = me.Physical;
@@ -147,7 +161,7 @@ namespace TarkovaCola.Client
             Speed = Mathf.Lerp(Speed, speed, Mathf.Clamp01(dt * 5f));
             bool still = speed < 0.15f;
             ClassicChallenge.OnMove(moved, sprinting, dt);                // desafio de raid (modo Classic): correr, recorrer, sobrevivir
-            if (sprinting) { Synergy.OnRun(moved); AchTrack.OnRun(moved); Apex.OnRun(moved); }                          // desafio de la sinergia Speed Cola + Stamin-Up
+            if (sprinting) { AchTrack.OnRun(moved); Apex.OnRun(moved); }                       
 
             if (Perks.IsActive(PhdFlopper.Id))
             {
@@ -171,12 +185,6 @@ namespace TarkovaCola.Client
                 stamina.Current = Mathf.Min(cap, stamina.Current + rest * PitStopBonus);
             }
 
-            float save = Synergy.StaminaSave;                                // sinergia Speed Cola + Stamin-Up: correr gasta algo menos
-            if (save > 0f && sprinting && _prevStamina >= 0f)
-            {
-                float spent = _prevStamina - stamina.Current;
-                if (spent > 0f) stamina.Current = Mathf.Min(cap, stamina.Current + spent * save);
-            }
             _prevStamina = stamina.Current;
 
             // ---- Iron Lungs (desafio): aguantar la respiracion ----
@@ -191,7 +199,7 @@ namespace TarkovaCola.Client
             if (Deadshot.Active)
             {
                 bool hb = phys.HoldingBreath;
-                if (hb && !_wasBreathD && Deadshot.Aiming(me)) { PerkService.AddProgress("dd_steady"); Synergy.OnBreath(); }
+                if (hb && !_wasBreathD && Deadshot.Aiming(me)) { PerkService.AddProgress("dd_steady"); }
                 _wasBreathD = hb;
             }
 
@@ -202,30 +210,13 @@ namespace TarkovaCola.Client
             if (Perk.Has("dj_hands")) sway *= HeavyHandsSway;
             if (Perk.Has("mm_d_jitter") && me.HandsController is Player.FirearmController) sway *= MeleeMacchiato.JitterSway;
             if (now < ConcussUntil) sway *= ConcussSway;
+            if (now < OwnWaveUntil) sway *= OwnWaveSway;                                       // Onda propia (PHD)
             if (Deadshot.Active) sway *= Deadshot.SwayFactor(me, Deadshot.Aiming(me));      // Deadshot: menos balanceo (Stillness, Shaky Hands)
-            sway *= Synergy.SwayFactor;                                                       // sinergia PHD Flopper + Deadshot
             sway *= Rev.SwayFactor(me);                                                       // Adicto a la polvora, Ojo seco
+            sway *= FinalPerks.SwayFactor(me);                                                // perks finales (Hormigueo, Sobrecarga de marcas...)
             SwayMult = sway;
             Deadshot.TickDeadAim(me);                                                         // Dead Aim: arma fija en el centro
             Deadshot.TickStillness(me, Time.deltaTime);                                        // Stillness: recuperas agachado o tumbado
-
-            // ---- ruido de pasos: Clanky Plates (12 m) y Hard Stomp (15 m) mientras te mueves ----
-            if (speed > 0.8f && now >= _nextStep)
-            {
-                // varias desventajas de pasos se acumulan: la mas fuerte y +5 m por cada una de las demas
-                float r = 0f; int n = 0;
-                if (Perk.Has("dj_clank")) { r = Mathf.Max(r, ClankRadius); n++; }
-                if (Perk.Has("dp_stomp")) { r = Mathf.Max(r, StompRadius); n++; }
-                if (Perk.Has("dd_d_squeak")) { r = Mathf.Max(r, Deadshot.SqueakRadius); n++; }
-                if (Perk.Has("va_d_stench")) { r = Mathf.Max(r, VultureAid.StenchRadius); n++; }
-                if (Perk.Has("mm_d_loud")) { r = Mathf.Max(r, MeleeMacchiato.LoudRadius); n++; }
-                if (n > 1) r += (n - 1) * 5f;
-                if (r > 0f)
-                {
-                    _nextStep = now + StepInterval;
-                    Singleton<GlobalEventDispatcher>.Instance.PlaySound(me, me.Position, r, AISoundType.step);
-                }
-            }
 
             // ---- 1 Hz ----
             if (now >= _next1Hz)
@@ -257,6 +248,7 @@ namespace TarkovaCola.Client
         // Una sola funcion decide la velocidad del animador del item en mano; si no toca acelerar/frenar nada, lo deja en x1.
         //   arma: Sprint Shooter (menos en recargas, que son cosa de Speed Cola) | granada: Quick Spinner
         //   cura: Quick Patch | comida: Slow Chewer (las perks no sufren Slow Chewer)
+        private const float ManualCycle = 1.6f;          // segundos tras el disparo en los que se acelera el cerrojo/corredera
         private static void UpdateAnim(Player me)
         {
             var hc = me.HandsController;
@@ -266,18 +258,25 @@ namespace TarkovaCola.Client
             {
                 if (hc is Player.FirearmController)
                 {
-                    if (Perk.Has("st_shooter") && !((Player.FirearmController)hc).IsInReloadOperation()) want = AnimSpeed;
+                    var fc = (Player.FirearmController)hc;
+                    bool reloading = fc.IsInReloadOperation();
+                    if (Perk.Has("st_shooter") && !reloading) want = AnimSpeed;
+                    // Speed Cola en armas manuales: recarga y cerrojo/corredera (lo que sigue al disparo) x2
+                    if (Util.Manual(fc.Item as Weapon) && (reloading || Time.time - Util.LastShot < ManualCycle))
+                    {
+                        float m = Util.ManualMult;
+                        if (m > 1f) want *= m;
+                    }
                 }
                 else if (hc is Player.BaseGrenadeHandsController)
                 {
                     if (Perk.Has("ww_quick")) want = QuickSpinnerAnim;
                     if (Perk.Has("dw_greasy")) want *= Rev.StickySilkAnim;       // Seda pegajosa
-                    want *= Synergy.PinMult;
                 }
                 else
                 {
                     var item = (hc as Player.ItemHandsController)?.Item;
-                    if (item is Meds && !(item is Stimulator)) { if (Perk.Has("jg_patch")) want = PatchSpeed; want *= Synergy.MedicMult; }
+                    if (item is Meds && !(item is Stimulator)) { if (Perk.Has("jg_patch")) want = PatchSpeed; }
                     else if (item is FoodDrink && Perks.ByItem(item.StringTemplateId) == null) { if (Perk.Has("dj_chew")) want = 1f / ChewTime; }
                 }
             }
@@ -293,7 +292,7 @@ namespace TarkovaCola.Client
 
         private static void ResetAnim()
         {
-            if (_sped != null) { _sped.speed = 1f; _sped = null; }
+            if (_sped != null) { try { _sped.speed = 1f; } catch { } _sped = null; }     // el animador puede haberse destruido (cambio de arma, muerte)
         }
 
         // ---------------------------------------------------------------- bajas del jugador (evento estatico del juego)
@@ -303,7 +302,7 @@ namespace TarkovaCola.Client
             {
                 var me = Plugin.Me;
                 if (me != null && victim == me && ArenaCompat.InArena) { ArenaCompat.OnDeath(); return; }      // Arena: no cuenta para el perfil
-                if (me != null && victim == me) { ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }      // (morir de verdad si cuenta)       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
+                if (me != null && victim == me) { FinalPerks.OnDeath(me); ClassicMode.OnDeath(); Eternal.OnDeath("muerte"); return; }      // (morir de verdad si cuenta)       // el operador murio: Classic pierde sus perks y vuelven las botellas eternas
                 StaminUp.OnPlayerDead(victim, aggressor, info, part);
                 Trials.OnDeath(victim);                                                   // prueba de TEDD: el objetivo a abatir
                 if (me == null || victim == null || aggressor == null || aggressor.ProfileId != me.ProfileId) return;
@@ -319,6 +318,11 @@ namespace TarkovaCola.Client
                     Bandolier.OnKill(me, victim, info, part, boss);
                     VultureAid.OnKill(me, victim, boss);
                     MeleeMacchiato.OnKill(me, info, boss);
+                }
+                catch (Exception e) { Dbg.Throttled("newperkkill", 10f, "ERROR", "bajas (perks nuevas): " + e); }
+                try
+                {
+                    FinalPerks.OnKill(me, victim, info, part, boss);                      // perks finales (3.1)
                 }
                 catch (Exception e) { Dbg.Throttled("newperkkill", 10f, "ERROR", "bajas (perks nuevas): " + e); }
                 bool grenade = (info.DamageType & (EDamageType.Explosion | EDamageType.GrenadeFragment)) != 0;
@@ -338,7 +342,6 @@ namespace TarkovaCola.Client
                 }
                 bool webbed = wid && WidowsWine.IsWebbed(victim);
                 if (webbed) PerkService.AddProgress("ww_venom");
-                Synergy.OnKill(me, victim, webbed, Deadshot.Armored(victim));
                 if (Deadshot.Active) Deadshot.OnKill(me, victim, info, part);
                 try { Apex.OnKill(me, victim, info, part); }                            // desafios APEX; Bandolier rellena, PHD explota
                 catch (Exception e) { Dbg.Throttled("apexkill", 10f, "ERROR", "APEX (baja): " + e); }
@@ -381,7 +384,6 @@ namespace TarkovaCola.Client
         [HarmonyPostfix]
         private static void Postfix(Physical __instance, ref float __result)
         {
-            if (QuestGuards.Any && QuestGuards.HasObj(__instance, StaminUp.Id)) { __result *= QuestGuards.StaminaMult; return; }     // Embotellador con Stamin-Up
             if (!Perks.AnyActive) return;
             var me = Plugin.Me;
             if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
@@ -403,7 +405,6 @@ namespace TarkovaCola.Client
             if (me == null || !ReferenceEquals(me.Physical, __instance)) return;
             if (Perk.Has("st_lungs")) __result *= PerkFx.LungsTime;
             if (Perk.Has("dd_steady")) __result *= Deadshot.PulseBreath;     // Steady Pulse (Deadshot)
-            __result *= Synergy.OxygenMult;                                  // sinergia Stamin-Up + Deadshot
         }
     }
 
@@ -430,10 +431,10 @@ namespace TarkovaCola.Client
             if (!Perks.AnyActive || !Util.IsMe(__instance._iPlayer)) return;
             float cut = Bandolier.WeightCut(__instance._iPlayer as Player);          // Bring it on! y Padded Strap
             if (cut > 0f) __result = Mathf.Max(0f, __result - cut);
+            __result = Mathf.Max(0f, __result + MuleKick.WeightDelta(__instance._iPlayer as Player));   // Light Strap / Mule Load
             float m = 1f;
             if (Perk.Has("st_feet")) m *= PerkFx.FeetWeight;
             if (Perk.Has("dj_plates")) m *= PerkFx.PlatesWeight;
-            m *= Synergy.WeightMult;                                     // sinergia Stamin-Up + Juggernog
             if (m != 1f) __result *= m;
         }
     }
@@ -454,10 +455,9 @@ namespace TarkovaCola.Client
             {
                 var victim = __instance.Player;
                 if (victim == null) return;
-                if (BotPerks.Any) { damage = BotPerks.OnDamage(victim, damage, damageInfo); if (damage <= 0f) return; }   // perks de enemigos y companeros
+                if (BotPerks.Any) { damage = BotPerks.OnDamage(victim, bodyPart, damage, damageInfo); if (damage <= 0f) return; }   // perks de enemigos y companeros
                 if (Util.IsMe(victim))
                 {
-                    if (QuestGuards.Any) QuestGuards.OnHitMe(victim, damageInfo);         // un Embotellador con Widow's Wine te frena
                     if (!Perks.AnyActive) return;
                     // APEX: Juggernog = inmune al cuerpo a cuerpo; Melee Macchiato = sin dano mientras dura tu golpe
                     if (Apex.Has(Juggernog.Id) && (damageInfo.DamageType & EDamageType.Melee) != 0) { damage = 0f; return; }
@@ -469,29 +469,25 @@ namespace TarkovaCola.Client
                     damage = MeleeMacchiato.OnDamageTaken(victim, __instance, bodyPart, damage);   // Charge, Iron Skull, Glass Jaw
                     if (damage <= 0f) return;
                     damage = Rev.OnDamageTaken(victim, bodyPart, damage, damageInfo);   // Sin red, Huevos fragiles
-                    if (Synergy.AnyEquipped) damage *= Synergy.DamageMult;      // sinergia Juggernog + Widow's Wine
+                    damage = FinalPerks.OnTaken(victim, __instance, bodyPart, damage, damageInfo);   // perks finales (Quick Revive, Tombstone, Electric Cherry)
+                    if (damage <= 0f) return;
                     ClassicChallenge.OnDamageTaken(damageInfo);                 // desafio "ghost": solo cuenta el dano que de verdad recibes
                     if (Perks.IsActive(WidowsWine.Id)) WidowsWine.OnDamageTaken(damage);
                     Apex.OnDamageTaken(damage);                                 // desafio APEX de Juggernog
                 }
                 else
                 {
-                    // los Embotelladores (guardias de las misiones) llevan perks de verdad
-                    if (QuestGuards.Any && QuestGuards.IsGuard(victim))
-                    {
-                        var t = damageInfo.DamageType;
-                        if (QuestGuards.Has(victim, PhdFlopper.Id) && (t & (PerkFx.Blast | EDamageType.Fall)) != 0) { damage = 0f; return; }
-                        if (QuestGuards.Has(victim, Juggernog.Id) && Juggernog.Reduces(t)) damage *= QuestGuards.JugMult;
-                    }
+                    // (los Embotelladores llevan sus perks por BotPerks, igual que cualquier bot)
+                    if (Allies.IsPerkBlast(damageInfo) && Allies.Is(victim)) { damage = 0f; return; }   // las explosiones de las perks no hieren a aliados
                     if (!Perks.AnyActive) return;
                     var me = Plugin.Me;
                     var by = damageInfo.Player != null ? damageInfo.Player.iPlayer : null;
                     if (me != null && by != null && by.ProfileId == me.ProfileId)
                     {
-                        if (Synergy.AnyEquipped && Perks.IsActive(WidowsWine.Id) && WidowsWine.IsWebbed(victim)) damage *= Synergy.OutgoingMult;   // Widow's Wine + Deadshot
                         if (Perks.IsActive(PhdFlopper.Id)) PhdFlopper.OnDealt(damage, damageInfo);
                         if ((damageInfo.DamageType & EDamageType.Melee) != 0) damage = MeleeMacchiato.OnHit(me, victim, damage);   // Melee Macchiato (x2, Frenzy, Whetstone, Second Wind)
                         damage = Rev.OnDamageDealt(me, bodyPart, damage, damageInfo);    // Todo o nada, Cinturon de balas, Sed de sangre
+                        damage = FinalPerks.OnDealt(me, victim, bodyPart, damage, damageInfo);   // perks finales (Double Tap...)
                     }
                 }
             }
@@ -627,8 +623,19 @@ namespace TarkovaCola.Client
     [HarmonyPatch(typeof(ArmorComponent), nameof(ArmorComponent.ApplyExplosionDurabilityDamage))]
     internal static class ArmorExplosionPatch
     {
+        // PHD Flopper: las explosiones no te hacen dano... y tampoco gastan tu armadura (la plancha de SAM explotaba y te la rompia)
         [HarmonyPrefix]
-        private static void Prefix() { ArmorHook.InExplosion = true; }
+        private static bool Prefix(List<ArmorComponent> armorComponents, ref float __result)
+        {
+            if (Perks.IsActive(PhdFlopper.Id) && ArmorHook.IsMine(armorComponents))
+            {
+                __result = 0f;
+                Dbg.Throttled("armorphd", 5f, "EFECTO", "PHD Flopper: la explosion no gasta la armadura");
+                return false;
+            }
+            ArmorHook.InExplosion = true;
+            return true;
+        }
 
         [HarmonyFinalizer]
         private static void Finalizer() { ArmorHook.InExplosion = false; }
@@ -654,12 +661,24 @@ namespace TarkovaCola.Client
                 Dbg.Log("EFECTO", "Shockwave: mecha " + rest.ToString("0.0") + " s -> " + (rest * PhdFlopper.ShockFuse).ToString("0.0") + " s");
             }
             catch (Exception e) { Plugin.Log.LogError("granada (mecha): " + e); }
+            // Itchy Pin (Bandolier): esta granada, y solo esta, tiene la mecha mas corta (nunca por debajo de 0.5 s)
+            try
+            {
+                if (!Bandolier.Active || __instance is SmokeGrenade || !Perk.Has("bb_d_pin")) return;
+                var me = Plugin.Me;
+                if (me == null || me.ProfileId != profileId || throwWeap == null) return;
+                float rest = throwWeap.GetExplDelay - timeSpent;
+                float cut = Mathf.Min(Bandolier.PinCut, rest - 0.5f);
+                if (cut > 0f) { timeSpent += cut; Dbg.Log("EFECTO", "Itchy Pin: mecha -" + cut.ToString("0.0") + " s"); }
+            }
+            catch (Exception e) { Plugin.Log.LogError("granada (Itchy Pin): " + e); }
         }
 
         [HarmonyPostfix]
         private static void Postfix(Grenade __instance, string profileId, ThrowWeap throwWeap)
         {
             Creatura.OnThrown(__instance, profileId, throwWeap);          // le creatura: modelo y sonido
+            FinalPerks.OnGrenadeThrown(__instance, profileId, throwWeap);  // Death Perception (granadas enemigas)
             try
             {
                 var me = Plugin.Me;
@@ -741,6 +760,7 @@ namespace TarkovaCola.Client
                 if (me == null) return;
                 PhdFlopper.OnExplosionNear(grenadePosition);                         // Concussed: cualquier explosion cercana
                 Rev.OnExplosion(me, grenadePosition);                                // Metralla, Panico
+                FinalPerks.OnGrenadeExploded(grenadePosition, playerProfileIDWhoThrew);   // Death Perception (sobrevivir a granadas)
                 if (me.ProfileId == playerProfileIDWhoThrew && Perks.IsActive(WidowsWine.Id)) WidowsWine.OnExploded(grenade, grenadeItem as Item, grenadePosition);
             }
             catch (Exception e) { Plugin.Log.LogError("granada (explosion): " + e); }

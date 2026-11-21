@@ -42,6 +42,16 @@ namespace TarkovaCola
             new Bottle { Id = "deadshot", Key = "deadshot",
                 Metal = "i_wardog_t7_perk_bottle_metal_deadshot_c.jpg", Water = "i_wardog_t7_perk_bottle_water_deadshot_c.jpg", Paper = "i_wardog_t7_perk_bottle_paper_deadshot_c_u.png",
                 LiquidTint = new Color(0.78f, 0.62f, 0.20f), LiquidEmission = new Color(0.05f, 0.04f, 0.0f) },
+            // perks finales: Mule Kick no tiene botella propia en el FBX (se usa la malla de "bear", todas son iguales, con sus texturas)
+            new Bottle { Id = "mulekick", Key = "bear",
+                Metal = "i_wardog_t7_perk_bottle_metal_mule_c.png", Water = "i_wardog_t7_perk_bottle_water_mule_c.png", Paper = "i_wardog_t7_perk_bottle_paper_mule_c_upsca.png",
+                LiquidTint = new Color(0.45f, 0.62f, 0.25f), LiquidEmission = new Color(0.02f, 0.04f, 0.0f) },
+            new Bottle { Id = "electriccherry", Key = "cherry",
+                Metal = "i_wardog_t7_perk_bottle_metal_cherry_c.jpg", Water = "i_wardog_t7_perk_bottle_water_cherry_c.png", Paper = "i_wardog_t7_perk_bottle_paper_cherry_c_ups.png",
+                LiquidTint = new Color(0.30f, 0.50f, 0.85f), LiquidEmission = new Color(0.0f, 0.02f, 0.06f) },
+            new Bottle { Id = "tombstone", Key = "tombstone",
+                Metal = "i_wardog_t7_perk_bottle_metal_tombstone_c.png", Water = "i_wardog_t7_perk_bottle_water_tombstone_c.png", Paper = "i_wardog_t7_perk_bottle_paper_tombstone_c.png",
+                LiquidTint = new Color(0.45f, 0.48f, 0.42f), LiquidEmission = new Color(0.01f, 0.02f, 0.01f) },
         };
 
         // Todas las botellas (o solo la indicada en la variable de entorno BOTTLE).
@@ -51,7 +61,7 @@ namespace TarkovaCola
             ConfigureTextures();
             string only = System.Environment.GetEnvironmentVariable("BOTTLE");
             foreach (var b in All)
-                if (string.IsNullOrEmpty(only) || only == b.Id) BuildOne(b);
+                if (string.IsNullOrEmpty(only) || only.Split(',').Contains(b.Id)) BuildOne(b);
         }
 
         private static void BuildOne(Bottle b)

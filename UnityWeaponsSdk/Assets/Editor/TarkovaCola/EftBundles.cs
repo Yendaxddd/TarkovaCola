@@ -42,6 +42,18 @@ namespace TarkovaCola
             return ab;
         }
 
+        // el bundle y sus dependencias de la misma carpeta: en algunas armas (SCAR) el controlador y los clips van en otro bundle de su carpeta
+        public static List<AssetBundle> Family(string rel)
+        {
+            var res = new List<AssetBundle>();
+            var ab = Load(rel); if (ab != null) res.Add(ab);
+            string dir = rel.Substring(0, rel.LastIndexOf('/') + 1);
+            string[] deps;
+            if (_deps.TryGetValue(rel, out deps))
+                foreach (var d in deps) if (d.StartsWith(dir) && d.LastIndexOf('/') == dir.Length - 1) { var b = Load(d); if (b != null && !res.Contains(b)) res.Add(b); }
+            return res;
+        }
+
         public static void UnloadAll()
         {
             foreach (var ab in _loaded.Values) if (ab != null) ab.Unload(true);

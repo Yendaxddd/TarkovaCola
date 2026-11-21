@@ -1,50 +1,164 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using BepInEx.Configuration;
 using EFT;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TarkovaCola.Client
 {
     // ============================================================================================
     //  Idiomas: todo texto visible sale de aqui. Cada entrada es { español, ingles }.
     //  El idioma sigue al del juego (Auto) salvo que se fuerce en la configuracion (F12).
+    //  Traducciones de la comunidad: BepInEx/plugins/TarkovaCola/locales/
+    //   - en.json y es.json son plantillas que el mod regenera en cada arranque con TODOS los textos (pantallas y opciones de F12).
+    //   - Para traducir: copiar en.json como <codigo>.json (p. ej. ch.json, ru.json, fr.json, de.json, pt.json...), poner su
+    //     "_language" (nombre que sale en F12) y "_culture" (idioma de EFT con el que se elige solo en Auto: ch, ru, fr, de, jp, kr,
+    //     pl, po, it, cz, hu, sk, tu, ro, es-mx...) y traducir los valores. Lo que falte sale en ingles.
+    //   - en.custom.json / es.custom.json corrigen el ingles o el espanol (no se borran al regenerar).
     // ============================================================================================
     internal static class L
     {
         private static ConfigEntry<string> _cfg;
         private const string Auto = "Auto", Es = "Español", En = "English";
 
+        private class Lang { public string Code, Name, Culture; public Dictionary<string, string> Texts; }
+        private static readonly List<Lang> _langs = new List<Lang>();                      // de la comunidad
+        private static readonly Dictionary<string, string> _esFix = new Dictionary<string, string>(), _enFix = new Dictionary<string, string>();
+
+        internal static string Dir { get { return Path.Combine(Path.GetDirectoryName(typeof(L).Assembly.Location) ?? ".", "locales"); } }
+
         internal static void Init(ConfigFile config)
         {
+            LoadFiles();
+            var values = new List<string> { Auto, Es, En };
+            values.AddRange(_langs.Select(l => l.Name).Where(n => !values.Contains(n)));
             _cfg = config.Bind("Idioma", "Idioma / Language", Auto,
-                new ConfigDescription("Auto sigue el idioma del juego. / Auto follows the game's language.",
-                    new AcceptableValueList<string>(Auto, Es, En)));
+                new ConfigDescription("Auto sigue el idioma del juego. Traducciones: carpeta locales del mod. / Auto follows the game's language. Translations: the mod's locales folder.",
+                    new AcceptableValueList<string>(values.ToArray())));
         }
 
-        // true = español
+        private static void LoadFiles()
+        {
+            try
+            {
+                if (!Directory.Exists(Dir)) return;
+                foreach (var path in Directory.GetFiles(Dir, "*.json"))
+                {
+                    string code = Path.GetFileNameWithoutExtension(path);
+                    if (code == "en" || code == "es") continue;                         // plantillas
+                    try
+                    {
+                        var o = JObject.Parse(File.ReadAllText(path));
+                        var texts = new Dictionary<string, string>();
+                        var src = o["texts"] as JObject ?? o;
+                        foreach (var p in src.Properties())
+                            if (p.Value.Type == JTokenType.String && !p.Name.StartsWith("_") && !string.IsNullOrEmpty((string)p.Value)) texts[p.Name] = (string)p.Value;
+                        if (code == "en.custom") { foreach (var kv in texts) _enFix[kv.Key] = kv.Value; continue; }
+                        if (code == "es.custom") { foreach (var kv in texts) _esFix[kv.Key] = kv.Value; continue; }
+                        _langs.Add(new Lang { Code = code, Name = (string)o["_language"] ?? code, Culture = (string)o["_culture"] ?? code, Texts = texts });
+                        Plugin.Log.LogInfo("Idioma de la comunidad: " + ((string)o["_language"] ?? code) + " (" + texts.Count + " textos, " + Path.GetFileName(path) + ")");
+                    }
+                    catch (Exception e) { Plugin.Log.LogWarning("Idioma " + Path.GetFileName(path) + " con errores: " + e.Message); }
+                }
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Idiomas: " + e.Message); }
+        }
+
+        // idioma de la comunidad elegido (o el del juego en Auto); null = español o ingles del mod
+        private static Lang Custom
+        {
+            get
+            {
+                if (_langs.Count == 0) return null;
+                string v = _cfg != null ? _cfg.Value : Auto;
+                if (v == Es || v == En) return null;
+                if (v != Auto) return _langs.FirstOrDefault(l => l.Name == v);
+                string c = GameCulture;
+                if (string.IsNullOrEmpty(c)) return null;
+                return _langs.FirstOrDefault(l => string.Equals(l.Culture, c, StringComparison.OrdinalIgnoreCase))
+                    ?? _langs.FirstOrDefault(l => c.StartsWith(l.Culture, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        private static string GameCulture
+        {
+            get
+            {
+                try { return LocalizationManager.Instance != null ? LocalizationManager.Instance.Culture : null; }
+                catch { return null; }
+            }
+        }
+
+        // true = español (base del texto; los idiomas de la comunidad usan el ingles para lo que no traduzcan)
         internal static bool Spanish
         {
             get
             {
                 string v = _cfg != null ? _cfg.Value : Auto;
                 if (v == Es) return true;
-                if (v == En) return false;
-                try
-                {
-                    var c = LocalizationManager.Instance != null ? LocalizationManager.Instance.Culture : null;
-                    if (!string.IsNullOrEmpty(c)) return c.StartsWith("es", StringComparison.OrdinalIgnoreCase);
-                }
-                catch { }
-                return false;
+                if (v != Auto) return false;
+                if (Custom != null) return false;
+                var c = GameCulture;
+                return !string.IsNullOrEmpty(c) && c.StartsWith("es", StringComparison.OrdinalIgnoreCase);
             }
         }
 
+        // clave del idioma que se ve ahora (para saber si hay que redibujar textos, p. ej. F12)
+        internal static string Current { get { var c = Custom; return c != null ? c.Code : Spanish ? "es" : "en"; } }
+
         internal static string T(string key)
         {
+            var c = Custom;
+            string s;
+            if (c != null && c.Texts.TryGetValue(key, out s)) return s;
+            bool es = c == null && Spanish;
+            if ((es ? _esFix : _enFix).TryGetValue(key, out s)) return s;
             string[] v;
-            if (!S.TryGetValue(key, out v)) return key;
-            return Spanish ? v[0] : v[1];
+            if (!S.TryGetValue(key, out v) && !FinalTexts.S.TryGetValue(key, out v)) return key;
+            return es ? v[0] : v[1];
+        }
+
+        // textos de F12 (Cfg): en un idioma de la comunidad, su traduccion si la tiene; si no, el texto del mod
+        internal static string CfgText(string key, string es, string en)
+        {
+            var c = Custom;
+            string s;
+            if (c != null) return c.Texts.TryGetValue(key, out s) ? s : en;
+            if (Spanish) return _esFix.TryGetValue(key, out s) ? s : es;
+            return _enFix.TryGetValue(key, out s) ? s : en;
+        }
+
+        // escribe las plantillas en.json y es.json con todos los textos (Plugin, al acabar de cargar)
+        internal static void Export(IEnumerable<KeyValuePair<string, string[]>> extra)
+        {
+            try
+            {
+                Directory.CreateDirectory(Dir);
+                var all = S.Concat(FinalTexts.S).Concat(extra).GroupBy(kv => kv.Key).Select(g => g.First()).OrderBy(kv => kv.Key, StringComparer.Ordinal).ToList();
+                for (int i = 0; i < 2; i++)
+                {
+                    var texts = new JObject();
+                    foreach (var kv in all) texts[kv.Key] = kv.Value[i];
+                    var o = new JObject
+                    {
+                        ["_readme"] = "Tarkova-Cola: plantilla generada en cada arranque, no la edites. Para traducir: copiala como <codigo>.json " +
+                                      "(ch.json, ru.json, fr.json...), cambia _language y _culture y traduce los valores (deja {0}, {1}... y \\n como estan). " +
+                                      "Los nombres de objetos, logros y misiones estan en SPT/user/mods/TarkovaCola/locales. / Generated template, do not edit. " +
+                                      "To translate: copy it as <code>.json, set _language and _culture and translate the values (keep {0}, {1}... and \\n). " +
+                                      "Item, achievement and quest names are in SPT/user/mods/TarkovaCola/locales.",
+                        ["_language"] = i == 0 ? "Español" : "English",
+                        ["_culture"] = i == 0 ? "es" : "en",
+                        ["texts"] = texts,
+                    };
+                    File.WriteAllText(Path.Combine(Dir, (i == 0 ? "es" : "en") + ".json"), o.ToString(Formatting.Indented), new UTF8Encoding(false));
+                }
+                Dbg.Log("IDIOMA", "plantillas de traduccion: " + all.Count + " textos en " + Dir);
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("No se pudieron escribir las plantillas de traduccion: " + e.Message); }
         }
 
         internal static string F(string key, params object[] args) { return string.Format(T(key), args); }
@@ -114,7 +228,7 @@ namespace TarkovaCola.Client
             ["apex_speedcola.d"]   = new[] { "Tu arma no puede encasquillarse.", "Your weapon cannot malfunction." },
             ["apex_speedcola.c"]   = new[] { "Consigue 40 bajas con Speed Cola activa.", "Get 40 kills with Speed Cola active." },
             ["apex_staminup.n"]    = new[] { "Sin límites", "Limitless" },
-            ["apex_staminup.d"]    = new[] { "Estamina infinita (piernas y brazos) y esprintas un 10% más rápido.", "Infinite stamina (legs and arms) and you sprint 10% faster." },
+            ["apex_staminup.d"]    = new[] { "La estamina (piernas y brazos) se recupera el triple de rápido y esprintas un 10% más rápido.", "Stamina (legs and arms) recovers three times as fast and you sprint 10% faster." },
             ["apex_staminup.c"]    = new[] { "Esprinta 15 km con Stamin-Up activa.", "Sprint 15 km with Stamin-Up active." },
             ["apex_phdflopper.n"]  = new[] { "Detonador", "Detonator" },
             ["apex_phdflopper.d"]  = new[] { "Cada baja hace explotar el cuerpo de la víctima (a ti no te afecta).", "Every kill makes the victim's body explode (it doesn't affect you)." },
@@ -127,9 +241,9 @@ namespace TarkovaCola.Client
             ["apex_deadshot.c"]    = new[] { "Consigue 30 bajas con disparo a la cabeza con Deadshot activa.", "Get 30 headshot kills with Deadshot active." },
             ["apex_bandolier.n"]   = new[] { "Cinta eterna", "Endless Belt" },
             ["apex_bandolier.d"]   = new[] { "Cada baja te rellena un cargador completo.", "Every kill refills one full magazine." },
-            ["apex_bandolier.c"]   = new[] { "Consigue 60 bajas con Bandolier Bandit activa.", "Get 60 kills with Bandolier Bandit active." },
+            ["apex_bandolier.c"]   = new[] { "Consigue 40 bajas con Bandolier Bandit activa.", "Get 40 kills with Bandolier Bandit active." },
             ["apex_vultureaid.n"]  = new[] { "Ojo del buitre", "Vulture's Eye" },
-            ["apex_vultureaid.d"]  = new[] { "La mitad de los enemigos llevan encima un objeto valioso o de misión. Nadie te avisa de cuáles.", "Half of the enemies carry a valuable or quest item. Nobody tells you which." },
+            ["apex_vultureaid.d"]  = new[] { "Algunos enemigos (15%) llevan encima un objeto valioso o de misión. Nadie te avisa de cuáles.", "Some enemies (15%) carry a valuable or quest item. Nobody tells you which." },
             ["apex_vultureaid.c"]  = new[] { "Registra 25 cuerpos de PMC con Vulture Aid activa.", "Search 25 PMC bodies with Vulture Aid active." },
             ["apex_meleemacchiato.n"] = new[] { "Torbellino", "Whirlwind" },
             ["apex_meleemacchiato.d"] = new[] { "No recibes daño mientras dura un ataque cuerpo a cuerpo.", "You take no damage while a melee attack is playing." },
@@ -169,7 +283,6 @@ namespace TarkovaCola.Client
             ["title.equip"]     = new[] { "EQUIPAR", "EQUIP" },
             ["nav.progress"]    = new[] { "PROGRESO", "PROGRESS" },
             ["nav.equip"]       = new[] { "EQUIPAR", "EQUIP" },
-            ["nav.syn"]         = new[] { "SINERGIA", "SYNERGY" },
             ["nav.summary"]     = new[] { "RESUMEN", "SUMMARY" },
             ["level"]           = new[] { "NIVEL", "LEVEL" },
             ["btn.research"]    = new[] { "INVESTIGAR", "RESEARCH" },
@@ -223,6 +336,7 @@ namespace TarkovaCola.Client
             ["xp.mult"]         =new[] { "MULTIPLICADOR DE XP", "XP MULTIPLIER" },
             ["xp.note"]         = new[] { "+25% de XP mientras la perk está activa en la raid", "+25% XP while the perk is active in raid" },
             ["err.needdrb"]     = new[] { "Equipa primero una desventaja principal.", "Equip a major drawback first." },
+            ["drink.hideout"]   = new[] { "Las perks solo se pueden beber en una raid.", "Perks can only be drunk during a raid." },
             ["err.needdrbn"]    = new[] { "Equipa primero una desventaja secundaria.", "Equip a minor drawback first." },
             ["toast.drbremoved"]= new[] { "Sin desventaja principal, la mejora principal también se desequipa.", "Without a major drawback, the major augment is unequipped too." },
             ["toast.drbremoved.minor"] = new[] { "Sin desventaja secundaria, las mejoras secundarias también se desequipan.", "Without a minor drawback, minor augments are unequipped too." },
@@ -263,7 +377,7 @@ namespace TarkovaCola.Client
 
             ["a_rush.n"]   = new[] { "SUBIDÓN DE AZÚCAR", "SUGAR RUSH" },
             ["a_rush.d"]   = new[] { "El bonus de recarga de Speed Cola sube de x1.5 a x2.0.", "Speed Cola's reload bonus rises from x1.5 to x2.0." },
-            ["a_rush.c"]   = new[] { "Mata a 4 PMC.", "Kill 4 PMCs." },
+            ["a_rush.c"]   = new[] { "Mata a 4 PMC con Speed Cola activa.", "Kill 4 PMCs with Speed Cola active." },
 
             ["a_steady.n"] = new[] { "PULSO FIRME", "STEADY FINGERS" },
             ["a_steady.d"] = new[] { "Tus brazos reciben un 30% menos de daño.", "Your arms take 30% less damage." },
@@ -271,7 +385,7 @@ namespace TarkovaCola.Client
 
             ["a_check.n"]  = new[] { "REVISIÓN RÁPIDA", "CHAMBER CHECK" },
             ["a_check.d"]  = new[] { "Descargar cargadores en el inventario es un 75% más rápido.", "Unloading magazines in your inventory is 75% faster." },
-            ["a_check.c"]  = new[] { "Revisa el cargador de tu arma 20 veces en raid.", "Check your weapon's magazine 20 times in raid." },
+            ["a_check.c"]  = new[] { "Revisa el cargador de tu arma 20 veces en raid con Speed Cola activa.", "Check your weapon's magazine 20 times in raid with Speed Cola active." },
 
             ["a_mags.n"]   = new[] { "MALABARISTA", "MAG JUGGLER" },
             ["a_mags.d"]   = new[] { "Los cargadores de tu arma principal se cargan un 50% más rápido en el inventario.", "Magazines for your primary weapon load 50% faster in your inventory." },
@@ -295,10 +409,10 @@ namespace TarkovaCola.Client
             ["notice.d_crash"] = new[] { "2 min sin matar: sin bonus de recarga hasta tu próxima baja", "2 min without a kill: no reload bonus until your next kill" },
             ["d_dry.n"]    = new[] { "A MEDIAS", "HALF MEASURES" },
             ["d_dry.d"]    = new[] { "Recargar con balas aún en el cargador no tiene el bonus de recarga.", "Reloading with rounds still in the magazine gets no reload bonus." },
-            ["d_slurp.n"]  = new[] { "SORBO RUIDOSO", "LOUD SLURP" },
-            ["d_slurp.d"]  = new[] { "Beberla hace ruido y los bots cercanos te oyen.", "Drinking it makes noise that nearby bots can hear." },
+            ["d_slurp.n"]  = new[] { "RECARGA RUIDOSA", "NOISY RELOAD" },
+            ["d_slurp.d"]  = new[] { "Cada recarga con Speed Cola hace ruido: los bots a 15 m te oyen.", "Every reload with Speed Cola makes noise: bots within 15 m hear you." },
             ["d_jam.n"]    = new[] { "CARGADORES PEGAJOSOS", "STICKY MAGS" },
-            ["d_jam.d"]    = new[] { "+10% de probabilidad de encasquillamiento.", "+10% jam chance." },
+            ["d_jam.d"]    = new[] { "La probabilidad de encasquillamiento se multiplica por 1,5.", "Jam chance is multiplied by 1.5." },
             ["d_sweet.n"]  = new[] { "DIENTE DULCE", "SWEET TOOTH" },
             ["d_sweet.d"]  = new[] { "Comer o beber otra cosa tarda el doble.", "Eating or drinking anything else takes twice as long." },
 
@@ -357,8 +471,8 @@ namespace TarkovaCola.Client
             ["classic.rules.title"] = new[] { "CÓMO FUNCIONA", "HOW IT WORKS" },
             ["classic.rules"]     = new[]
             {
-                "- Las perks siguen activas entre raids: solo las pierdes si tu operador muere.\n- Hasta 4 perks principales y una quinta como modificador (efecto reducido).\n- Cada perk principal lleva 1 mejora menor al azar al beberla.\n- Cada raid trae un desafío opcional: cúmplelo y extrae con vida para darle una 2.ª mejora menor a una perk al azar.\n- Sin Research, sin desventajas y sin XP: tu progreso del modo Moderno queda intacto.",
-                "- Perks stay active between raids: you only lose them if your operator dies.\n- Up to 4 main perks and a 5th as a modifier (reduced effect).\n- Each main perk comes with 1 random minor augment when you drink it.\n- Every raid has an optional challenge: complete it and extract alive to give a random perk a 2nd minor augment.\n- No Research, no drawbacks and no XP: your Modern progress stays untouched.",
+                "- Las perks siguen activas entre raids: solo las pierdes si tu operador muere.\n- Hasta 4 perks principales y una quinta como modificador (50% del efecto y su mejora firma fija).\n- Cada perk principal lleva 1 mejora menor al azar al beberla.\n- Cada raid trae un desafío opcional: cúmplelo y extrae con vida para darle una 2.ª mejora menor a una perk al azar.\n- Sin Research, sin desventajas y sin XP: tu progreso del modo Moderno queda intacto.",
+                "- Perks stay active between raids: you only lose them if your operator dies.\n- Up to 4 main perks and a 5th as a modifier (50% of its effect plus its fixed signature augment).\n- Each main perk comes with 1 random minor augment when you drink it.\n- Every raid has an optional challenge: complete it and extract alive to give a random perk a 2nd minor augment.\n- No Research, no drawbacks and no XP: your Modern progress stays untouched.",
             },
             ["classic.active"]    = new[] { "PERKS ACTIVAS", "ACTIVE PERKS" },
             ["classic.count"]     = new[] { "{0} / {1} principales", "{0} / {1} main" },
@@ -373,7 +487,7 @@ namespace TarkovaCola.Client
             ["classic.empty.mod"] = new[] { "MODIFICADOR LIBRE", "FREE MODIFIER" },
             ["classic.empty.hint"] = new[] { "Bebe una perk en raid para activarla.", "Drink a perk in a raid to activate it." },
             ["classic.emptymod.hint"] = new[] { "La 5.ª perk que bebas será un modificador.", "The 5th perk you drink becomes a modifier." },
-            ["classic.mod.note"]  = new[] { "Da el {0}% de su efecto y no lleva mejora.", "Gives {0}% of its effect and has no augment." },
+            ["classic.mod.note"]  = new[] { "Da el {0}% de su efecto y lleva siempre su mejora firma.", "Gives {0}% of its effect and always carries its signature augment." },
             ["classic.chal.title"] = new[] { "DESAFÍO DE RAID", "RAID CHALLENGE" },
             ["classic.chal.text"] = new[]
             {
@@ -382,77 +496,14 @@ namespace TarkovaCola.Client
             },
             ["classic.lost.hint"] = new[] { "Si tu operador muere o no extrae, pierdes todas estas perks.", "If your operator dies or doesn't extract, you lose all these perks." },
 
-            ["pos.title"]       = new[] { "POSICIÓN COPIADA", "POSITION COPIED" },
 
-            // sinergias
+            // textos de Research/APEX (claves syn.*, antes de las sinergias)
             ["syn.kicker"]      = new[] { "PERKS", "PERKS" },
-            ["syn.title"]       = new[] { "SINERGIAS", "SYNERGIES" },
-            ["syn.equipped"]    = new[] { "Sinergia equipada", "Equipped synergy" },
-            ["syn.bonus"]       = new[] { "BONO", "BONUS" },
             ["syn.challenge"]   = new[] { "DESAFÍO PARA DESBLOQUEARLA", "UNLOCK CHALLENGE" },
-            ["syn.tag.eq"]      = new[] { "EQUIPADA", "EQUIPPED" },
-            ["syn.tag.un"]      = new[] { "DESBLOQUEADA", "UNLOCKED" },
-            ["syn.tag.lock"]    = new[] { "BLOQUEADA", "LOCKED" },
             ["syn.done"]        = new[] { "Desafío completado", "Challenge completed" },
-            ["syn.need"]        = new[] { "Hace falta llevar {0} y {1} a la vez en la raid, para el desafío y para el bono.", "You need {0} and {1} active together in the raid, for the challenge and for the bonus." },
             ["syn.equip"]       = new[] { "EQUIPAR", "EQUIP" },
             ["syn.unequip"]     = new[] { "QUITAR", "REMOVE" },
-            ["syn.locked"]      = new[] { "BLOQUEADA", "LOCKED" },
-            ["syn.unlocked"]    = new[] { "SINERGIA DESBLOQUEADA", "SYNERGY UNLOCKED" },
-            ["syn.blast.sub"]   = new[] { "Recarga +{0}% durante {1} s", "Reload +{0}% for {1} s" },
-            ["err.synmax"]      = new[] { "Ya llevas 2 sinergias equipadas. Quita una primero.", "You already have 2 synergies equipped. Remove one first." },
-            ["syn.rules.title"] = new[] { "CÓMO FUNCIONAN", "HOW THEY WORK" },
-            ["syn.rules"]       = new[]
-            {
-                "Una sinergia es un pequeño bono que se activa al llevar dos perks concretas a la vez.\nCada una se desbloquea con su propio desafío, que solo avanza con las dos perks activas en la raid.\nSolo puedes llevar 1 sinergia equipada; equipar otra sustituye a la anterior.\nEn el modo Clásico también valen: si una de las dos perks es el modificador, el bono es más pequeño.",
-                "A synergy is a small bonus that kicks in when you carry two specific perks at once.\nEach one unlocks with its own challenge, which only advances with both perks active in the raid.\nYou can only carry 1 equipped synergy; equipping another replaces the first.\nThey also work in Classic mode: if one of the two perks is the modifier, the bonus is smaller.",
-            },
-            ["syn_cardio.n"]    = new[] { "Cardio", "Cardio" },
-            ["syn_cardio.d"]    = new[] { "Sacas y cambias de arma un 12% más rápido y correr gasta un 5% menos de estamina.", "You draw and swap weapons 12% faster and sprinting uses 5% less stamina." },
-            ["syn_cardio.c"]    = new[] { "Corre 3 km con Speed Cola y Stamin-Up activas.", "Sprint 3 km with Speed Cola and Stamin-Up active." },
-            ["syn_iron.n"]      = new[] { "Telaraña de acero", "Steel Web" },
-            ["syn_iron.d"]      = new[] { "Recibes un 3% menos de daño.", "You take 3% less damage." },
-            ["syn_iron.c"]      = new[] { "Mata a 5 enemigos atrapados en tu telaraña con Juggernog y Widow's Wine activas.", "Kill 5 enemies caught in your web with Juggernog and Widow's Wine active." },
-            ["syn_blast.n"]     = new[] { "Recarga explosiva", "Blast Reload" },
-            ["syn_blast.d"]     = new[] { "Cuando PHD Flopper anula una explosión o una caída, recargas un 20% más rápido durante 6 s.", "When PHD Flopper cancels an explosion or a fall, you reload 20% faster for 6 s." },
-            ["syn_blast.c"]     = new[] { "Absorbe 5 explosiones o caídas con Speed Cola y PHD Flopper activas.", "Absorb 5 explosions or falls with Speed Cola and PHD Flopper active." },
 
-            ["syn_medic.n"]     = new[] { "Médico de combate", "Combat Medic" },
-            ["syn_medic.d"]     = new[] { "Curarte con objetos médicos va un 15% más rápido.", "Healing with medical items is 15% faster." },
-            ["syn_medic.c"]     = new[] { "Usa 10 objetos médicos con Speed Cola y Juggernog activas.", "Use 10 medical items with Speed Cola and Juggernog active." },
-            ["syn_pin.n"]       = new[] { "Anilla rápida", "Quick Pin" },
-            ["syn_pin.d"]       = new[] { "Lanzas las granadas un 15% más rápido.", "You throw grenades 15% faster." },
-            ["syn_pin.c"]       = new[] { "Lanza 10 granadas con Speed Cola y Widow's Wine activas.", "Throw 10 grenades with Speed Cola and Widow's Wine active." },
-            ["syn_trigger.n"]   = new[] { "Gatillo fácil", "Hair Trigger" },
-            ["syn_trigger.d"]   = new[] { "Apuntas un 8% más rápido.", "You aim down sights 8% faster." },
-            ["syn_trigger.c"]   = new[] { "Mata a 15 enemigos apuntando, con Speed Cola y Deadshot activas.", "Kill 15 enemies while aiming, with Speed Cola and Deadshot active." },
-            ["syn_tank.n"]      = new[] { "Tanque", "Tank" },
-            ["syn_tank.d"]      = new[] { "Llevas un 5% menos de peso.", "You carry 5% less weight." },
-            ["syn_tank.c"]      = new[] { "Corre 2 km con Stamin-Up y Juggernog activas.", "Sprint 2 km with Stamin-Up and Juggernog active." },
-            ["syn_bounce.n"]    = new[] { "Rebote", "Bounce Back" },
-            ["syn_bounce.d"]    = new[] { "Cuando PHD Flopper anula una explosión o una caída, recuperas un 15% de estamina.", "When PHD Flopper cancels an explosion or a fall, you recover 15% stamina." },
-            ["syn_bounce.c"]    = new[] { "Absorbe 8 explosiones o caídas con Stamin-Up y PHD Flopper activas.", "Absorb 8 explosions or falls with Stamin-Up and PHD Flopper active." },
-            ["syn_getaway.n"]   = new[] { "Huida", "Getaway" },
-            ["syn_getaway.d"]   = new[] { "Al lanzar una granada recuperas un 10% de estamina.", "Throwing a grenade restores 10% stamina." },
-            ["syn_getaway.c"]   = new[] { "Lanza 10 granadas con Stamin-Up y Widow's Wine activas.", "Throw 10 grenades with Stamin-Up and Widow's Wine active." },
-            ["syn_breath.n"]    = new[] { "Aliento de corredor", "Runner's Breath" },
-            ["syn_breath.d"]    = new[] { "Aguantas la respiración un 15% más.", "You hold your breath 15% longer." },
-            ["syn_breath.c"]    = new[] { "Aguanta la respiración apuntando 20 veces, con Stamin-Up y Deadshot activas.", "Hold your breath while aiming 20 times, with Stamin-Up and Deadshot active." },
-            ["syn_shock.n"]     = new[] { "Escudo de choque", "Shock Shield" },
-            ["syn_shock.d"]     = new[] { "Cuando PHD Flopper anula una explosión o una caída, recibes un 10% menos de daño durante 5 s.", "When PHD Flopper cancels an explosion or a fall, you take 10% less damage for 5 s." },
-            ["syn_shock.c"]     = new[] { "Absorbe 5 explosiones o caídas con Juggernog y PHD Flopper activas.", "Absorb 5 explosions or falls with Juggernog and PHD Flopper active." },
-            ["syn_sights.n"]    = new[] { "Mira de hierro", "Iron Sights" },
-            ["syn_sights.d"]    = new[] { "Mientras apuntas recibes un 5% menos de daño.", "While aiming you take 5% less damage." },
-            ["syn_sights.c"]    = new[] { "Mata a 10 enemigos con armadura, con Juggernog y Deadshot activas.", "Kill 10 armored enemies with Juggernog and Deadshot active." },
-            ["syn_webblast.n"]  = new[] { "Red expansiva", "Blast Web" },
-            ["syn_webblast.d"]  = new[] { "Tus telarañas cubren un 20% más de radio.", "Your webs cover a 20% larger radius." },
-            ["syn_webblast.c"]  = new[] { "Atrapa a 15 enemigos con PHD Flopper y Widow's Wine activas.", "Web 15 enemies with PHD Flopper and Widow's Wine active." },
-            ["syn_above.n"]     = new[] { "Muerte desde arriba", "Death From Above" },
-            ["syn_above.d"]     = new[] { "Cuando PHD Flopper anula una explosión o una caída, el balanceo del arma baja un 40% durante 5 s.", "When PHD Flopper cancels an explosion or a fall, weapon sway drops 40% for 5 s." },
-            ["syn_above.c"]     = new[] { "Mata a 3 enemigos en los 10 s siguientes a absorber una explosión o caída, con PHD Flopper y Deadshot activas.", "Kill 3 enemies within 10 s of absorbing an explosion or fall, with PHD Flopper and Deadshot active." },
-            ["syn_spider.n"]    = new[] { "Ojo de araña", "Spider Eye" },
-            ["syn_spider.d"]    = new[] { "Haces un 10% más de daño a los enemigos atrapados en tu telaraña.", "You deal 10% more damage to enemies caught in your web." },
-            ["syn_spider.c"]    = new[] { "Mata a 8 enemigos atrapados en tu telaraña, con Widow's Wine y Deadshot activas.", "Kill 8 enemies caught in your web, with Widow's Wine and Deadshot active." },
 
             // Eternal Perk y powerup de perk aleatoria
             ["eternal.title"]     = new[] { "ETERNAL PERK", "ETERNAL PERK" },
@@ -563,7 +614,7 @@ namespace TarkovaCola.Client
             ["bb_pouch.c"] = new[] { "Mata a 5 enemigos con explosivos, con Bandolier activa.", "Kill 5 enemies with explosives, with Bandolier active." },
             ["bb_cold.n"] = new[] { "CAÑÓN FRÍO", "COLD BARREL" },
             ["bb_cold.d"] = new[] { "Tus armas se calientan un 30% más despacio.", "Your weapons heat up 30% slower." },
-            ["bb_cold.c"] = new[] { "Dispara 1,000 balas con Bandolier activa.", "Fire 1,000 rounds with Bandolier active." },
+            ["bb_cold.c"] = new[] { "Dispara 600 balas con Bandolier activa.", "Fire 600 rounds with Bandolier active." },
             ["bb_leech.n"] = new[] { "SANGUIJUELA DE MUNICIÓN", "AMMO LEECH" },
             ["bb_leech.d"] = new[] { "Matar de un tiro a la cabeza devuelve 2 balas al cargador.", "A headshot kill puts 2 rounds back in your magazine." },
             ["bb_leech.c"] = new[] { "Mata a 15 enemigos de un tiro a la cabeza, con Bandolier activa.", "Kill 15 enemies with headshots, with Bandolier active." },
@@ -574,7 +625,7 @@ namespace TarkovaCola.Client
             ["bb_slot.d"] = new[] { "Podrás llevar 2 mejoras secundarias (por defecto solo 1).", "You can carry 2 minor augments (1 by default)." },
             ["bb_slot.c"] = new[] { "Mata a 1 boss con Bandolier activa.", "Kill 1 boss with Bandolier active." },
             ["bb_d_loose.n"] = new[] { "BALAS SUELTAS", "LOOSE ROUNDS" },
-            ["bb_d_loose.d"] = new[] { "Al recargar, 10% de que se te caiga una bala del cargador.", "When reloading, 10% chance a round falls out of the magazine." },
+            ["bb_d_loose.d"] = new[] { "Al recargar, 10% de que se te caiga el 10% de las balas del cargador.", "When reloading, 10% chance that 10% of the magazine's rounds fall out." },
             ["bb_d_numb.n"] = new[] { "ENTUMECIDO", "NUMB" },
             ["bb_d_numb.d"] = new[] { "Los analgésicos duran un 30% menos.", "Painkillers last 30% shorter." },
             ["bb_d_clatter.n"] = new[] { "TRASTOS RUIDOSOS", "GEAR CLATTER" },
@@ -613,8 +664,8 @@ namespace TarkovaCola.Client
             ["va_slot.n"] = new[] { "RANURA EXTRA", "EXTRA SLOT" },
             ["va_slot.d"] = new[] { "Podrás llevar 2 mejoras secundarias (por defecto solo 1).", "You can carry 2 minor augments (1 by default)." },
             ["va_slot.c"] = new[] { "Mata a 1 boss con Vulture activa.", "Kill 1 boss with Vulture active." },
-            ["va_d_stench.n"] = new[] { "HEDOR", "STENCH" },
-            ["va_d_stench.d"] = new[] { "Tus pasos al andar se oyen a 15 m.", "Your footsteps are audible from 15 m when walking." },
+            ["va_d_stench.n"] = new[] { "BUITRE EXIGENTE", "PICKY VULTURE" },
+            ["va_d_stench.d"] = new[] { "Solo se marcan los contenedores y cuerpos que valen 100.000 ₽ o más (antes 50.000).", "Only containers and bodies worth 100,000 ₽ or more are marked (was 50,000)." },
             ["va_d_greedy.n"] = new[] { "CODICIA", "GREED" },
             ["va_d_greedy.d"] = new[] { "Registrar cuerpos y contenedores es un 25% más lento.", "Searching bodies and containers is 25% slower." },
             ["va_d_hunch.n"] = new[] { "CARROÑERO MARCADO", "MARKED SCAVENGER" },
@@ -638,12 +689,13 @@ namespace TarkovaCola.Client
             ["prompt.reroll"] = new[] { "[{0}] Re-roll del contenedor ({1} puntos)", "[{0}] Re-roll container ({1} points)" },
             ["mm_charge.n"] = new[] { "CARGA", "CHARGE" },
             ["mm_charge.d"] = new[] { "Corriendo con un arma cuerpo a cuerpo en la mano, recibes un 40% menos de daño.", "While sprinting with a melee weapon in hand, you take 40% less damage." },
-            ["mm_charge.c"] = new[] { "Corre 2 km con un arma cuerpo a cuerpo en la mano, con Macchiato activa.", "Sprint 2 km with a melee weapon in hand, with Macchiato active." },
+            ["mm_charge.c"] = new[] { "Corre 1 km con un arma cuerpo a cuerpo en la mano, con Macchiato activa.", "Sprint 1 km with a melee weapon in hand, with Macchiato active." },
             ["mm_frenzy.n"] = new[] { "FRENESÍ", "FRENZY" },
             ["mm_frenzy.d"] = new[] { "Cada golpe seguido al mismo objetivo hace x1.2 de daño (hasta x3).", "Each consecutive hit on the same target deals x1.2 damage (up to x3)." },
             ["mm_frenzy.c"] = new[] { "Golpea 3 veces seguidas al mismo enemigo, 10 veces, con Macchiato activa.", "Hit the same enemy 3 times in a row, 10 times, with Macchiato active." },
             ["mm_iron.n"] = new[] { "CRÁNEO DE HIERRO", "IRON SKULL" },
-            ["mm_iron.d"] = new[] { "Con un arma cuerpo a cuerpo en la mano, un golpe en la cabeza no te mata.", "With a melee weapon in hand, a hit to the head can't kill you." },
+            ["notice.mm_iron"] = new[] { "El golpe en la cabeza no te mata (ya no queda en esta raid)", "The head hit doesn't kill you (used up for this raid)" },
+            ["mm_iron.d"] = new[] { "Con un arma cuerpo a cuerpo en la mano, un golpe en la cabeza no te mata (una vez por raid).", "With a melee weapon in hand, a hit to the head can't kill you (once per raid)." },
             ["mm_iron.c"] = new[] { "Mata a 10 enemigos cuerpo a cuerpo, con Macchiato activa.", "Kill 10 enemies in melee, with Macchiato active." },
             ["mm_quick.n"] = new[] { "DESENFUNDE RÁPIDO", "QUICK DRAW" },
             ["mm_quick.d"] = new[] { "Sacar el arma cuerpo a cuerpo es instantáneo.", "Drawing your melee weapon is instant." },
@@ -653,7 +705,7 @@ namespace TarkovaCola.Client
             ["mm_hone.c"] = new[] { "Acierta 50 golpes cuerpo a cuerpo, con Macchiato activa.", "Land 50 melee hits, with Macchiato active." },
             ["mm_flash.n"] = new[] { "GOLPE RELÁMPAGO", "FLASH STRIKE" },
             ["mm_flash.d"] = new[] { "El ataque rápido es casi instantáneo (x2.5 de velocidad).", "The quick attack is almost instant (x2.5 speed)." },
-            ["mm_flash.c"] = new[] { "Ataca 200 veces cuerpo a cuerpo, con Macchiato activa.", "Make 200 melee attacks, with Macchiato active." },
+            ["mm_flash.c"] = new[] { "Ataca 100 veces cuerpo a cuerpo, con Macchiato activa.", "Make 100 melee attacks, with Macchiato active." },
             ["mm_wind.n"] = new[] { "SEGUNDO ALIENTO", "SECOND WIND" },
             ["mm_wind.d"] = new[] { "Cada ataque te devuelve 5 de estamina; si acierta, 15.", "Each attack restores 5 stamina; 15 if it lands." },
             ["mm_wind.c"] = new[] { "Ataca 25 veces con menos del 30% de estamina, con Macchiato activa.", "Attack 25 times below 30% stamina, with Macchiato active." },
@@ -669,20 +721,20 @@ namespace TarkovaCola.Client
             ["mm_d_butter.n"] = new[] { "MANOS DE MANTEQUILLA", "BUTTERFINGERS" },
             ["mm_d_butter.d"] = new[] { "Sacar armas de fuego es un 15% más lento.", "Drawing firearms is 15% slower." },
             ["mm_d_bitter.n"] = new[] { "IMPULSIVO", "IMPULSIVE" },
-            ["mm_d_bitter.d"] = new[] { "Al guardar el arma cuerpo a cuerpo, tu arma de fuego tarda 0.3 s más en poder apuntar y disparar.", "After putting away your melee weapon, your firearm takes 0.3 s longer before it can aim and fire." },
-            ["mm_d_loud.n"] = new[] { "PASOS FUERTES", "LOUD STEPS" },
-            ["mm_d_loud.d"] = new[] { "Tus pasos al andar se oyen a 12 m.", "Your footsteps are audible from 12 m when walking." },
+            ["mm_d_bitter.d"] = new[] { "Al guardar el arma cuerpo a cuerpo, tu arma de fuego no puede apuntar ni disparar durante 0.9 s.", "After putting away your melee weapon, your firearm can't aim or fire for 0.9 s." },
+            ["mm_d_loud.n"] = new[] { "FILO FUGAZ", "FLEETING EDGE" },
+            ["mm_d_loud.d"] = new[] { "El daño x2 de Macchiato solo vale en el primer golpe a cada enemigo.", "Macchiato's x2 damage only applies to the first hit on each enemy." },
             ["mm_d_sugar.n"] = new[] { "GOLPE EN FALSO", "WHIFF" },
             ["mm_d_sugar.d"] = new[] { "Fallar un golpe cuerpo a cuerpo te quita 10 de estamina.", "Missing a melee swing costs 10 stamina." },
             ["dd_aim.n"]      = new[] { "DEAD AIM", "DEAD AIM" },
-            ["dd_aim.d"]      = new[] { "El arma se queda fija en el centro: sin balanceo al moverte, al girar ni al apuntar (el retroceso se mantiene).", "Your weapon stays locked to the center: no sway while moving, turning or aiming (recoil still applies)." },
+            ["dd_aim.d"]      = new[] { "El arma no se mueve al andar ni al girar, y el balanceo al apuntar baja un 65% (el retroceso se mantiene).", "Your weapon doesn't move while walking or turning, and aiming sway drops by 65% (recoil still applies)." },
             ["dd_aim.c"]      = new[] { "Mata a 20 enemigos mientras te mueves, con Deadshot activa.", "Kill 20 enemies while moving, with Deadshot active." },
             ["dd_pen.n"]      = new[] { "INCREÍBLE", "INCREDIBLE" },
             ["dd_pen.d"]      = new[] { "Tus balas penetran un 30% más la armadura.", "Your bullets have 30% more armor penetration." },
             ["dd_pen.c"]      = new[] { "Mata a 15 enemigos con armadura, con Deadshot activa.", "Kill 15 armored enemies with Deadshot active." },
             ["dd_sky.n"]      = new[] { "HACIA EL CIELO", "TO THE SKIES" },
             ["dd_sky.d"]      = new[] { "El retroceso vertical y horizontal baja un 50%.", "Vertical and horizontal recoil drop by 50%." },
-            ["dd_sky.c"]      = new[] { "Dispara 1,500 balas con Deadshot activa.", "Fire 1,500 rounds with Deadshot active." },
+            ["dd_sky.c"]      = new[] { "Dispara 800 balas con Deadshot activa.", "Fire 800 rounds with Deadshot active." },
             ["dd_quick.n"]    = new[] { "MIRA RÁPIDA", "QUICK SCOPE" },
             ["dd_quick.d"]    = new[] { "Apuntas un 20% más rápido.", "You aim down sights 20% faster." },
             ["dd_quick.c"]    = new[] { "Mata a 10 enemigos apuntando, con Deadshot activa.", "Kill 10 enemies while aiming, with Deadshot active." },
@@ -710,11 +762,11 @@ namespace TarkovaCola.Client
             ["dd_d_lime.d"]   = new[] { "Si apuntas más de 6 s seguidos, la mira empieza a temblar (balanceo +50%).", "Aim for more than 6 s straight and your sight starts to shake (+50% sway)." },
             ["dd_d_sugar.n"]  = new[] { "TIRO LIMPIO", "CLEAN SHOT" },
             ["dd_d_sugar.d"]  = new[] { "Disparar menos de 0.5 s después de correr tiene un 30% más de retroceso.", "Firing within 0.5 s of sprinting has 30% more recoil." },
-            ["dd_d_squeak.n"] = new[] { "BOTAS CHIRRIANTES", "SQUEAKY BOOTS" },
-            ["dd_d_squeak.d"] = new[] { "Tus pasos al andar se oyen a 12 m.", "Your footsteps are audible from 12 m when walking." },
+            ["dd_d_squeak.n"] = new[] { "OJO CANSADO", "TIRED EYE" },
+            ["dd_d_squeak.d"] = new[] { "Tras 8 s apuntando sin parar, la reducción de balanceo de Deadshot baja a la mitad.", "After aiming for 8 s straight, Deadshot's sway reduction drops by half." },
             ["jg_skull.n"]    = new[] { "GORRO DE CALAVERA", "SKULL CAP" },
             ["jg_skull.d"]    = new[] { "Más probabilidad de que las balas reboten en tu casco.", "Higher chance that bullets ricochet off your helmet." },
-            ["jg_skull.c"]    = new[] { "Recibe 1,500 de daño con Juggernog activa.", "Take 1,500 damage with Juggernog active." },
+            ["jg_skull.c"]    = new[] { "Recibe 600 de daño con Juggernog activa.", "Take 600 damage with Juggernog active." },
             ["jg_thick.n"]    = new[] { "PIEL GRUESA", "THICK SKIN" },
             ["jg_thick.d"]    = new[] { "Los sangrados te quitan la mitad de vida.", "Bleeding drains half as much health." },
             ["jg_thick.c"]    = new[] { "Arregla 5 sangrados pesados con Juggernog activa.", "Fix 5 heavy bleeds with Juggernog active." },
@@ -726,7 +778,7 @@ namespace TarkovaCola.Client
             ["jg_patch.c"]    = new[] { "Usa 10 items médicos con Juggernog activa.", "Use 10 medical items with Juggernog active." },
             ["jg_plates.n"]   = new[] { "PLACAS DE HUESO", "BONE PLATING" },
             ["jg_plates.d"]   = new[] { "Tus placas de armadura pierden durabilidad la mitad de rápido.", "Your armor plates lose durability half as fast." },
-            ["jg_plates.c"]   = new[] { "Recibe 60 impactos en tu armadura con Juggernog activa.", "Take 60 hits on your armor with Juggernog active." },
+            ["jg_plates.c"]   = new[] { "Recibe 40 impactos en tu armadura con Juggernog activa.", "Take 40 hits on your armor with Juggernog active." },
             ["jg_keep.n"]     = new[] { "SIGUE ADELANTE", "KEEP GOING" },
             ["jg_keep.d"]     = new[] { "El hambre y la sed te quitan vida mucho más lento.", "Hunger and thirst drain your health much more slowly." },
             ["jg_keep.c"]     = new[] { "Come o bebe 15 veces con Juggernog activa.", "Eat or drink 15 times with Juggernog active." },
@@ -736,8 +788,8 @@ namespace TarkovaCola.Client
             ["jg_slot.n"]     = new[] { "RANURA EXTRA", "EXTRA SLOT" },
             ["jg_slot.d"]     = new[] { "Podrás llevar 2 mejoras secundarias (por defecto solo 1).", "You can carry 2 minor augments (1 by default)." },
             ["jg_slot.c"]     = new[] { "Mata a 1 boss con Juggernog activa.", "Kill 1 boss with Juggernog active." },
-            ["dj_clank.n"]    = new[] { "PLACAS RUIDOSAS", "CLANKY PLATES" },
-            ["dj_clank.d"]    = new[] { "Tus pasos al andar se oyen a 12 m.", "Your footsteps are audible from 12 m when walking." },
+            ["dj_clank.n"]    = new[] { "ARMADURA FRÍA", "COLD ARMOR" },
+            ["dj_clank.d"]    = new[] { "La reducción de daño de Juggernog empieza en 0 con el primer golpe de un combate y tarda 3 s en llegar al total.", "Juggernog's damage reduction starts at 0 on the first hit of a fight and takes 3 s to reach full." },
             ["dj_plates.n"]   = new[] { "PLACAS PESADAS", "HEAVY PLATES" },
             ["dj_plates.d"]   = new[] { "Llevas un 10% más de peso.", "You carry 10% more weight." },
             ["dj_hands.n"]    = new[] { "MANOS PESADAS", "HEAVY HANDS" },
@@ -772,7 +824,7 @@ namespace TarkovaCola.Client
             ["pf_ears.c"]     = new[] { "Sufre 5 contusiones con PHD Flopper activa.", "Suffer 5 contusions with PHD Flopper active." },
             ["pf_terrain.n"]  = new[] { "CAMINANTE DEL TERRENO", "TERRAIN WALKER" },
             ["pf_terrain.d"]  = new[] { "Eres inmune al alambre de púas y al barro.", "You are immune to barbed wire and mud." },
-            ["pf_terrain.c"]  = new[] { "Recorre 5 km con PHD Flopper activa.", "Travel 5 km with PHD Flopper active." },
+            ["pf_terrain.c"]  = new[] { "Recorre 3 km con PHD Flopper activa.", "Travel 3 km with PHD Flopper active." },
             ["pf_slot.n"]     = new[] { "RANURA EXTRA", "EXTRA SLOT" },
             ["pf_slot.d"]     = new[] { "Podrás llevar 2 mejoras secundarias (por defecto solo 1).", "You can carry 2 minor augments (1 by default)." },
             ["pf_slot.c"]     = new[] { "Mata a 1 boss con PHD Flopper activa.", "Kill 1 boss with PHD Flopper active." },
@@ -781,15 +833,15 @@ namespace TarkovaCola.Client
             ["dp_throw.n"]    = new[] { "LANZAMIENTO PESADO", "HEAVY THROW" },
             ["dp_throw.d"]    = new[] { "Lanzar una granada te quita 25 de estamina.", "Throwing a grenade costs you 25 stamina." },
             ["dp_powder.n"]   = new[] { "ADICTO A LA PÓLVORA", "POWDER JUNKIE" },
-            ["dp_powder.d"]   = new[] { "Sin granadas en el inventario, el balanceo del arma sube un 15%.", "With no grenades in your inventory, weapon sway rises by 15%." },
+            ["dp_powder.d"]   = new[] { "Con menos de 2 granadas encima, el balanceo del arma sube un 15%.", "With fewer than 2 grenades on you, weapon sway rises by 15%." },
             ["dp_stagger.n"]  = new[] { "TAMBALEO", "STAGGER" },
             ["dp_stagger.d"]  = new[] { "Aterrizar de una caída de 3 m o más te quita 40 de estamina.", "Landing from a fall of 3 m or more costs you 40 stamina." },
             ["dp_lazy.n"]     = new[] { "METRALLA", "SHRAPNEL" },
             ["dp_lazy.d"]     = new[] { "Una explosión a menos de 10 m tiene un 30% de causarte un sangrado leve (la metralla atraviesa tu inmunidad).", "An explosion within 10 m has a 30% chance to give you a light bleed (shrapnel gets past your immunity)." },
             ["dp_pockets.n"]  = new[] { "PÁNICO", "PANIC" },
             ["dp_pockets.d"]  = new[] { "Una explosión a menos de 10 m te quita 20 de estamina.", "An explosion within 10 m costs you 20 stamina." },
-            ["dp_stomp.n"]    = new[] { "PISADAS FUERTES", "HARD STOMP" },
-            ["dp_stomp.d"]    = new[] { "Tus pasos se oyen a 15 m.", "Your footsteps are audible from 15 m." },
+            ["dp_stomp.n"]    = new[] { "ONDA PROPIA", "OWN WAVE" },
+            ["dp_stomp.d"]    = new[] { "Las explosiones no te hacen daño, pero te sacuden: balanceo +30% durante 2 s.", "Explosions don't hurt you, but they shake you: +30% sway for 2 s." },
 
             // ---- Widow's Wine ----
             ["ww_spin.n"]     = new[] { "HILERA", "SPINNERET" },
@@ -798,7 +850,7 @@ namespace TarkovaCola.Client
             ["ww_fuse.n"]     = new[] { "NIDO", "NEST" },
             ["ww_fuse.d"]     = new[] { "Cada telaraña deja una trampa en el suelo durante 20 s: el primer enemigo que la pisa queda atrapado 4 s.", "Each web leaves a trap on the ground for 20 s: the first enemy to step on it is stuck for 4 s." },
             ["notice.ww_fuse"] = new[] { "Un enemigo ha caído en tu nido", "An enemy walked into your nest" },
-            ["ww_fuse.c"]     = new[] { "Atrapa a 3 enemigos con una sola granada.", "Web 3 enemies with a single grenade." },
+            ["ww_fuse.c"]     = new[] { "Atrapa a 3 enemigos con una sola granada, 5 veces.", "Web 3 enemies with a single grenade, 5 times." },
             ["ww_burst.n"]    = new[] { "RÁFAGA DE TELARAÑAS", "WEB BURST" },
             ["ww_burst.d"]    = new[] { "Si recibes 100 de daño en menos de 3 s, gastas una granada del inventario: los enemigos cercanos quedan atrapados y aturdidos (1 vez cada 5 min).", "If you take 100 damage in under 3 s, a grenade from your inventory is spent: nearby enemies are webbed and stunned (once every 5 min)." },
             ["ww_burst.c"]    = new[] { "Recibe 100 de daño en menos de 3 s, 3 veces, con Widow's Wine activa.", "Take 100 damage in under 3 s, 3 times, with Widow's Wine active." },
@@ -822,11 +874,11 @@ namespace TarkovaCola.Client
             ["dw_brittle.n"]  = new[] { "PLACAS FRÁGILES", "BRITTLE PLATES" },
             ["dw_brittle.d"]  = new[] { "Tu armadura recibe un 25% más de daño de las balas.", "Your armor takes 25% more damage from bullets." },
             ["dw_bitter.n"]   = new[] { "SIN RED", "NO NET" },
-            ["dw_bitter.d"]   = new[] { "Si no llevas granadas, recibes un 10% más de daño.", "If you carry no grenades, you take 10% more damage." },
+            ["dw_bitter.d"]   = new[] { "Sin granadas en el chaleco táctico, recibes un 10% más de daño.", "With no grenades in your tactical rig, you take 10% more damage." },
             ["dw_tangled.n"]  = new[] { "ENREDADO", "ENTANGLED" },
             ["dw_tangled.d"]  = new[] { "Te frenas un 40% dentro de tus propias telarañas.", "You slow down by 40% inside your own webs." },
             ["dw_greasy.n"]   = new[] { "SEDA PEGAJOSA", "STICKY SILK" },
-            ["dw_greasy.d"]   = new[] { "Preparar y lanzar granadas es un 25% más lento.", "Readying and throwing grenades is 25% slower." },
+            ["dw_greasy.d"]   = new[] { "Preparar y lanzar granadas tarda un 33% más.", "Readying and throwing grenades takes 33% longer." },
             ["dw_hungry.n"]   = new[] { "HUEVOS FRÁGILES", "FRAGILE EGGS" },
             ["dw_hungry.d"]   = new[] { "Un disparo en el torso tiene un 25% de romper una de las granadas que llevas (la pierdes).", "A shot to the torso has a 25% chance to break one of the grenades you carry (you lose it)." },
             ["notice.dw_hungry"] = new[] { "Se ha roto tu {0}", "Your {0} broke" },
@@ -835,16 +887,16 @@ namespace TarkovaCola.Client
 
             ["st_rush.n"]     = new[] { "HORA PUNTA", "RUSH HOUR" },
             ["st_rush.d"]     = new[] { "Tras una baja, recuperas toda la estamina de las piernas.", "After a kill, your leg stamina refills completely." },
-            ["st_rush.c"]     = new[] { "Haz 3 bajas en menos de 3 minutos con Stamin-Up activa.", "Get 3 kills in under 3 minutes with Stamin-Up active." },
+            ["st_rush.c"]     = new[] { "Haz 3 bajas en menos de 3 minutos con Stamin-Up activa, 3 veces.", "Get 3 kills in under 3 minutes with Stamin-Up active, 3 times." },
             ["st_shooter.n"]  = new[] { "TIRADOR EN CARRERA", "SPRINT SHOOTER" },
             ["st_shooter.d"]  = new[] { "Las animaciones del arma van siempre x1.75 más rápido (las recargas no cambian).", "Weapon animations always run 1.75x faster (reloads are not affected)." },
-            ["st_shooter.c"]  = new[] { "Encuentra 15 Hot Rod, RatCola o Max Energy en raid.", "Find 15 Hot Rod, RatCola or Max Energy in raid." },
+            ["st_shooter.c"]  = new[] { "Encuentra 15 Hot Rod, RatCola o Max Energy en raid con Stamin-Up activa.", "Find 15 Hot Rod, RatCola or Max Energy in raid with Stamin-Up active." },
             ["st_wind.n"]     = new[] { "SEGUNDO ALIENTO", "SECOND WIND" },
-            ["st_wind.d"]     = new[] { "Cada vez que tu salud esté en rojo: 5 s de estamina infinita e inmunidad al dolor, sin cooldown. Aún puedes recibir daño.", "Every time your health is in the red: 5 s of infinite stamina and pain immunity, no cooldown. You can still take damage." },
+            ["st_wind.d"]     = new[] { "Cuando tu salud está en rojo: 5 s de estamina infinita e inmunidad al dolor (cada 90 s como mucho). Aún puedes recibir daño.", "When your health is in the red: 5 s of infinite stamina and pain immunity (at most every 90 s). You can still take damage." },
             ["st_wind.c"]     = new[] { "Quédate sin estamina 5 veces con Stamin-Up activa.", "Run out of stamina 5 times with Stamin-Up active." },
             ["st_feet.n"]     = new[] { "PIES LIGEROS", "LIGHT FEET" },
             ["st_feet.d"]     = new[] { "Llevas un 10% menos de peso.", "You carry 10% less weight." },
-            ["st_feet.c"]     = new[] { "Corre 5 km en total con Stamin-Up activa.", "Sprint 5 km in total with Stamin-Up active." },
+            ["st_feet.c"]     = new[] { "Corre 3 km en total con Stamin-Up activa.", "Sprint 3 km in total with Stamin-Up active." },
             ["st_recover.n"]  = new[] { "RECUPERACIÓN RÁPIDA", "QUICK RECOVERY" },
             ["st_recover.d"]  = new[] { "La estamina se recupera un 25% más rápido.", "Stamina recovers 25% faster." },
             ["st_recover.c"]  = new[] { "Mata a 10 enemigos menos de 3 s después de esprintar, con Stamin-Up activa.", "Kill 10 enemies within 3 s of sprinting, with Stamin-Up active." },

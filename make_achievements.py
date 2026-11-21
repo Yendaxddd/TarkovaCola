@@ -1,4 +1,4 @@
-"""Logros de la 2.0 (70): genera el codigo de datos del servidor y del cliente y la lista de insignias.
+"""Logros extra (97: 52 de la 2.0 y 45 de las perks de la 3.x): genera el codigo de datos del servidor y del cliente y la lista de insignias.
 
 Salida:
   Server/AchievementsExtra.cs     definiciones (nombre, descripcion, rareza, recompensas) que registra el servidor
@@ -13,23 +13,6 @@ RUB, GP = "Roubles", "Perks.GpCoin"
 BOTTLE = {"speedcola": "Perks.SpeedColaId", "staminup": "Perks.StaminUpId", "juggernog": "Perks.JuggernogId",
           "phdflopper": "Perks.PhdFlopperId", "widowswine": "Perks.WidowsWineId", "deadshot": "Perks.DeadshotId"}
 
-SYN = [  # id, A, B, en, es
-    ("cardio", "speedcola", "staminup", "Runner's high", "Euforia del corredor", "Cardio", "Cardio"),
-    ("medic", "speedcola", "juggernog", "Doctor's orders", "Órdenes del médico", "Combat Medic", "Médico de combate"),
-    ("blast", "speedcola", "phdflopper", "Bang, reload", "Bum, recarga", "Blast Reload", "Recarga explosiva"),
-    ("pin", "speedcola", "widowswine", "Pull and pray", "Tira y reza", "Quick Pin", "Anilla rápida"),
-    ("trigger", "speedcola", "deadshot", "Trigger happy", "Gatillo alegre", "Hair Trigger", "Gatillo fácil"),
-    ("tank", "staminup", "juggernog", "Heavy cardio", "Cardio pesado", "Tank", "Tanque"),
-    ("bounce", "staminup", "phdflopper", "Boing", "Boing", "Bounce Back", "Rebote"),
-    ("getaway", "staminup", "widowswine", "Web and run", "Atrapa y corre", "Getaway", "Huida"),
-    ("breath", "staminup", "deadshot", "Deep breaths", "Respira hondo", "Runner's Breath", "Aliento de corredor"),
-    ("shock", "juggernog", "phdflopper", "Shock absorber", "Amortiguador", "Shock Shield", "Escudo de choque"),
-    ("iron", "juggernog", "widowswine", "Steel silk", "Seda de acero", "Steel Web", "Telaraña de acero"),
-    ("sights", "juggernog", "deadshot", "Iron curtain", "Telón de acero", "Iron Sights", "Mira de hierro"),
-    ("webblast", "phdflopper", "widowswine", "Spider bomb", "Bomba araña", "Blast Web", "Red expansiva"),
-    ("above", "phdflopper", "deadshot", "Look out below", "Cuidado abajo", "Death From Above", "Muerte desde arriba"),
-    ("spider", "widowswine", "deadshot", "Spider sense", "Sentido arácnido", "Spider Eye", "Ojo de araña"),
-]
 MISSIONS = [("Cold Cargo", "Carga fría"), ("The Formula", "La fórmula"), ("Bottling Line", "Línea de embotellado"),
             ("Fast Hands", "Manos rápidas"), ("Long Haul", "Fondo"), ("Meat Wall", "Muro de carne"), ("Zero Gravity", "Gravedad cero"),
             ("Black Widow", "Viuda negra"), ("Hawkeye", "Ojo de halcón"), ("Last Call", "Última ronda")]
@@ -38,6 +21,7 @@ A = []  # key, rarity, hidden, en name, es name, en desc, es desc, rewards [(tpl
 
 
 def add(key, rarity, en, es, den, des, rewards, icon, hidden=False):
+    # los ids son estables: despues del hueco de las sinergias quitadas se suman 18
     A.append(dict(key=key, rarity=rarity, hidden=hidden, en=en, es=es, den=den, des=des, rewards=rewards, icon=icon))
 
 
@@ -49,12 +33,8 @@ add("dd_lvl5", "Rare", "Steady as a rock", "Firme como una roca", "Take Deadshot
 add("dd_all", "Legendary", "Deadeye", "Ojo infalible", "Unlock every Deadshot Daiquiri augment.", "Consigue todas las mejoras de Deadshot Daiquiri.", [(BOTTLE["deadshot"], 3)], "deadshot")
 add("dd_secret", "Legendary", "Five for five", "Cinco de cinco", "Get 5 headshot kills in a single raid with Deadshot Daiquiri active.", "Consigue 5 bajas de un tiro a la cabeza en una misma raid con Deadshot Daiquiri activa.", [(GP, 5)], "deadshot", hidden=True)
 
-# ---- Sinergias (18)
-for sid, a, b, en, es, sen, ses in SYN:
-    add("syn_" + sid, "Common", en, es, "Unlock the " + sen + " synergy.", "Desbloquea la sinergia " + ses + ".", [(RUB, 15000)], [a, b])
-add("syn_five", "Rare", "Chemistry", "Química", "Unlock 5 synergies.", "Desbloquea 5 sinergias.", [(GP, 3)], ["speedcola", "juggernog"])
-add("syn_all", "Legendary", "Perfect blend", "Mezcla perfecta", "Unlock all 15 synergies.", "Desbloquea las 15 sinergias.", [(GP, 8)], ["widowswine", "deadshot"])
-add("syn_extract", "Common", "Teamwork", "Trabajo en equipo", "Extract alive with an equipped synergy working (both of its perks active).", "Extrae con vida con una sinergia equipada funcionando (sus dos perks activas).", [(RUB, 25000)], ["staminup", "phdflopper"])
+# ---- Sinergias: QUITADAS en 3.1 (sus 18 ids a25..a36 se saltan para no mover los ids de los demas logros)
+SKIP_AT_SYN = 18
 
 # ---- Historia (13)
 for i, (en, es) in enumerate(MISSIONS, 1):
@@ -110,13 +90,61 @@ add("s_webbed", "Rare", "Arachnophobia", "Aracnofobia", "Web 250 enemies in tota
 add("x_mirror", "Rare", "Mirror match", "Duelo de espejos", "Kill a Bottler who carries a perk you also have active.", "Mata a un Embotellador que lleve una perk que tú también tengas activa.", [(GP, 2)], "research")
 add("x_extract6", "Legendary", "Last one standing", "El último en pie", "Extract alive with all six perks active.", "Extrae con vida con las seis perks activas.", [(GP, 6)], "research")
 
-assert len(A) == 70, len(A)
+# ---- Perks de la 3.x (9 perks x 5): primera vez, contador total, nivel 5, todas las mejoras y secreto (en una raid).
+# Los contadores los suma AchTrack.OnPerkEvent con el mismo evento que el desafio APEX de la perk (Apex.AddProgress).
+NEW = [
+    # perk, prefijo, botella del servidor, nombre en/es,
+    #   primera (en, es), total (en, es, n, evento en, evento es), nivel 5 (en, es), todas (en, es), secreto (en, es, n)
+    ("bandolier", "bb", "Perks.BandolierId", "Bandolier Bandit",
+     ("Locked and loaded", "Cargado y listo"), ("Bandit king", "Rey de los bandidos", 150, "kills", "bajas"),
+     ("Ammo belt", "Canana"), ("Walking armory", "Arsenal andante"), ("Trigger happy", "Gatillo fácil", 8)),
+    ("vultureaid", "va", "Perks.VultureAidId", "Vulture Aid",
+     ("Picky eater", "Carroñero novato"), ("Scavenger supreme", "Carroñero supremo", 50, "PMC bodies searched", "cuerpos de PMC registrados"),
+     ("Circling above", "Sobrevolando"), ("Lord of the leftovers", "Señor de las sobras"), ("All you can eat", "Bufé libre", 5)),
+    ("meleemacchiato", "mm", "Perks.MeleeMacchiatoId", "Melee Macchiato",
+     ("Espresso shot", "Un expreso"), ("Knuckle sandwich", "Sándwich de nudillos", 50, "melee kills", "bajas cuerpo a cuerpo"),
+     ("Barista", "Barista"), ("Black belt", "Cinturón negro"), ("Knife to a gunfight", "Cuchillo en un tiroteo", 5)),
+    ("quickrevive", "qr", "Perks.QuickReviveId", "Quick Revive",
+     ("Second wind", "Segundo aliento"), ("Self-care", "Autocuidado", 10000, "HP healed by its regeneration", "PV curados con su regeneración"),
+     ("Field medic", "Médico de campo"), ("Hard to kill", "Duro de matar"), ("Good as new", "Como nuevo", 1000)),
+    ("mulekick", "mk", "Perks.MuleKickId", "Mule Kick",
+     ("Third arm", "Tercer brazo"), ("Pack mule", "Mula de carga", 100, "kills with the Mule Kick weapon", "bajas con el arma de Mule Kick"),
+     ("Stubborn as a mule", "Terco como una mula"), ("Mule's kick", "Coz de mula"), ("Spare tire", "De repuesto", 6)),
+    ("electriccherry", "ec", "Perks.ElectricCherryId", "Electric Cherry",
+     ("Shocking", "Electrizante"), ("Live wire", "Cable pelado", 200, "empty-magazine reloads", "recargas con el cargador vacío"),
+     ("High voltage", "Alto voltaje"), ("Power plant", "Central eléctrica"), ("Overload", "Sobrecarga", 25)),
+    ("deathperception", "de", "Perks.DeathPerceptionId", "Death Perception",
+     ("I see you", "Te veo"), ("Sixth sense", "Sexto sentido", 100, "marked enemies killed", "enemigos marcados abatidos"),
+     ("Night owl", "Búho nocturno"), ("All-seeing", "Omnividente"), ("Nowhere to hide", "Sin escondite", 8)),
+    ("tombstone", "ts", "Perks.TombstoneId", "Tombstone",
+     ("Grave robber", "Profanador de tumbas"), ("Restless soul", "Alma en pena", 30, "times as a specter", "veces convertido en espectro"),
+     ("Gravedigger", "Sepulturero"), ("Undertaker", "Enterrador"), ("Thrice dead", "Tres veces muerto", 3)),
+    ("doubletap", "db", "Perks.DoubleTapId", "Double Tap",
+     ("Double trouble", "Doble problema"), ("Rapid fire", "Fuego rápido", 150, "kills", "bajas"),
+     ("Hair trigger", "Gatillo sensible"), ("Twice as nice", "Por partida doble"), ("Spray and pray", "Ráfaga y fe", 10)),
+]
+
+
+def num(n, es):
+    return f"{n:,}".replace(",", ".") if es else f"{n:,}"
+
+
+for perk, px, bottle, name, fresh, tot, lvl, allx, sec in NEW:
+    add(px + "_fresh", "Common", fresh[0], fresh[1], f"Drink {name} for the first time.", f"Bebe {name} por primera vez.", [(RUB, 20000)], perk)
+    add(px + "_total", "Rare", tot[0], tot[1], f"{num(tot[2], False)} {tot[3]} in total with {name} active.",
+        f"{num(tot[2], True)} {tot[4]} en total con {name} activa.", [(bottle, 1), (RUB, 15000)], perk)
+    add(px + "_lvl5", "Rare", lvl[0], lvl[1], f"Take {name} to level 5.", f"Lleva {name} al nivel 5.", [(GP, 4)], perk)
+    add(px + "_all", "Legendary", allx[0], allx[1], f"Unlock every {name} augment.", f"Consigue todas las mejoras de {name}.", [(bottle, 3)], perk)
+    add(px + "_secret", "Legendary", sec[0], sec[1], f"{num(sec[2], False)} {tot[3]} in a single raid with {name} active.",
+        f"{num(sec[2], True)} {tot[4]} en una misma raid con {name} activa.", [(GP, 5)], perk, hidden=True)
+
+assert len(A) == 97, len(A)
 
 
 def cs(s): return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def sid(i): return "6a1c00000000000000000a%02x" % (0x1f + i)
+def sid(i): return "6a1c00000000000000000a%02x" % (0x1f + i + (SKIP_AT_SYN if i >= 6 else 0))
 
 
 # servidor

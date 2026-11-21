@@ -83,6 +83,7 @@ namespace TarkovaCola.Client
             {
                 _done = true;
                 Hud.Notify(L.T("cc.done"), L.T("cc.done.sub"), null);
+                Jingle.ChallengeDone();
             }
         }
 

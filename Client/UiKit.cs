@@ -31,6 +31,8 @@ namespace TarkovaCola.Client
             ["speedcola"] = C(77, 230, 110), ["staminup"] = C(255, 170, 60), ["juggernog"] = C(255, 70, 60), ["phdflopper"] = C(190, 105, 255),
             ["widowswine"] = C(255, 80, 120), ["deadshot"] = C(255, 215, 80), ["bandolier"] = C(150, 190, 70), ["vultureaid"] = C(40, 200, 185),
             ["meleemacchiato"] = C(205, 140, 80),
+            ["quickrevive"] = C(90, 170, 255), ["mulekick"] = C(120, 200, 90), ["electriccherry"] = C(80, 200, 255),
+            ["deathperception"] = C(235, 110, 40), ["tombstone"] = C(120, 140, 120), ["doubletap"] = C(200, 60, 60),
         };
         internal static Color PerkColor(string id) { Color c; return id != null && PerkColors.TryGetValue(id, out c) ? c : Green; }
 

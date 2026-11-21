@@ -9,7 +9,7 @@ using UnityEngine;
 namespace TarkovaCola.Client
 {
     // Disparadores de los logros de la 2.0 (las definiciones estan en AchievementsExtra.cs, generadas por make_achievements.py).
-    // Cada metodo lo llama el sistema correspondiente cuando pasa algo; los que dependen del estado (niveles, mejoras, sinergias,
+    // Cada metodo lo llama el sistema correspondiente cuando pasa algo; los que dependen del estado (niveles, mejoras,
     // misiones) se comprueban en CheckState.
     internal static class AchTrack
     {
@@ -24,7 +24,34 @@ namespace TarkovaCola.Client
 
         private static void U(string key) { Achievements.Unlock(key); }
 
-        internal static void OnRaidStart() { _drinks.Clear(); _kills.Clear(); _headsRaid = 0; _run = 0f; }
+        internal static void OnRaidStart() { _drinks.Clear(); _kills.Clear(); _headsRaid = 0; _run = 0f; _raidCount.Clear(); }
+
+        // ---------------------------------------------------------------- perks de la 3.x (5 logros cada una, make_achievements.py)
+        // perk -> (prefijo de los logros, total, en una raid). El evento es el mismo que el del desafio APEX de la perk.
+        private static readonly Dictionary<string, KeyValuePair<string, int[]>> NewPerks = new Dictionary<string, KeyValuePair<string, int[]>>
+        {
+            [Bandolier.Id]       = new KeyValuePair<string, int[]>("bb", new[] { 150, 8 }),       // bajas
+            [VultureAid.Id]      = new KeyValuePair<string, int[]>("va", new[] { 50, 5 }),        // cuerpos de PMC registrados
+            [MeleeMacchiato.Id]  = new KeyValuePair<string, int[]>("mm", new[] { 50, 5 }),        // bajas cuerpo a cuerpo
+            [QuickRevive.Id]     = new KeyValuePair<string, int[]>("qr", new[] { 10000, 1000 }),  // PV curados con la regeneracion
+            [MuleKick.Id]        = new KeyValuePair<string, int[]>("mk", new[] { 100, 6 }),       // bajas con el arma de Mule Kick
+            [ElectricCherry.Id]  = new KeyValuePair<string, int[]>("ec", new[] { 200, 25 }),      // recargas con el cargador vacio
+            [DeathPerception.Id] = new KeyValuePair<string, int[]>("de", new[] { 100, 8 }),       // enemigos marcados abatidos
+            [Tombstone.Id]       = new KeyValuePair<string, int[]>("ts", new[] { 30, 3 }),        // veces espectro
+            [DoubleTap.Id]       = new KeyValuePair<string, int[]>("db", new[] { 150, 10 }),      // bajas
+        };
+        private static readonly Dictionary<string, int> _raidCount = new Dictionary<string, int>();
+
+        // desde Apex.AddProgress (con la perk activa), haya o no desafio APEX empezado
+        internal static void OnPerkEvent(string perk, int n)
+        {
+            KeyValuePair<string, int[]> d;
+            if (n <= 0 || perk == null || !NewPerks.TryGetValue(perk, out d)) return;
+            PerkService.AddStat("ach_" + perk, n);
+            if (PerkService.Stat("ach_" + perk) >= d.Value[0]) U(d.Key + "_total");
+            int r; _raidCount.TryGetValue(perk, out r); r += n; _raidCount[perk] = r;
+            if (r >= d.Value[1]) U(d.Key + "_secret");
+        }
 
         // El jugador ya existe (las perks persistentes ya estan activas)
         internal static void OnPlayerReady()
@@ -40,6 +67,8 @@ namespace TarkovaCola.Client
         // ---------------------------------------------------------------- perks
         internal static void OnDrink(PerkDef def, bool powerup)
         {
+            KeyValuePair<string, int[]> np;
+            if (def != null && NewPerks.TryGetValue(def.Id, out np)) U(np.Key + "_fresh");
             if (!powerup)
             {
                 PerkService.AddStat("drinks", 1);
@@ -56,7 +85,7 @@ namespace TarkovaCola.Client
 
         internal static void CheckActive()
         {
-            int n = Perks.ActivePerks.Count();
+            int n = Perks.DrunkPerks.Count();
             if (n >= 5) U("g_five");
             if (n >= Perks.Original.Length) U("g_six");
             if (ClassicMode.Enabled)
@@ -101,7 +130,7 @@ namespace TarkovaCola.Client
             }
 
             float now = Time.time;
-            int active = Perks.ActivePerks.Count();
+            int active = Perks.DrunkPerks.Count();
             _kills.Add(now);
             _kills.RemoveAll(t => now - t > 10f);
             if (_kills.Count >= 3 && active >= 3) U("g_combo");
@@ -162,15 +191,21 @@ namespace TarkovaCola.Client
                 else if (!alive && PerkService.State["stats"] is Newtonsoft.Json.Linq.JObject st) { st["classic_streak"] = 0; PerkService.Save(); }
             }
             if (!alive) return;
-            if (Synergy.Equipped().Any(id => Synergy.Power(id) > 0f)) U("syn_extract");
-            if (Perks.ActivePerks.Count() >= Perks.Original.Length) U("x_extract6");
+            if (Perks.DrunkPerks.Count() >= Perks.Original.Length) U("x_extract6");
         }
 
-        // ---------------------------------------------------------------- estado (niveles, mejoras, sinergias, misiones)
+        // ---------------------------------------------------------------- estado (niveles, mejoras, misiones)
         internal static void CheckState()
         {
             if (PerkService.IsMax(Deadshot.Id)) U("dd_lvl5");
             if (Perks.Deadshot.Augs.All(a => PerkService.IsDone(a.Id))) U("dd_all");
+            foreach (var kv in NewPerks)
+            {
+                var def = Perks.Get(kv.Key);
+                if (def == null) continue;
+                if (PerkService.IsMax(kv.Key)) U(kv.Value.Key + "_lvl5");
+                if (def.Augs.Length > 0 && def.Augs.All(a => PerkService.IsDone(a.Id))) U(kv.Value.Key + "_all");
+            }
             if (Perks.Original.All(p => PerkService.IsMax(p.Id))) U("g_lvl5all");
             var augs = Perks.All.SelectMany(p => p.Augs).ToList();
             int done = augs.Count(a => PerkService.IsDone(a.Id));
@@ -181,17 +216,7 @@ namespace TarkovaCola.Client
                 if (Perks.All.Any(p => PerkService.EquippedMajor(p.Id, false) != null && PerkService.EquippedMinors(p.Id, false).Count >= 2)) U("m_loaded");
                 if (Perks.Original.All(p => p.Augs.Any(a => PerkService.IsDone(a.Id)))) U("m_spread");
             }
-            OnSynergyUnlocked();
             CheckMissions();
-        }
-
-        internal static void OnSynergyUnlocked()
-        {
-            int n = 0;
-            foreach (var s in Synergy.All)
-                if (Synergy.IsUnlocked(s.Id)) { n++; U(s.Id); }
-            if (n >= 5) U("syn_five");
-            if (n >= Synergy.All.Length) U("syn_all");
         }
 
         // Misiones de la historia completadas (estado de las misiones del perfil)

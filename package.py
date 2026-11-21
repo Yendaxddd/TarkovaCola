@@ -49,6 +49,14 @@ def main():
         for f in packs.rglob("*"):
             if f.is_file(): add(z, f, "SPT_Runtime/user/mods/VisitAPI-Server/packs/" + str(f.relative_to(packs)))
         add(z, ROOT / "Package" / "README.md", "README.md")
+        add(z, ROOT / "Package" / "TRANSLATING.md", "TRANSLATING.md")
+        # plantillas de traduccion (las escribe el mod al arrancar; se copian de la instalacion si estan) y traducciones de la comunidad
+        spt = ROOT.parent
+        for src, arc in ((spt / "BepInEx" / "plugins" / "TarkovaCola" / "locales", "BepInEx/plugins/TarkovaCola/locales/"),
+                         (spt / "SPT_Runtime" / "user" / "mods" / "TarkovaCola" / "locales", "SPT_Runtime/user/mods/TarkovaCola/locales/")):
+            if not src.exists(): print("aviso: faltan las plantillas de traduccion en", src, "(arranca el juego una vez)"); continue
+            for f in src.glob("*.json"):
+                if not f.name.endswith(".custom.json"): add(z, f, arc + f.name)
     print("->", out, round(out.stat().st_size / 1e6, 1), "MB")
 
     # copia del codigo fuente

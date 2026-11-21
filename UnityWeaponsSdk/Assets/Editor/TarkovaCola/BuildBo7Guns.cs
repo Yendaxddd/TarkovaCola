@@ -15,17 +15,17 @@ using UnityEngine;
 // Salida: Build/guns/assets/content/items/mods/tarkovacola/<pieza>.bundle, Preview/bo7_<arma>.png
 namespace TarkovaCola
 {
-    public static class BuildBo7Guns
+    public static partial class BuildBo7Guns
     {
-        private const string Dir = "Assets/TarkovaCola/Models/bo7/";
-        private const string BundleDir = "assets/content/items/mods/tarkovacola/";
-        private static readonly Quaternion R = Quaternion.LookRotation(Vector3.right, Vector3.forward);
+        internal const string Dir = "Assets/TarkovaCola/Models/bo7/";
+        internal const string BundleDir = "assets/content/items/mods/tarkovacola/";
+        internal static readonly Quaternion R = Quaternion.LookRotation(Vector3.right, Vector3.forward);
 
-        private class Pose { public Vector3 p; public Quaternion q = Quaternion.identity; public Pose(Vector3 p, Quaternion q) { this.p = p; this.q = q; } }
+        internal class Pose { public Vector3 p; public Quaternion q = Quaternion.identity; public Pose(Vector3 p, Quaternion q) { this.p = p; this.q = q; } }
         // EFT monta cada accesorio en su ranura con localRotation = Euler(90,0,0) (ContainerCollectionView.SlotView.InsertItem)
-        private static readonly Quaternion E90 = Quaternion.Euler(90f, 0f, 0f);
-        private static Pose ModRoot(Pose slot) => new Pose(slot.p, slot.q * E90);
-        private static Pose Rel(Pose parent, Pose child) => new Pose(Quaternion.Inverse(parent.q) * (child.p - parent.p), Quaternion.Inverse(parent.q) * child.q);
+        internal static readonly Quaternion E90 = Quaternion.Euler(90f, 0f, 0f);
+        internal static Pose ModRoot(Pose slot) => new Pose(slot.p, slot.q * E90);
+        internal static Pose Rel(Pose parent, Pose child) => new Pose(Quaternion.Inverse(parent.q) * (child.p - parent.p), Quaternion.Inverse(parent.q) * child.q);
 
         public static void Run()
         {
@@ -44,12 +44,12 @@ namespace TarkovaCola
             if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null) Preview();
         }
 
-        private const string EftShader = "Assets/Shader Assets/Bumped Specular SMap.shader", EftCube = "Assets/Cubemaps/obshaga_blurred_DXT1.png";
+        internal const string EftShader = "Assets/Shader Assets/Bumped Specular SMap.shader", EftCube = "Assets/Cubemaps/obshaga_blurred_DXT1.png";
 
         // Como el "imposter" del SDK (com.bmpq.assetbundlebrowser-imposter): los shaders y cubemaps de EFT del proyecto se construyen como los
         // bundles "shaders" y "cubemaps" con los mismos CAB/PathID que los del juego, se borran, y nuestras piezas quedan enlazadas a los de verdad
         // (en bundles.json: dependencyKeys "shaders" y "cubemaps")
-        private static void BuildWithImposters(string outDir, List<AssetBundleBuild> builds)
+        internal static void BuildWithImposters(string outDir, List<AssetBundleBuild> builds)
         {
             var gen = new AssetBundleBrowser.ImposterIdentifierGenerator();
             var imposters = new[] { "shaders", "cubemaps" };
@@ -72,7 +72,7 @@ namespace TarkovaCola
         }
 
         // ---------------------------------------------------------------- MK35 ISR
-        private static IEnumerable<string> BuildMk35()
+        internal static IEnumerable<string> BuildMk35()
         {
             var slots = Slots("assets/content/weapons/hk416/weapon_hk_416a5_556x45_container.bundle", "weapon_hk_416a5_556x45_model.generated");
             var rec = Part("sat_vm_ar_finch_rec");
@@ -130,7 +130,7 @@ namespace TarkovaCola
         }
 
         // hijo con pose (espacio del arma) en un prefab cuya raiz esta en 'root'; si se da 'copy', el hijo es ese objeto (con sus hijos)
-        private static void AddChild(GameObject go, Pose root, string name, Pose w, GameObject copy = null)
+        internal static void AddChild(GameObject go, Pose root, string name, Pose w, GameObject copy = null)
         {
             var t = copy != null ? Object.Instantiate(copy).transform : new GameObject(name).transform;
             t.name = name;
@@ -148,7 +148,7 @@ namespace TarkovaCola
 
         // Miras de hierro de BO7: la mira trasera es lo mas alto de la mitad de atras de las piezas, el punto de mira lo mas alto de la de
         // delante (en el espacio del arma: delante = -Y). Devuelve (y de la trasera, y del punto, z de la linea de mira = punta del punto).
-        private static (float rearY, float frontY, float lineZ) Irons(params (BoPart part, Vector3 at)[] parts)
+        internal static (float rearY, float frontY, float lineZ) Irons(params (BoPart part, Vector3 at)[] parts)
         {
             var pts = new List<Vector3>();
             foreach (var (part, at) in parts)
@@ -168,7 +168,7 @@ namespace TarkovaCola
         // Mira trasera "de verdad" (objeto de mira de EFT, para poder apuntar con las miras de hierro): la plantilla es la mira plegable de la
         // HK416 sin sus mallas (las miras ya las dibuja la pieza de BO7); solo quedan su mod_aim_camera (el ojo) y su mod_align_rear.
         // Devuelve el prefab y la altura de mod_align_rear sobre la base de la mira (para colocar la ranura).
-        private static (string path, float alignUp) RearSight(string id)
+        internal static (string path, float alignUp) RearSight(string id)
         {
             var src = EftBundles.Load(Mods + "sights rear/sight_rear_all_hk_416_flip_up.bundle").LoadAllAssets<GameObject>().First(g => g.GetComponent<PreviewPivot>() != null);
             var go = Object.Instantiate(src); go.name = id;
@@ -183,7 +183,7 @@ namespace TarkovaCola
         }
 
         // lo mas alto de una pieza de BO7 colocada en 'at' (espacio del arma), con su escala
-        private static float TopZ(BoPart part, Vector3 at, float s)
+        internal static float TopZ(BoPart part, Vector3 at, float s)
         {
             var v = Visual(part);
             v.transform.position = at; v.transform.rotation = R; v.transform.localScale = Vector3.one * s;
@@ -195,8 +195,8 @@ namespace TarkovaCola
 
         // Guardamanos de EFT montado en su receptor sobre el arma: pose (espacio del arma) de sus ranuras y de sus GripPose (manos).
         // Las GripPose (palma con dedos) se guardan en _grips para copiarlas tal cual.
-        private static readonly Dictionary<string, GameObject> _grips = new Dictionary<string, GameObject>();
-        private static Dictionary<string, Pose> Handguard(Dictionary<string, Pose> weaponSlots, string receiverBundle, string handguardBundle)
+        internal static readonly Dictionary<string, GameObject> _grips = new Dictionary<string, GameObject>();
+        internal static Dictionary<string, Pose> Handguard(Dictionary<string, Pose> weaponSlots, string receiverBundle, string handguardBundle)
         {
             System.Func<string, GameObject> load = b => EftBundles.Load(b).LoadAllAssets<GameObject>().First(g => g.GetComponent<PreviewPivot>() != null);
             var upRoot = ModRoot(weaponSlots["mod_reciever"]);
@@ -215,11 +215,11 @@ namespace TarkovaCola
         }
 
         // escala de las piezas de BO7 (la fija Fit; 1 = la del modelo)
-        private static float _scale = 1f;
+        internal static float _scale = 1f;
 
         // Encaje: con el arma de EFT montada con 'eftMag' y 'eftGrip', se busca escala y posicion (sin giro) para que la parte de arriba del
         // cargador de BO7 y el centro de su empunadura caigan donde los de EFT. Devuelve el desplazamiento de W y deja la escala en _scale.
-        private static Vector3 Fit(string bundle, string model, BoPart rec, BoPart mag, BoPart grip, string eftMag, string eftGrip)
+        internal static Vector3 Fit(string bundle, string model, BoPart rec, BoPart mag, BoPart grip, string eftMag, string eftGrip)
         {
             var (eft, w) = Base(bundle, model);
             var em = LocalBounds(Mount(Slot(w, "mod_magazine"), null, eftMag), w);
@@ -244,7 +244,7 @@ namespace TarkovaCola
 
         // caja de las mallas (sin LOD1+) en el espacio de 'space'. Las mallas de EFT no se pueden leer: se gira todo para que 'space' quede
         // alineado con el mundo y se usan las cajas de los renderers (las piezas van alineadas con el arma, asi que salen justas)
-        private static Bounds LocalBounds(GameObject go, Transform space)
+        internal static Bounds LocalBounds(GameObject go, Transform space)
         {
             var root = space.root; var keep = root.rotation;
             root.rotation = Quaternion.Inverse(space.rotation) * root.rotation;
@@ -263,10 +263,10 @@ namespace TarkovaCola
         // En la MP5 la empunadura va en el armazon y el receptor superior es un accesorio (guardamanos, culata, bocacha, montura).
         // La VMP: "vmp_upper" en la ranura del receptor con el cuerpo, el canon y la empunadura de BO7 y ranuras propias de culata, bocacha y
         // mira; cargador y culata aparte. Misma escala que la MK35; colocada para que la mano derecha de la MP5 coja su empunadura.
-        private const string Mp5 = "assets/content/weapons/mp5/weapon_hk_mp5_navy3_9x19_container.bundle", Mp5Model = "weapon_hk_mp5_navy3_9x19_model.generated";
-        private static float _mk35Scale = 0.834f;
+        internal const string Mp5 = "assets/content/weapons/mp5/weapon_hk_mp5_navy3_9x19_container.bundle", Mp5Model = "weapon_hk_mp5_navy3_9x19_model.generated";
+        internal static float _mk35Scale = 0.834f;
 
-        private static IEnumerable<string> BuildVmp()
+        internal static IEnumerable<string> BuildVmp()
         {
             var slots = Slots(Mp5, Mp5Model);
             _scale = _mk35Scale; float S = _scale;
@@ -303,7 +303,7 @@ namespace TarkovaCola
         }
 
         // donde debe ir la empunadura de BO7 para la mano derecha del arma: palma en reposo + (empunadura - palma) medido en la HK416
-        private static Vector3 GripFromPalm(string bundle)
+        internal static Vector3 GripFromPalm(string bundle)
         {
             System.Func<string, (Vector3 palm, Vector3 grip)> measure = bnd =>
             {
@@ -322,13 +322,13 @@ namespace TarkovaCola
         }
 
         // ---------------------------------------------------------------- piezas de BO7
-        private class BoPart
+        internal class BoPart
         {
             public string Name; public GameObject Fbx; public Dictionary<string, Vector3> Tags = new Dictionary<string, Vector3>();
             public Vector3 Tag(string n) { Vector3 v; if (!Tags.TryGetValue(n, out v)) throw new System.Exception(Name + " no tiene " + n); return v; }
         }
 
-        private static BoPart Part(string model)
+        internal static BoPart Part(string model)
         {
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(Dir + model + "/" + model + ".fbx");
             if (fbx == null) throw new System.Exception("falta el FBX de " + model);
@@ -341,7 +341,7 @@ namespace TarkovaCola
 
         // Prefab de accesorio de EFT: raiz [PreviewPivot] en 'root' (espacio del hueso weapon), las mallas de cada pieza de BO7 con su
         // origen en la posicion dada, ranuras hijas "mod_*", colision, y (cargadores) los patron_NNN del cargador de EFT
-        private static string MakeMod(string id, Pose root, (BoPart part, Vector3 at)[] parts, Dictionary<string, Vector3> childSlots, string magBundle, bool hot = false, bool pivot = true, System.Action<GameObject> extra = null)
+        internal static string MakeMod(string id, Pose root, (BoPart part, Vector3 at)[] parts, Dictionary<string, Vector3> childSlots, string magBundle, bool hot = false, bool pivot = true, System.Action<GameObject> extra = null)
         {
             var go = new GameObject(id);
             var lod0 = new GameObject(id + "_LOD0");
@@ -384,7 +384,7 @@ namespace TarkovaCola
             return path;
         }
 
-        private static void CopyPatrons(GameObject go, string magBundle, Vector3 shift)
+        internal static void CopyPatrons(GameObject go, string magBundle, Vector3 shift)
         {
             var ab = EftBundles.Load(magBundle);
             var src = ab.LoadAllAssets<GameObject>().FirstOrDefault();
@@ -401,11 +401,19 @@ namespace TarkovaCola
             Debug.Log("[BO7] " + go.name + ": " + n + " balas copiadas de " + Path.GetFileName(magBundle));
         }
 
+        // el rig de primera persona del arma base: por nombre, o el *_model.generated / *.generated con brazos (como EftLab.LoadRig)
+        internal static GameObject ModelPrefab(AssetBundle ab, string model)
+        {
+            var all = ab.LoadAllAssets<GameObject>();
+            return all.FirstOrDefault(g => g.name == model) ?? all.FirstOrDefault(g => g.name.EndsWith("_model.generated"))
+                   ?? all.FirstOrDefault(g => g.name.EndsWith(".generated") && !g.name.Contains("_simple") && g.transform.Find("Base HumanLCollarbone") != null);
+        }
+
         // posiciones y giros de las ranuras del arma de EFT, en el espacio del hueso "weapon"
-        private static Dictionary<string, Pose> Slots(string bundle, string model)
+        internal static Dictionary<string, Pose> Slots(string bundle, string model)
         {
             var ab = EftBundles.Load(bundle);
-            var prefab = ab.LoadAllAssets<GameObject>().FirstOrDefault(g => g.name == model);
+            var prefab = ModelPrefab(ab, model);
             if (prefab == null) throw new System.Exception("no esta " + model + " en " + bundle);
             var go = Object.Instantiate(prefab);
             var weapon = go.GetComponentsInChildren<Transform>().First(t => t.name == "weapon");
@@ -417,8 +425,9 @@ namespace TarkovaCola
         }
 
         // ---------------------------------------------------------------- mallas y materiales (como BuildBo6)
-        private static GameObject Visual(BoPart part)
+        internal static GameObject Visual(BoPart part)
         {
+            if (_movers != null) return VisualSplit(part, _movers);
             string model = part.Name;
             var mats = ReadMats(model);
             var cache = new Dictionary<string, Material>();
@@ -427,7 +436,7 @@ namespace TarkovaCola
             foreach (var r in src.GetComponentsInChildren<Renderer>(true))
             {
                 Mesh mesh = r is SkinnedMeshRenderer smr ? smr.sharedMesh : (r.GetComponent<MeshFilter>() != null ? r.GetComponent<MeshFilter>().sharedMesh : null);
-                if (mesh == null) continue;
+                if (mesh == null || _dropMeshes.Contains(model + "/" + r.name)) continue;
                 var go = new GameObject(r.name);
                 go.transform.SetParent(root.transform, false);
                 go.transform.position = r.transform.position; go.transform.rotation = r.transform.rotation; go.transform.localScale = r.transform.lossyScale;
@@ -444,7 +453,7 @@ namespace TarkovaCola
             return root;
         }
 
-        private static void ConfigureTextures()
+        internal static void ConfigureTextures()
         {
             foreach (var path in Directory.GetFiles(Dir, "*.png", SearchOption.AllDirectories))
             {
@@ -460,7 +469,7 @@ namespace TarkovaCola
             }
         }
 
-        private static Dictionary<string, Dictionary<string, string>> ReadMats(string model)
+        internal static Dictionary<string, Dictionary<string, string>> ReadMats(string model)
         {
             var res = new Dictionary<string, Dictionary<string, string>>();
             string json = File.ReadAllText(Dir + model + "/mats.json");
@@ -473,7 +482,7 @@ namespace TarkovaCola
             return res;
         }
 
-        private static Material MakeMaterial(string model, string matName, Dictionary<string, Dictionary<string, string>> mats)
+        internal static Material MakeMaterial(string model, string matName, Dictionary<string, Dictionary<string, string>> mats)
         {
             var key = mats.Keys.Where(k => matName.Contains(k) || k.Contains(matName)).OrderByDescending(k => k.Length).FirstOrDefault();
             var tex = key != null ? mats[key] : new Dictionary<string, string>();
@@ -488,7 +497,11 @@ namespace TarkovaCola
             if (tex.TryGetValue("gloss", out v)) m.SetTexture("_SpecMap", AssetDatabase.LoadAssetAtPath<Texture2D>(Dir + model + "/" + v));
             m.SetTexture("_Cube", AssetDatabase.LoadAssetAtPath<Texture>(EftCube));
             m.SetColor("_SpecColor", new Color(0.35f, 0.35f, 0.35f, 1f));             // el alfa del color de BO7 no es brillo: brillo moderado
-            m.SetColor("_ReflectColor", new Color(1f, 1f, 1f, 0.15f));
+            // el alfa del color de BO7 es su mascara de metal y este shader lo usa como fuerza del reflejo: con el reflejo entero, balas, tornillos
+            // y perillas salian blancos. Las armas nuevas (_movers != null) lo llevan atenuado; la MK35 y la VMP se quedan como estaban.
+            m.SetColor("_ReflectColor", _movers != null ? new Color(0.22f, 0.22f, 0.22f, 0.15f) : new Color(1f, 1f, 1f, 0.15f));
+            // marca de superficie "arma" (como las piezas de EFT): sin ella el mod de camuflajes de 7Bpencil no pinta (proyecta solo sobre stencil 2)
+            m.SetFloat("_StencilType", 2f);
             AssetDatabase.CreateAsset(m, path);
             return m;
         }
@@ -496,7 +509,7 @@ namespace TarkovaCola
         // ---------------------------------------------------------------- vista previa, montada como en el juego
         //   Unity.exe -batchmode -quit -projectPath UnityWeapons -executeMethod TarkovaCola.BuildBo7Guns.Preview
         // Por arma, 4 vistas: [configuracion de fabrica | con accesorios de EFT] x [de lado | tres cuartos]. Lo de EFT sale en gris.
-        private const string Mods = "assets/content/items/mods/";
+        internal const string Mods = "assets/content/items/mods/";
         public static void Preview()
         {
             var cam = new GameObject("cam").AddComponent<Camera>();
@@ -505,18 +518,17 @@ namespace TarkovaCola
             var light = new GameObject("l").AddComponent<Light>(); light.type = LightType.Directional; light.intensity = 1.1f;
             RenderSettings.ambientLight = new Color(0.75f, 0.75f, 0.8f);
             var rt = new RenderTexture(800, 450, 24);
-            var guns = new[] { "mk35", "vmp" };
+            var guns = (System.Environment.GetEnvironmentVariable("BO7_GUN") ?? "mk35,vmp").Split(',');
             foreach (var gun in guns)
             {
                 var tex = new Texture2D(1600, 900, TextureFormat.RGB24, false);
                 for (int variant = 0; variant < 2; variant++)
                 {
-                    var (eft, weapon) = gun == "mk35" ? Base("assets/content/weapons/hk416/weapon_hk_416a5_556x45_container.bundle", "weapon_hk_416a5_556x45_model.generated")
-                                                      : Base(Mp5, Mp5Model);
+                    var (eft, weapon) = Base(Gun(gun).Bundle, Gun(gun).Model);
                     Assemble(gun, weapon, variant == 1);
                     var grey = new Material(Shader.Find("Standard")) { color = new Color(0.55f, 0.56f, 0.58f) };
                     foreach (var r in eft.GetComponentsInChildren<Renderer>()) if (!HasBo(r.transform) && r.enabled) r.sharedMaterials = r.sharedMaterials.Select(_ => grey).ToArray();
-                    var c = weapon.position + weapon.rotation * new Vector3(0f, float.Parse(System.Environment.GetEnvironmentVariable("PREV_Y_" + gun.ToUpperInvariant()) ?? (gun == "mk35" ? "-0.3" : "-0.33"), System.Globalization.CultureInfo.InvariantCulture), float.Parse(System.Environment.GetEnvironmentVariable("PREV_Z") ?? "0", System.Globalization.CultureInfo.InvariantCulture));
+                    var c = weapon.position + weapon.rotation * new Vector3(0f, float.Parse(System.Environment.GetEnvironmentVariable("PREV_Y_" + gun.ToUpperInvariant()) ?? (gun == "vmp" ? "-0.33" : "-0.3"), System.Globalization.CultureInfo.InvariantCulture), float.Parse(System.Environment.GetEnvironmentVariable("PREV_Z") ?? "0", System.Globalization.CultureInfo.InvariantCulture));
                     for (int view = 0; view < 2; view++)
                     {
                         var dir = view == 0 ? new Vector3(1f, 0f, 0f) : new Vector3(0.8f, -0.55f, 0.35f).normalized;
@@ -545,9 +557,9 @@ namespace TarkovaCola
             var light = new GameObject("l").AddComponent<Light>(); light.type = LightType.Directional; light.intensity = 1.1f;
             RenderSettings.ambientLight = new Color(0.7f, 0.7f, 0.75f);
             var rt = new RenderTexture(960, 540, 24) { antiAliasing = 4 }; cam.targetTexture = rt;
-            foreach (var gun in new[] { "mk35", "vmp" })
+            foreach (var gun in (System.Environment.GetEnvironmentVariable("BO7_GUN") ?? "mk35,vmp").Split(','))
             {
-                var (eft, w) = gun == "mk35" ? Base("assets/content/weapons/hk416/weapon_hk_416a5_556x45_container.bundle", "weapon_hk_416a5_556x45_model.generated") : Base(Mp5, Mp5Model);
+                var (eft, w) = Base(Gun(gun).Bundle, Gun(gun).Model);
                 Assemble(gun, w, false);
                 // el ojo: el mod_aim_camera de la mira trasera montada (lo que usa EFT al apuntar con miras de hierro)
                 var aim = w.GetComponentsInChildren<Transform>(true).First(t => t.name == "mod_aim_camera");
@@ -559,14 +571,19 @@ namespace TarkovaCola
                 for (int x = 470; x <= 490; x++) tex.SetPixel(x, 270, Color.red); for (int y = 260; y <= 280; y++) tex.SetPixel(480, y, Color.red);
                 tex.Apply(); File.WriteAllBytes("Preview/aim_" + gun + ".png", tex.EncodeToPNG());
                 Debug.Log("[AIM] " + gun + ": ojo en " + w.InverseTransformPoint(aim.position).ToString("F3"));
+                System.Func<Transform, string> ax = t => "x" + w.InverseTransformDirection(t.right).ToString("F3") + " y" + w.InverseTransformDirection(t.up).ToString("F3") + " z" + w.InverseTransformDirection(t.forward).ToString("F3");
+                Debug.Log("[AIM] " + gun + ": ejes aim " + ax(aim));
+                foreach (var n in new[] { "fireport", "mod_align_front", "mod_align_rear", "mod_sight_rear", "aim_camera" })
+                    foreach (var t in w.GetComponentsInChildren<Transform>(true).Where(t => t.name == n))
+                        Debug.Log("[AIM] " + gun + ": " + n + " (" + t.parent.name + ") en " + w.InverseTransformPoint(t.position).ToString("F4") + " " + ax(t));
                 Object.DestroyImmediate(eft);
             }
             EftBundles.UnloadAll();
         }
 
-        private static (GameObject, Transform) Base(string bundle, string model)
+        internal static (GameObject, Transform) Base(string bundle, string model)
         {
-            var eft = Object.Instantiate(EftBundles.Load(bundle).LoadAllAssets<GameObject>().First(g => g.name == model));
+            var eft = Object.Instantiate(ModelPrefab(EftBundles.Load(bundle), model));
             var weapon = eft.GetComponentsInChildren<Transform>().First(t => t.name == "weapon");
             HideBase(weapon);
             return (eft, weapon);
@@ -583,12 +600,12 @@ namespace TarkovaCola
             }
         }
 
-        internal static void Assemble(string gun, Transform w, bool eftParts) { if (gun == "mk35") Mk35(w, eftParts); else Vmp(w, eftParts); }
+        internal static void Assemble(string gun, Transform w, bool eftParts) { var d = Gun(gun); if (d.Mount != null) d.Mount(w, eftParts); else MountRifle(d, w, eftParts); }
 
-        private static Transform Slot(Transform under, string name) => under.GetComponentsInChildren<Transform>(true).First(t => t.name == name);
+        internal static Transform Slot(Transform under, string name) => under.GetComponentsInChildren<Transform>(true).First(t => t.name == name);
 
         // como SlotView.InsertItem: hijo de la ranura, en su origen, girado 90 en X
-        private static GameObject Mount(Transform slot, string ours, string eftBundle = null)
+        internal static GameObject Mount(Transform slot, string ours, string eftBundle = null)
         {
             GameObject inst = ours != null ? (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/TarkovaCola/Prefabs/" + ours + ".prefab"))
                                            : Object.Instantiate(EftBundles.Load(Mods + eftBundle).LoadAllAssets<GameObject>().First(g => g.GetComponent<PreviewPivot>() != null));
@@ -597,7 +614,7 @@ namespace TarkovaCola
             return inst;
         }
 
-        private static void Mk35(Transform w, bool eftParts)
+        internal static void Mk35(Transform w, bool eftParts)
         {
             var up = Mount(Slot(w, "mod_reciever"), "mk35_upper");
             var bar = Mount(Slot(up.transform, "mod_barrel"), "mk35_barrel");
@@ -617,7 +634,7 @@ namespace TarkovaCola
             }
         }
 
-        private static void Vmp(Transform w, bool eftParts)
+        internal static void Vmp(Transform w, bool eftParts)
         {
             var up = Mount(Slot(w, "mod_reciever"), "vmp_upper");
             Mount(Slot(up.transform, "mod_sight_rear"), "vmp_sight_rear");
@@ -640,9 +657,9 @@ namespace TarkovaCola
         {
             try
             {
-                foreach (var gun in new[] { "mk35", "vmp" })
+                foreach (var gun in (System.Environment.GetEnvironmentVariable("BO7_GUN") ?? "mk35,vmp").Split(','))
                 {
-                    var rig = EftLab.LoadRig(gun == "mk35" ? "assets/content/weapons/hk416/weapon_hk_416a5_556x45_container.bundle" : Mp5);
+                    var rig = EftLab.LoadRig(Gun(gun).Bundle);
                     var weapon = rig.Bones["weapon"];
                     if (System.Environment.GetEnvironmentVariable("HANDS_BASE") != "1") { HideBase(weapon); Assemble(gun, weapon, System.Environment.GetEnvironmentVariable("HANDS_EFT") == "1"); }
                     if (System.Environment.GetEnvironmentVariable("HANDS_LIST") == "1") Debug.Log("[HANDS] " + gun + " clips: " + string.Join(", ", rig.Clips.Select(c => c.name + "(" + Mathf.RoundToInt(c.length * 30f) + ")")));
@@ -670,10 +687,11 @@ namespace TarkovaCola
         // ---------------------------------------------------------------- la VMP sobre otras armas de EFT (para elegir base)
         //   CMP_GUNS="mp7:assets/...container.bundle;uzi:..."   -> Preview/cmp_<nombre>.png (reposo de 1a persona, de lado y la base sola)
         // reposo: el clip _idle, o el final de _out_to_idle
-        private static AnimationClip Idle(EftLab.Rig rig)
+        internal static AnimationClip Idle(EftLab.Rig rig)
         {
             var clips = rig.Clips.Where(c => !c.name.Contains("generated")).ToList();
-            var idle = clips.FirstOrDefault(c => c.name.EndsWith("_idle")) ?? clips.FirstOrDefault(c => c.name.EndsWith("_out_to_idle"));
+            var idle = clips.FirstOrDefault(c => c.name.EndsWith("_idle_armed")) ?? clips.FirstOrDefault(c => c.name.EndsWith("_grip_0_armed"))
+                       ?? clips.FirstOrDefault(c => c.name.EndsWith("_idle") && c.name != "hand_idle") ?? clips.FirstOrDefault(c => c.name.EndsWith("_out_to_idle"));
             if (idle != null) idle.SampleAnimation(rig.Root, idle.name.EndsWith("_out_to_idle") ? idle.length : 0f);
             return idle;
         }
@@ -746,6 +764,6 @@ namespace TarkovaCola
             }
             EftBundles.UnloadAll();
         }
-        private static bool HasBo(Transform t) { for (; t != null; t = t.parent) if (t.name.StartsWith("mk35_") || t.name.StartsWith("vmp_")) return true; return false; }
+        internal static bool HasBo(Transform t) { for (; t != null; t = t.parent) if (Guns.Keys.Any(k => t.name.StartsWith(k + "_"))) return true; return false; }
     }
 }

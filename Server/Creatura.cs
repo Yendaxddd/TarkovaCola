@@ -20,6 +20,8 @@ namespace TarkovaCola.Server
     {
         internal const string ItemId = "6a1c00000000000000000b01";
         internal const string OfferId = "6a1c00000000000000000b02";
+        internal const string MiiId = "6a1c00000000000000000b03";       // duplicado: misma granada de racimo con la piel de Mii
+        internal const string MiiOfferId = "6a1c00000000000000000b04";
         internal const string Rgd5 = "5448be9a4bdc2dfd2f8b456a";
         private const string NeverQuest = "6a1c0000000000000000ffff";   // mision que no existe: oculta la oferta mientras la opcion esta apagada
         internal const int PriceRoubles = 6661;
@@ -36,7 +38,8 @@ namespace TarkovaCola.Server
                 var qa = _traders?[Traders.THERAPIST].QuestAssort;
                 if (qa == null) return;
                 if (!qa.TryGetValue("success", out var success) || success == null) qa["success"] = success = new Dictionary<MongoId, MongoId>();
-                if (on) success.Remove(new MongoId(OfferId)); else success[new MongoId(OfferId)] = new MongoId(NeverQuest);
+                foreach (var id in new[] { OfferId, MiiOfferId })
+                    if (on) success.Remove(new MongoId(id)); else success[new MongoId(id)] = new MongoId(NeverQuest);
                 var f = _assortHelper?.GetType().GetField("<MergedQuestAssorts>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 if (f != null) f.SetValue(_assortHelper, null);
                 Console.WriteLine("[Tarkova-Cola] le creatura en Therapist: " + (on ? "A LA VENTA (que has hecho...)" : "oculta"));
@@ -82,15 +85,37 @@ namespace TarkovaCola.Server
                     },
                 });
 
+                _items.CreateItemFromClone(new NewItemFromCloneDetails
+                {
+                    ItemTplToClone = new MongoId(Creatura.Rgd5),
+                    ParentId = baseItem.Parent,
+                    NewId = new MongoId(Creatura.MiiId),
+                    NewItemName = "tarkovacola_mii",
+                    OverrideProperties = new TemplateItemProperties { CanSellOnRagfair = true },
+                    FleaPriceRoubles = Creatura.PriceRoubles,
+                    HandbookPriceRoubles = Creatura.PriceRoubles,
+                    HandbookParentId = "5b5f7a2386f774093f2ed3c4",
+                    Locales = new Dictionary<string, LocaleDetails>
+                    {
+                        ["en"] = new LocaleDetails { Name = "Mii", ShortName = "Mii",
+                            Description = "A little guy in a red shirt. He looks at you with deep, silent judgement.\n\nCluster grenade: after the blast, 3 small extra explosions around it." },
+                        ["es"] = new LocaleDetails { Name = "Mii", ShortName = "Mii",
+                            Description = "Un tipito con camiseta roja. Te mira juzgándote en silencio.\n\nGranada de racimo: tras la explosión, 3 explosiones pequeñas más a su alrededor." },
+                    },
+                });
+
                 var assort = _traders[Traders.THERAPIST].Assort;
-                var offer = new MongoId(Creatura.OfferId);
-                assort.Items.Add(new Item { Id = offer, Template = new MongoId(Creatura.ItemId), ParentId = "hideout", SlotId = "hideout",
-                    Upd = new Upd { StackObjectsCount = 999999, UnlimitedCount = true } });
-                assort.BarterScheme[offer] = new List<List<BarterScheme>> { new List<BarterScheme> { new BarterScheme { Count = Creatura.PriceRoubles, Template = new MongoId("5449016a4bdc2d6f028b456f") } } };
-                assort.LoyalLevelItems[offer] = 1;
+                foreach (var (offerId, tpl) in new[] { (Creatura.OfferId, Creatura.ItemId), (Creatura.MiiOfferId, Creatura.MiiId) })
+                {
+                    var offer = new MongoId(offerId);
+                    assort.Items.Add(new Item { Id = offer, Template = new MongoId(tpl), ParentId = "hideout", SlotId = "hideout",
+                        Upd = new Upd { StackObjectsCount = 999999, UnlimitedCount = true } });
+                    assort.BarterScheme[offer] = new List<List<BarterScheme>> { new List<BarterScheme> { new BarterScheme { Count = Creatura.PriceRoubles, Template = new MongoId("5449016a4bdc2d6f028b456f") } } };
+                    assort.LoyalLevelItems[offer] = 1;
+                }
                 Creatura.Init(_traders, _assortHelper);
                 Creatura.SetForSale(false);
-                Console.WriteLine("[Tarkova-Cola] le creatura creada (granada de racimo, mercadillo; Therapist solo con la opcion secreta)");
+                Console.WriteLine("[Tarkova-Cola] le creatura y Mii creadas (granadas de racimo, mercadillo; Therapist solo con la opcion secreta)");
             }
             catch (Exception e) { Console.WriteLine("[Tarkova-Cola] ERROR creando le creatura: " + e); }
             return Task.CompletedTask;

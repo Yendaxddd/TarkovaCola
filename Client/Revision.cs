@@ -61,7 +61,7 @@ namespace TarkovaCola.Client
         // --- estado (por raid) ---
         internal static float HotUntil;
         internal static bool NoReloadBonus;
-        internal static int FullMags, Grenades;
+        internal static int FullMags, Grenades, RigGrenades;
         internal static bool InvOpen;
         internal static bool InFallBlast, SelfHeal;
         private static bool _hotPending, _half, _crashOn;
@@ -74,7 +74,7 @@ namespace TarkovaCola.Client
 
         internal static void OnRaidStart()
         {
-            HotUntil = 0f; NoReloadBonus = false; FullMags = 0; Grenades = 1; InvOpen = false; InFallBlast = false; SelfHeal = false;
+            HotUntil = 0f; NoReloadBonus = false; FullMags = 0; Grenades = 2; RigGrenades = 1; InvOpen = false; InFallBlast = false; SelfHeal = false;
             _hotPending = _half = _crashOn = false; _reloadAt = 0f; _stillFor = 0f; _prevStamina = -1f; _aimFor = 0f; _next1Hz = 0f;
             _markedUntil = 0f; _nextMark = 0f; _nextRustle = 0f; _impulseUntil = 0f; _swingAt = 0f; _lastMeleeHit = Time.time; _lastFallBlast = -10f;
             _swingHit = _wasKnife = _eggPending = false; _nests.Clear(); _nextNest = 0f;
@@ -145,6 +145,11 @@ namespace TarkovaCola.Client
                 else if (it is ThrowWeap tw && tw.ThrowType != ThrowWeapType.smoke_grenade && tw.ThrowType != ThrowWeapType.sonar) grenades++;
             }
             FullMags = mags; Grenades = grenades;
+            // granadas en el chaleco tactico (Sin red, 3.1)
+            int rig = 0;
+            var vest = me.Equipment != null ? me.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem : null;
+            if (vest != null) foreach (var it in vest.GetAllItems()) if (it is ThrowWeap tg && tg.ThrowType != ThrowWeapType.smoke_grenade && tg.ThrowType != ThrowWeapType.sonar) rig++;
+            RigGrenades = rig;
 
             // Mochila llena: mas del 80% de la mochila ocupada, un 5% mas lento
             if (Perk.Has("va_d_dry") && BackpackFill(me) > FullBag && me.MovementContext != null)
@@ -168,7 +173,7 @@ namespace TarkovaCola.Client
         internal static float SwayFactor(Player me)
         {
             float m = 1f;
-            if (Grenades == 0 && Perk.Has("dp_powder")) m *= PowderSway;
+            if (Grenades < 2 && Perk.Has("dp_powder")) m *= PowderSway;
             if (_aimFor > DryEyeAfter && Perk.Has("dd_d_lime")) m *= DryEyeSway;
             return m;
         }
@@ -215,7 +220,7 @@ namespace TarkovaCola.Client
         internal static float OnDamageTaken(Player me, EBodyPart part, float damage, DamageInfo info)
         {
             bool bullet = (info.DamageType & (EDamageType.Bullet | EDamageType.Sniper)) != 0;
-            if (Grenades == 0 && Perk.Has("dw_bitter")) damage *= NoNetTaken;
+            if (RigGrenades == 0 && Perk.Has("dw_bitter")) damage *= NoNetTaken;
             if (bullet && (part == EBodyPart.Chest || part == EBodyPart.Stomach) && Grenades > 0 && Perk.Has("dw_hungry") && UnityEngine.Random.value < FragileChance)
                 _eggPending = true;
             return damage;
@@ -287,7 +292,7 @@ namespace TarkovaCola.Client
                 {
                     if (p == null || p == me || p.MovementContext == null || (p.Position - n.Pos).sqrMagnitude > NestRadius * NestRadius) continue;
                     p.MovementContext.ChangeSpeedLimit(0.05f * p.MovementContext.MaxSpeed, Player.ESpeedLimit.Shot, NestHold);
-                    WebVfx.OnVictim(p.Position, NestHold);
+                    WebVfx.OnVictim(p, NestHold);
                     Hud.Notify(Data.Name("ww_fuse"), L.T("notice.ww_fuse"), WidowsWine.Id);
                     Dbg.Log("EFECTO", "Nido: enemigo atrapado");
                     _nests.RemoveAt(i);

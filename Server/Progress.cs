@@ -59,6 +59,11 @@ namespace TarkovaCola.Server
         [JsonPropertyName("unlock")] public bool Unlock { get; set; }
     }
 
+    public class PerkLoadRequest : IRequestData
+    {
+        [JsonPropertyName("count")] public int Count { get; set; }
+    }
+
     public class PerkResponse
     {
         [JsonPropertyName("json")] public string Json { get; set; }
@@ -67,7 +72,7 @@ namespace TarkovaCola.Server
     [Injectable(InjectionType.Transient, int.MaxValue, TypePriority = 400000)]
     public class TarkovaColaRouter : StaticRouter
     {
-        public TarkovaColaRouter(JsonUtil jsonUtil, HttpResponseUtil http, PerkStore store, AchievementStore ach, RefundStore refund, Reroll reroll)
+        public TarkovaColaRouter(JsonUtil jsonUtil, HttpResponseUtil http, PerkStore store, AchievementStore ach, RefundStore refund, Reroll reroll, OfferingStore offering)
             : base(jsonUtil, new List<RouteAction>
             {
                 new RouteAction<PerkRequest>("/tarkovacola/state/get",
@@ -87,6 +92,11 @@ namespace TarkovaCola.Server
                         bool ok = info != null && refund.Send(sessionId, info.Tpl, info.Count);
                         return http.NoBody(new PerkResponse { Json = ok ? "ok" : "no" });
                     }),
+
+                // Ofrenda de Tombstone Soda: lo de los bolsillos y el chaleco al morir (JSON [{tpl,count}])
+                new RouteAction<PerkRequest>("/tarkovacola/offering",
+                    async (url, info, sessionId, output, ct) =>
+                        http.NoBody(new PerkResponse { Json = offering.Send(sessionId, info?.Json) ? "ok" : "no" })),
 
                 // los puntos de los guardias de las misiones, con sus perks y el objeto que llevan (JSON de un array, o "")
                 new RouteAction<PerkRequest>("/tarkovacola/quest/posts",
@@ -108,6 +118,16 @@ namespace TarkovaCola.Server
                 new RouteAction<MachinesRequest>("/tarkovacola/machines/save",
                     async (url, info, sessionId, output, ct) =>
                         http.NoBody(new PerkResponse { Json = Machines.Write(info?.Json) ? "ok" : "no" })),
+
+                // cuantas perks lleva el jugador: cuantas mas, mas enemigos con perks (BotPerksPatch)
+                new RouteAction<PerkLoadRequest>("/tarkovacola/perkload",
+                    async (url, info, sessionId, output, ct) =>
+                    {
+                        int n = Math.Max(0, info?.Count ?? 0);
+                        if (n != BotPerksPatch.PlayerPerks) Console.WriteLine("[Tarkova-Cola] el jugador lleva " + n + " perk(s): enemigos con perks hasta un " + (int)Math.Round(Math.Min(BotPerksPatch.LoadCap, n * BotPerksPatch.PerPerk) * 100) + "% extra");
+                        BotPerksPatch.PlayerPerks = n;
+                        return http.NoBody(new PerkResponse { Json = "ok" });
+                    }),
 
                 // opcion secreta de F12: Therapist vende "le creatura"
                 new RouteAction<JrRequest>("/tarkovacola/jr",

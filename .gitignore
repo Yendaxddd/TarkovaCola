@@ -81,3 +81,10 @@ UnityWeaponsSdk/Assets/TarkovaCola/UiLab/Src/
 # capturas de pruebas
 lab_*.png
 v.log
+
+Client/assets/bo7_anims.bundle
+Client/assets/bo7_sounds.bundle
+
+# modelo original de la granada Mii (solo se distribuye compilado)
+UnityBundle/Assets/Models/mii/
+UnityBundle/Assets/Models/mii.meta

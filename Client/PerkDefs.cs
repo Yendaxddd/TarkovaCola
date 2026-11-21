@@ -32,6 +32,7 @@ namespace TarkovaCola.Client
         public string HandBundle;          // modelo en la mano (null = se deja el de la lata normal)
         public float HandRefHeight = 0.122f;   // altura en metros del modelo de la mano, para escalarlo
         public AugDef[] Augs;
+        public string Signature;                // Classic: mejora menor fija que lleva la perk cuando es el modificador (5.a perk)
         public string[] DrbMajor, DrbMinor;     // desventaja i = la ligada a la mejora i de su tipo
         public Func<string> DrinkNotice;        // subtitulo del aviso al beberla (segun la fuerza con que esta activa)
         public Func<float, string> EffectText;  // texto del efecto base segun la fuerza (1 = completo, Perks.ModifierPower = modificador de Classic)
@@ -53,6 +54,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef SpeedCola = new PerkDef
         {
+            Signature = "a_mags",
             Id = "speedcola",
             ItemTpl = SpeedColaId,
             IconFile = "speedcola_icon.png",
@@ -79,6 +81,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef StaminUp = new PerkDef
         {
+            Signature = "st_feet",
             Id = TarkovaCola.Client.StaminUp.Id,
             ItemTpl = TarkovaCola.Client.StaminUp.ItemTpl,
             IconFile = "staminup_icon.png",
@@ -87,10 +90,10 @@ namespace TarkovaCola.Client
             HandRefHeight = 0.13f,
             Augs = new[]
             {
-                new AugDef { Id = "st_rush",    Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 1 },
+                new AugDef { Id = "st_rush",    Kind = NodeKind.Major,   Seq = 1, Lvl = 1, Goal = 3 },
                 new AugDef { Id = "st_shooter", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 15 },
                 new AugDef { Id = "st_wind",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },
-                new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5000 , Unit = ProgUnit.Meters },
+                new AugDef { Id = "st_feet",    Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 3000 , Unit = ProgUnit.Meters },
                 new AugDef { Id = "st_recover", Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 10 },
                 new AugDef { Id = "st_land",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 3 },
                 new AugDef { Id = "st_lungs",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 20 },
@@ -106,6 +109,7 @@ namespace TarkovaCola.Client
         // ---- perks nuevas: de momento solo la base (item, modelo, icono, cancion y efecto base); el arbol de mejoras llega despues ----
         internal static readonly PerkDef Juggernog = new PerkDef
         {
+            Signature = "jg_thick",
             Id = TarkovaCola.Client.Juggernog.Id,
             ItemTpl = TarkovaCola.Client.Juggernog.ItemTpl,
             IconFile = "juggernog_icon.png",
@@ -116,9 +120,9 @@ namespace TarkovaCola.Client
             Augs = new[]
             {
                 new AugDef { Id = "jg_patch",   Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 10 },     // curaciones x2 de rapidas
-                new AugDef { Id = "jg_plates",  Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 60 },     // placas aguantan el doble
+                new AugDef { Id = "jg_plates",  Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 40 },     // placas aguantan el doble
                 new AugDef { Id = "jg_bastion", Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 5 },      // un golpe letal por raid te deja a 1 PV
-                new AugDef { Id = "jg_skull",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 1500 },   // rebote de balas en el casco
+                new AugDef { Id = "jg_skull",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 600 },   // rebote de balas en el casco
                 new AugDef { Id = "jg_thick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 5 },      // menos sangrado, mas fracturas (desafio: arreglar 5 sangrados pesados)
                 new AugDef { Id = "jg_bones",   Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // menos fracturas, mas sangrado (desafio: arreglar 5 fracturas)
                 new AugDef { Id = "jg_keep",    Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 15 },     // hambre y sed hacen menos dano
@@ -133,6 +137,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef PhdFlopper = new PerkDef
         {
+            Signature = "pf_soles",
             Id = TarkovaCola.Client.PhdFlopper.Id,
             ItemTpl = TarkovaCola.Client.PhdFlopper.ItemTpl,
             IconFile = "phdflopper_icon.png",
@@ -147,7 +152,7 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "pf_soles",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },   // aterrizar no te frena
                 new AugDef { Id = "pf_stop",    Kind = NodeKind.Minor,   Seq = 3, Lvl = 2, Goal = 300 , Unit = ProgUnit.Seconds },    // quieto: estamina x2 de rapida
                 new AugDef { Id = "pf_ears",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 5 },      // inmune a la contusion
-                new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 5000 , Unit = ProgUnit.Meters },   // inmune a alambre de puas y barro
+                new AugDef { Id = "pf_terrain", Kind = NodeKind.Minor,   Seq = 5, Lvl = 3, Goal = 3000 , Unit = ProgUnit.Meters },   // inmune a alambre de puas y barro
                 new AugDef { Id = "pf_slot",    Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
             DrbMajor = new[] { "dp_concussed", "dp_throw", "dp_powder" },
@@ -158,6 +163,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef WidowsWine = new PerkDef
         {
+            Signature = "ww_quick",
             Id = TarkovaCola.Client.WidowsWine.Id,
             ItemTpl = TarkovaCola.Client.WidowsWine.ItemTpl,
             IconFile = "widowswine_icon.png",
@@ -167,7 +173,7 @@ namespace TarkovaCola.Client
             Augs = new[]
             {
                 new AugDef { Id = "ww_spin",    Kind = NodeKind.Major,   Seq = 4, Lvl = 3, Goal = 25 },     // telarana x2 de radio y +2 s
-                new AugDef { Id = "ww_fuse",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 1 },      // Nido (3.0): cada telaraña deja una trampa 20 s
+                new AugDef { Id = "ww_fuse",    Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },      // Nido (3.0): cada telaraña deja una trampa 20 s
                 new AugDef { Id = "ww_burst",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 3 },      // 100 de dano en 3 s: gastas una granada y atrapas
                 new AugDef { Id = "ww_venom",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 5 },      // los atrapados tambien quedan aturdidos
                 new AugDef { Id = "ww_quick",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 10 },     // granadas mas rapidas de lanzar
@@ -183,6 +189,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef Deadshot = new PerkDef
         {
+            Signature = "dd_quick",
             Id = TarkovaCola.Client.Deadshot.Id,
             ItemTpl = TarkovaCola.Client.Deadshot.ItemTpl,
             IconFile = "deadshot_icon.png",
@@ -193,7 +200,7 @@ namespace TarkovaCola.Client
             {
                 new AugDef { Id = "dd_aim",     Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 20 },     // Dead Aim: el arma no se balancea al moverte
                 new AugDef { Id = "dd_pen",     Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 15 },     // Incredible: +30% de penetracion
-                new AugDef { Id = "dd_sky",     Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 1500 },   // To the Skies: retroceso -50%
+                new AugDef { Id = "dd_sky",     Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 800 },   // To the Skies: retroceso -50%
                 new AugDef { Id = "dd_quick",   Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 10 },     // apuntar +20%
                 new AugDef { Id = "dd_steady",  Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 25 },     // aguantar la respiracion +40%
                 new AugDef { Id = "dd_head",    Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 15 },     // tiro a la cabeza: +20% de estamina
@@ -209,6 +216,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef Bandolier = new PerkDef
         {
+            Signature = "bb_cold",
             Id = TarkovaCola.Client.Bandolier.Id,
             ItemTpl = TarkovaCola.Client.Bandolier.ItemTpl,
             IconFile = "bandolier_icon.png", JingleFile = "bandolier_jingle.mp3", HandBundle = "bandolier_hand.bundle", HandRefHeight = 0.13f,
@@ -218,7 +226,7 @@ namespace TarkovaCola.Client
                 new AugDef { Id = "bb_disc",   Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 5 },      // Cinturon de balas (3.0; antes Discipline): 6 cargadores llenos, +10% de dano
                 new AugDef { Id = "bb_bring",  Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 10 },     // Bring it on!: municion y cargadores no pesan
                 new AugDef { Id = "bb_pouch",  Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 5 },      // Extra Pouch: 10% de granada al matar
-                new AugDef { Id = "bb_cold",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 1000 },   // Cold Barrel: -30% de calor
+                new AugDef { Id = "bb_cold",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 600 },   // Cold Barrel: -30% de calor
                 new AugDef { Id = "bb_leech",  Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 15 },     // Ammo Leech: tiro a la cabeza, +2 balas
                 new AugDef { Id = "bb_strap",  Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 3000, Unit = ProgUnit.Meters },   // Padded Strap
                 new AugDef { Id = "bb_slot",   Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
@@ -231,6 +239,7 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef VultureAid = new PerkDef
         {
+            Signature = "va_sharp",
             Id = TarkovaCola.Client.VultureAid.Id,
             ItemTpl = TarkovaCola.Client.VultureAid.ItemTpl,
             IconFile = "vultureaid_icon.png", JingleFile = "vultureaid_jingle.mp3", HandBundle = "vultureaid_hand.bundle", HandRefHeight = 0.13f,
@@ -253,17 +262,18 @@ namespace TarkovaCola.Client
 
         internal static readonly PerkDef MeleeMacchiato = new PerkDef
         {
+            Signature = "mm_quick",
             Id = TarkovaCola.Client.MeleeMacchiato.Id,
             ItemTpl = TarkovaCola.Client.MeleeMacchiato.ItemTpl,
             IconFile = "meleemacchiato_icon.png", JingleFile = "meleemacchiato_jingle.mp3", HandBundle = "meleemacchiato_hand.bundle", HandRefHeight = 0.13f,
             Augs = new[]
             {
-                new AugDef { Id = "mm_charge", Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 2000, Unit = ProgUnit.Meters },   // Charge
+                new AugDef { Id = "mm_charge", Kind = NodeKind.Major,   Seq = 3, Lvl = 2, Goal = 1000, Unit = ProgUnit.Meters },   // Charge
                 new AugDef { Id = "mm_frenzy", Kind = NodeKind.Major,   Seq = 5, Lvl = 3, Goal = 10 },     // Frenzy: golpes seguidos x1.2
                 new AugDef { Id = "mm_iron",   Kind = NodeKind.Major,   Seq = 7, Lvl = 4, Goal = 10 },     // Iron Skull
                 new AugDef { Id = "mm_quick",  Kind = NodeKind.Minor,   Seq = 1, Lvl = 1, Goal = 30 },     // Quick Draw
                 new AugDef { Id = "mm_hone",   Kind = NodeKind.Minor,   Seq = 2, Lvl = 1, Goal = 50 },     // Whetstone
-                new AugDef { Id = "mm_flash",  Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 200 },    // Flash Strike
+                new AugDef { Id = "mm_flash",  Kind = NodeKind.Minor,   Seq = 4, Lvl = 2, Goal = 100 },    // Flash Strike
                 new AugDef { Id = "mm_wind",   Kind = NodeKind.Minor,   Seq = 6, Lvl = 3, Goal = 25 },     // Second Wind
                 new AugDef { Id = "mm_slot",   Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
             },
@@ -273,7 +283,147 @@ namespace TarkovaCola.Client
             EffectText = TarkovaCola.Client.MeleeMacchiato.Effect,
         };
 
-        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot, Bandolier, VultureAid, MeleeMacchiato };
+        // ---- perks finales (3.1): la base de cada una y sus arboles; los efectos estan en FinalPerks*.cs ----
+        internal static readonly PerkDef QuickRevive = new PerkDef
+        {
+            Signature = "qr_patience",
+            Id = TarkovaCola.Client.QuickRevive.Id,
+            ItemTpl = TarkovaCola.Client.QuickRevive.ItemTpl,
+            IconFile = TarkovaCola.Client.QuickRevive.Id + "_icon.png", JingleFile = TarkovaCola.Client.QuickRevive.Id + "_jingle.mp3", HandBundle = "quickrevive_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "qr_revive", Kind = NodeKind.Major, Seq = 3, Lvl = 2, Goal = 1000 },
+                new AugDef { Id = "qr_transfuse", Kind = NodeKind.Major, Seq = 5, Lvl = 3, Goal = 5 },
+                new AugDef { Id = "qr_medic", Kind = NodeKind.Major, Seq = 7, Lvl = 4, Goal = 2000 },
+                new AugDef { Id = "qr_patience", Kind = NodeKind.Minor, Seq = 1, Lvl = 1, Goal = 50 },
+                new AugDef { Id = "qr_priority", Kind = NodeKind.Minor, Seq = 2, Lvl = 1, Goal = 300 },
+                new AugDef { Id = "qr_clot", Kind = NodeKind.Minor, Seq = 4, Lvl = 2, Goal = 10 },
+                new AugDef { Id = "qr_reserve", Kind = NodeKind.Minor, Seq = 6, Lvl = 3, Goal = 20 },
+                new AugDef { Id = "qr_slot", Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "qr_d_thin", "qr_d_metab", "qr_d_startle" },
+            DrbMinor = new[] { "qr_d_lukewarm", "qr_d_scars", "qr_d_rush", "qr_d_weak" },
+            DrinkNotice = TarkovaCola.Client.QuickRevive.Notice,
+            EffectText = TarkovaCola.Client.QuickRevive.Effect,
+        };
+
+        internal static readonly PerkDef MuleKick = new PerkDef
+        {
+            Signature = "mk_chamber",
+            Id = TarkovaCola.Client.MuleKick.Id,
+            ItemTpl = TarkovaCola.Client.MuleKick.ItemTpl,
+            IconFile = TarkovaCola.Client.MuleKick.Id + "_icon.png", JingleFile = TarkovaCola.Client.MuleKick.Id + "_jingle.mp3", HandBundle = "mulekick_hand.bundle", HandRefHeight = 0.17f,
+            Augs = new[]
+            {
+                new AugDef { Id = "mk_kick", Kind = NodeKind.Major, Seq = 3, Lvl = 2, Goal = 15 },
+                new AugDef { Id = "mk_bando", Kind = NodeKind.Major, Seq = 5, Lvl = 3, Goal = 25 },
+                new AugDef { Id = "mk_change", Kind = NodeKind.Major, Seq = 7, Lvl = 4, Goal = 30 },
+                new AugDef { Id = "mk_strap", Kind = NodeKind.Minor, Seq = 1, Lvl = 1, Goal = 3000, Unit = ProgUnit.Meters },
+                new AugDef { Id = "mk_chamber", Kind = NodeKind.Minor, Seq = 2, Lvl = 1, Goal = 30 },
+                new AugDef { Id = "mk_balance", Kind = NodeKind.Minor, Seq = 4, Lvl = 2, Goal = 10 },
+                new AugDef { Id = "mk_holster", Kind = NodeKind.Minor, Seq = 6, Lvl = 3, Goal = 100 },
+                new AugDef { Id = "mk_slot", Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "mk_d_load", "mk_d_strap", "mk_d_clumsy" },
+            DrbMinor = new[] { "mk_d_empty", "mk_d_safety", "mk_d_clatter", "mk_d_tangled" },
+            DrinkNotice = TarkovaCola.Client.MuleKick.Notice,
+            EffectText = TarkovaCola.Client.MuleKick.Effect,
+        };
+
+        internal static readonly PerkDef ElectricCherry = new PerkDef
+        {
+            Signature = "ec_battery",
+            Id = TarkovaCola.Client.ElectricCherry.Id,
+            ItemTpl = TarkovaCola.Client.ElectricCherry.ItemTpl,
+            IconFile = TarkovaCola.Client.ElectricCherry.Id + "_icon.png", JingleFile = TarkovaCola.Client.ElectricCherry.Id + "_jingle.mp3", HandBundle = "electriccherry_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "ec_discharge", Kind = NodeKind.Major, Seq = 3, Lvl = 2, Goal = 30 },
+                new AugDef { Id = "ec_overcharge", Kind = NodeKind.Major, Seq = 5, Lvl = 3, Goal = 2000, Unit = ProgUnit.Meters },
+                new AugDef { Id = "ec_lightning", Kind = NodeKind.Major, Seq = 7, Lvl = 4, Goal = 20 },
+                new AugDef { Id = "ec_battery", Kind = NodeKind.Minor, Seq = 1, Lvl = 1, Goal = 180, Unit = ProgUnit.Seconds },
+                new AugDef { Id = "ec_voltage", Kind = NodeKind.Minor, Seq = 2, Lvl = 1, Goal = 50 },
+                new AugDef { Id = "ec_feedback", Kind = NodeKind.Minor, Seq = 4, Lvl = 2, Goal = 10 },
+                new AugDef { Id = "ec_steady", Kind = NodeKind.Minor, Seq = 6, Lvl = 3, Goal = 1000, Unit = ProgUnit.Meters },
+                new AugDef { Id = "ec_slot", Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "ec_d_leak", "ec_d_polarity", "ec_d_backlash" },
+            DrbMinor = new[] { "ec_d_short", "ec_d_spark", "ec_d_tingle", "ec_d_ceiling" },
+            DrinkNotice = TarkovaCola.Client.ElectricCherry.Notice,
+            EffectText = TarkovaCola.Client.ElectricCherry.Effect,
+        };
+
+        internal static readonly PerkDef DeathPerception = new PerkDef
+        {
+            Signature = "de_persist",
+            Id = TarkovaCola.Client.DeathPerception.Id,
+            ItemTpl = TarkovaCola.Client.DeathPerception.ItemTpl,
+            IconFile = TarkovaCola.Client.DeathPerception.Id + "_icon.png", JingleFile = TarkovaCola.Client.DeathPerception.Id + "_jingle.mp3", HandBundle = "deathperception_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "de_sixth", Kind = NodeKind.Major, Seq = 3, Lvl = 2, Goal = 25 },
+                new AugDef { Id = "de_hunter", Kind = NodeKind.Major, Seq = 5, Lvl = 3, Goal = 10 },
+                new AugDef { Id = "de_instinct", Kind = NodeKind.Major, Seq = 7, Lvl = 4, Goal = 15 },
+                new AugDef { Id = "de_persist", Kind = NodeKind.Minor, Seq = 1, Lvl = 1, Goal = 10 },
+                new AugDef { Id = "de_cat", Kind = NodeKind.Minor, Seq = 2, Lvl = 1, Goal = 15 },
+                new AugDef { Id = "de_shrapnel", Kind = NodeKind.Minor, Seq = 4, Lvl = 2, Goal = 10 },
+                new AugDef { Id = "de_reading", Kind = NodeKind.Minor, Seq = 6, Lvl = 3, Goal = 10 },
+                new AugDef { Id = "de_slot", Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "de_d_interf", "de_d_short", "de_d_paranoia" },
+            DrbMinor = new[] { "de_d_lag", "de_d_glare", "de_d_migraine", "de_d_overload" },
+            DrinkNotice = TarkovaCola.Client.DeathPerception.Notice,
+            EffectText = TarkovaCola.Client.DeathPerception.Effect,
+        };
+
+        internal static readonly PerkDef Tombstone = new PerkDef
+        {
+            Signature = "ts_long",
+            Id = TarkovaCola.Client.Tombstone.Id,
+            ItemTpl = TarkovaCola.Client.Tombstone.ItemTpl,
+            IconFile = TarkovaCola.Client.Tombstone.Id + "_icon.png", JingleFile = TarkovaCola.Client.Tombstone.Id + "_jingle.mp3", HandBundle = "tombstone_hand.bundle", HandRefHeight = 0.17f,
+            Augs = new[]
+            {
+                new AugDef { Id = "ts_offering", Kind = NodeKind.Major, Seq = 3, Lvl = 2, Goal = 5 },
+                new AugDef { Id = "ts_polter", Kind = NodeKind.Major, Seq = 5, Lvl = 3, Goal = 10 },
+                new AugDef { Id = "ts_haunt", Kind = NodeKind.Major, Seq = 7, Lvl = 4, Goal = 5 },
+                new AugDef { Id = "ts_long", Kind = NodeKind.Minor, Seq = 1, Lvl = 1, Goal = 60, Unit = ProgUnit.Seconds },
+                new AugDef { Id = "ts_restless", Kind = NodeKind.Minor, Seq = 2, Lvl = 1, Goal = 3 },
+                new AugDef { Id = "ts_ecto", Kind = NodeKind.Minor, Seq = 4, Lvl = 2, Goal = 10 },
+                new AugDef { Id = "ts_trail", Kind = NodeKind.Minor, Seq = 6, Lvl = 3, Goal = 5 },
+                new AugDef { Id = "ts_slot", Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "ts_d_short", "ts_d_heavy", "ts_d_marked" },
+            DrbMinor = new[] { "ts_d_cold", "ts_d_wail", "ts_d_slow", "ts_d_fragile" },
+            DrinkNotice = TarkovaCola.Client.Tombstone.Notice,
+            EffectText = TarkovaCola.Client.Tombstone.Effect,
+        };
+
+        internal static readonly PerkDef DoubleTap = new PerkDef
+        {
+            Signature = "db_cold",
+            Id = TarkovaCola.Client.DoubleTap.Id,
+            ItemTpl = TarkovaCola.Client.DoubleTap.ItemTpl,
+            IconFile = TarkovaCola.Client.DoubleTap.Id + "_icon.png", JingleFile = TarkovaCola.Client.DoubleTap.Id + "_jingle.mp3", HandBundle = "doubletap_hand.bundle", HandRefHeight = 0.13f,
+            Augs = new[]
+            {
+                new AugDef { Id = "db_double", Kind = NodeKind.Major, Seq = 3, Lvl = 2, Goal = 20 },
+                new AugDef { Id = "db_perf", Kind = NodeKind.Major, Seq = 5, Lvl = 3, Goal = 15 },
+                new AugDef { Id = "db_momentum", Kind = NodeKind.Major, Seq = 7, Lvl = 4, Goal = 30 },
+                new AugDef { Id = "db_trigger", Kind = NodeKind.Minor, Seq = 1, Lvl = 1, Goal = 15 },
+                new AugDef { Id = "db_cold", Kind = NodeKind.Minor, Seq = 2, Lvl = 1, Goal = 800 },
+                new AugDef { Id = "db_feed", Kind = NodeKind.Minor, Seq = 4, Lvl = 2, Goal = 10 },
+                new AugDef { Id = "db_metro", Kind = NodeKind.Minor, Seq = 6, Lvl = 3, Goal = 10 },
+                new AugDef { Id = "db_slot", Kind = NodeKind.Special, Seq = 9, Lvl = 5, Goal = 1 },
+            },
+            DrbMajor = new[] { "db_d_hungry", "db_d_step", "db_d_jam" },
+            DrbMinor = new[] { "db_d_slow", "db_d_kick", "db_d_wear", "db_d_irreg" },
+            DrinkNotice = TarkovaCola.Client.DoubleTap.Notice,
+            EffectText = TarkovaCola.Client.DoubleTap.Effect,
+        };
+
+        internal static readonly PerkDef[] All = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot, Bandolier, VultureAid, MeleeMacchiato,
+                                                   QuickRevive, MuleKick, ElectricCherry, DeathPerception, Tombstone, DoubleTap };
         // las seis originales (los logros de "todas las perks" se escribieron para ellas)
         internal static readonly PerkDef[] Original = { SpeedCola, StaminUp, Juggernog, PhdFlopper, WidowsWine, Deadshot };
 
@@ -297,20 +447,26 @@ namespace TarkovaCola.Client
         internal static PerkDef OfNode(string nodeId) { PerkDef p; return nodeId != null && _byNode.TryGetValue(nodeId, out p) ? p : null; }
 
         // ---- perks activas en la raid actual (se bebieron en ella; en Classic tambien las que persisten de raids anteriores) ----
-        internal const float ModifierPower = 0.4f;          // Classic: la perk "modificador" da el 40% de su efecto base
+        internal const float ModifierPower = 0.5f;          // Classic: la perk "modificador" da el 50% de su efecto base (3.1; antes 40%) + su mejora firma
         private static readonly HashSet<string> _active = new HashSet<string>();
         private static string _modifier;                    // perk activa como modificador (Classic): efecto reducido
-        internal static bool IsActive(string perkId) { return _active.Contains(perkId); }
-        internal static bool AnyActive { get { return _active.Count > 0; } }
+        // Efectos pausados (F12 "Pausar efectos de perks", para probar sin ellas): las perks siguen bebidas (HUD, XP, eternas, maquinas)
+        // pero IsActive/Power/AnyActive dicen que no, asi que no se aplica ningun efecto.
+        internal static bool Paused { get { return Plugin.CfgPauseEffects != null && Plugin.CfgPauseEffects.Value; } }
+        internal static bool IsDrunk(string perkId) { return _active.Contains(perkId); }
+        internal static bool IsActive(string perkId) { return !Paused && _active.Contains(perkId); }
+        internal static bool AnyActive { get { return !Paused && _active.Count > 0; } }
         internal static bool IsModifier(string perkId) { return perkId != null && perkId == _modifier && _active.Contains(perkId); }
         // Fuerza del efecto base: 0 = inactiva, 1 = completo, ModifierPower = modificador de Classic.
-        internal static float Power(string perkId) { return !_active.Contains(perkId) ? 0f : (perkId == _modifier ? ModifierPower : 1f); }
+        internal static float Power(string perkId) { return !IsActive(perkId) ? 0f : (perkId == _modifier ? ModifierPower : 1f); }
         internal static void Activate(string perkId, bool modifier = false)
         {
             _active.Add(perkId);
             if (modifier) _modifier = perkId; else if (_modifier == perkId) _modifier = null;
+            BotPerkLoad.Sync(_active.Count);
         }
-        internal static void ClearActive() { _active.Clear(); _modifier = null; }
-        internal static IEnumerable<PerkDef> ActivePerks { get { return All.Where(p => _active.Contains(p.Id)); } }
+        internal static void ClearActive() { _active.Clear(); _modifier = null; BotPerkLoad.Sync(0); }
+        internal static IEnumerable<PerkDef> ActivePerks { get { return All.Where(p => IsActive(p.Id)); } }
+        internal static IEnumerable<PerkDef> DrunkPerks { get { return All.Where(p => _active.Contains(p.Id)); } }
     }
 }

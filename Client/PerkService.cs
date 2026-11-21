@@ -131,9 +131,30 @@ namespace TarkovaCola.Client
             SendRefund(tpl, count);
         }
 
+        // Ofrenda de Tombstone (3.1): lista JSON [{tpl,count}] que el servidor devuelve por correo; se manda fuera de la raid
+        private static string _pendingOffering;
+        internal static void RequestOffering(string json)
+        {
+            _pendingOffering = json;
+            if (Plugin.ServerSafe) FlushRefunds();
+        }
+
         // Plugin.Update fuera de la raid
         internal static void FlushRefunds()
         {
+            if (_pendingOffering != null && Plugin.ServerSafe)
+            {
+                var body = new JObject { ["json"] = _pendingOffering }.ToString(Formatting.None);
+                _pendingOffering = null;
+                try
+                {
+                    RequestHandler.PostJsonAsync("/tarkovacola/offering", body).ContinueWith(t =>
+                    {
+                        if (t.IsFaulted) Plugin.Log.LogWarning("No se pudo enviar la ofrenda: " + t.Exception?.GetBaseException().Message);
+                    });
+                }
+                catch (Exception e) { Plugin.Log.LogWarning("Error enviando la ofrenda: " + e.Message); }
+            }
             if (_pendingRefunds.Count == 0 || !Plugin.ServerSafe) return;
             var list = _pendingRefunds.ToArray();
             _pendingRefunds.Clear();
@@ -241,6 +262,7 @@ namespace TarkovaCola.Client
                 Sub(Sub(State, "researched"), c.Perk)[id] = true;
                 Plugin.Log.LogInfo("Desafio completado: " + id);
                 Hud.Notify(L.T("notice.chal.title"), L.F("notice.chal.sub", Data.Name(id)), c.Perk);
+                Jingle.ChallengeDone();
             }
             Save();
             if (now >= c.Goal) Achievements.CheckState();

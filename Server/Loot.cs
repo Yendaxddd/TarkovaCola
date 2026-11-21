@@ -25,32 +25,32 @@ namespace TarkovaCola.Server
     // Bots: probabilidad de que el bot lleve una perk encima al aparecer.
     internal class LootSettings
     {
-        internal const int CurrentVersion = 3;               // al subirla, un loot.json mas viejo se cambia por los valores nuevos
+        internal const int CurrentVersion = 5;   // 5: mas perks en el botin (x1.6) y en enemigos (PMC 25%, Scav 10%, Rogue 30%). Al subirla, un loot.json mas viejo se cambia por los valores nuevos
         public int Version { get; set; } = CurrentVersion;
-        public double AmmoBox { get; set; } = 0.04;           // cajas de municion de madera: todas
-        public double WoodenCrate { get; set; } = 0.05;       // cajas de madera: todas
-        public double GrenadeBox { get; set; } = 0.10;        // cajas de granadas: Widow's Wine y PHD Flopper
-        public double RationCrate { get; set; } = 0.10;       // cajas de raciones: Juggernog y Stamin-Up
-        public double MedCase { get; set; } = 0.06;           // botiquines y bolsas medicas: Juggernog y PHD Flopper
-        public double WeaponBox { get; set; } = 0.05;         // cajas de armas: Deadshot y Speed Cola
-        public double DuffleBag { get; set; } = 0.03;         // bolsas de deporte: todas
-        public double DeadScav { get; set; } = 0.03;          // Scavs muertos del mapa: todas
-        public double Cache { get; set; } = 0.12;             // alijos enterrados y barriles: todas
-        public double Drawer { get; set; } = 0.01;            // cajones y chaquetas: todas (poco, hay muchos)
-        public double PmcBody { get; set; } = 0.06;           // cuerpos de PMC del mapa: todas
-        public double Safe { get; set; } = 0.45;              // cajas fuertes: casi seguro que sale alguna
-        public double LooseDrinks { get; set; } = 0.04;       // sueltas por el mapa, donde pueden salir bebidas (Tar-Cola, bebidas energeticas...)
+        public double AmmoBox { get; set; } = 0.07;           // cajas de municion de madera: todas
+        public double WoodenCrate { get; set; } = 0.08;       // cajas de madera: todas
+        public double GrenadeBox { get; set; } = 0.16;        // cajas de granadas: Widow's Wine y PHD Flopper
+        public double RationCrate { get; set; } = 0.16;       // cajas de raciones: Juggernog y Stamin-Up
+        public double MedCase { get; set; } = 0.1;           // botiquines y bolsas medicas: Juggernog y PHD Flopper
+        public double WeaponBox { get; set; } = 0.08;         // cajas de armas: Deadshot y Speed Cola
+        public double DuffleBag { get; set; } = 0.05;         // bolsas de deporte: todas
+        public double DeadScav { get; set; } = 0.05;          // Scavs muertos del mapa: todas
+        public double Cache { get; set; } = 0.2;             // alijos enterrados y barriles: todas
+        public double Drawer { get; set; } = 0.015;            // cajones y chaquetas: todas (poco, hay muchos)
+        public double PmcBody { get; set; } = 0.1;           // cuerpos de PMC del mapa: todas
+        public double Safe { get; set; } = 0.6;              // cajas fuertes: casi seguro que sale alguna
+        public double LooseDrinks { get; set; } = 0.06;       // sueltas por el mapa, donde pueden salir bebidas (Tar-Cola, bebidas energeticas...)
         public int BossPerks { get; set; } = 2;               // jefes: siempre llevan este numero de perks distintas
-        public double PmcChance { get; set; } = 0.10;         // PMC con vida
-        public double ScavChance { get; set; } = 0.03;        // Scavs
-        public double RogueChance { get; set; } = 0.12;       // Rogues
+        public double PmcChance { get; set; } = 0.25;         // PMC con vida
+        public double ScavChance { get; set; } = 0.1;        // Scavs
+        public double RogueChance { get; set; } = 0.3;       // Rogues
         // Nucleo APEX (Server/Apex.cs): raro
         public double ApexSafe { get; set; } = 0.04;          // cajas fuertes
         public double ApexCache { get; set; } = 0.02;         // alijos enterrados y barriles
         public double ApexWeaponBox { get; set; } = 0.01;     // cajas de armas
-        public double ApexPmcBody { get; set; } = 0.02;       // cuerpos de PMC del mapa
+        public double ApexPmcBody { get; set; } = 0.003;      // cuerpos de PMC del mapa (3.1: 0.02 -> 0.003, salia demasiado: es por objeto sacado)
         public double ApexBoss { get; set; } = 0.20;          // jefes (no sus escoltas)
-        public double ApexPmc { get; set; } = 0.01;           // PMC con vida
+        public double ApexPmc { get; set; } = 0.005;          // PMC con vida (3.1: 0.01 -> 0.005)
     }
 
     internal static class LootContainers
@@ -136,8 +136,8 @@ namespace TarkovaCola.Server
                 (LootContainers.WoodenCrate, all, s.WoodenCrate),
                 (LootContainers.GrenadeBox, new[] { Perks.WidowsWine, Perks.PhdFlopper }, s.GrenadeBox),
                 (LootContainers.RationCrate, new[] { Perks.Juggernog, Perks.StaminUp }, s.RationCrate),
-                (LootContainers.MedCase, new[] { Perks.Juggernog, Perks.PhdFlopper }, s.MedCase),
-                (LootContainers.WeaponBox, new[] { Perks.Deadshot, Perks.SpeedCola }, s.WeaponBox),
+                (LootContainers.MedCase, new[] { Perks.Juggernog, Perks.PhdFlopper, Perks.QuickRevive }, s.MedCase),
+                (LootContainers.WeaponBox, new[] { Perks.Deadshot, Perks.SpeedCola, Perks.MuleKick, Perks.DoubleTap }, s.WeaponBox),
                 (LootContainers.DuffleBag, all, s.DuffleBag),
                 (LootContainers.DeadScav, all, s.DeadScav),
                 (LootContainers.Cache, all, s.Cache),
@@ -262,9 +262,9 @@ namespace TarkovaCola.Server
                 string role = botGenerationDetails?.RoleLowercase ?? "";
                 int count = 0;
                 if ((role.StartsWith("boss") && role != "bosstest") || BossFollowers.Contains(role)) count = s.BossPerks;
-                else if (botGenerationDetails.IsPmc) count = Roll(s.PmcChance);
-                else if (role == "exusec") count = Roll(s.RogueChance);
-                else if (Scavs.Contains(role)) count = Roll(s.ScavChance);
+                else if (botGenerationDetails.IsPmc) count = Roll(Loaded(s.PmcChance));
+                else if (role == "exusec") count = Roll(Loaded(s.RogueChance));
+                else if (Scavs.Contains(role)) count = Roll(Loaded(s.ScavChance));
                 // nucleo APEX: jefes (no escoltas) y, muy pocas veces, PMC
                 bool bossOnly = role.StartsWith("boss") && role != "bosstest";
                 if (LootContainers.BotHelper != null && Roll(bossOnly ? s.ApexBoss : botGenerationDetails.IsPmc ? s.ApexPmc : 0) > 0)
@@ -283,10 +283,38 @@ namespace TarkovaCola.Server
                     var item = new Item { Id = id, Template = tpl };
                     var r = LootContainers.BotHelper.AddItemWithChildrenToEquipmentSlot(botId, Slots, id, tpl, new List<Item> { item }, botInventory);
                     if (r != ItemAddedResult.SUCCESS) Console.WriteLine("[Tarkova-Cola] No cupo " + perk.Id + " en " + role + ": " + r);
+                    else if (perk.Id == "meleemacchiato" && !bossOnly) MeleeOnly(botInventory, role);
                 }
             }
             catch (Exception e) { Console.WriteLine("[Tarkova-Cola] ERROR anadiendo perks a un bot: " + e.Message); }
         }
+
+        // Melee Macchiato en un bot normal: se le quitan las armas de fuego (con todo lo que llevan dentro) y, si no tenia, se le da un machete
+        private static readonly string[] Guns = { "FirstPrimaryWeapon", "SecondPrimaryWeapon", "Holster" };
+        private const string Machete = "5c0126f40db834002a125382";    // SP-8 "Survival Machete"
+        private static void MeleeOnly(BotBaseInventory inv, string role)
+        {
+            var items = inv.Items;
+            if (items == null) return;
+            var gone = new HashSet<MongoId>(items.Where(i => i.ParentId == inv.Equipment.ToString() && Guns.Contains(i.SlotId)).Select(i => i.Id));
+            bool grew = true;
+            while (grew)
+            {
+                grew = false;
+                foreach (var i in items)
+                    if (!gone.Contains(i.Id) && i.ParentId != null && gone.Contains(new MongoId(i.ParentId))) { gone.Add(i.Id); grew = true; }
+            }
+            items.RemoveAll(i => gone.Contains(i.Id));
+            if (!items.Any(i => i.ParentId == inv.Equipment.ToString() && i.SlotId == "Scabbard"))
+                items.Add(new Item { Id = new MongoId(), Template = new MongoId(Machete), ParentId = inv.Equipment.ToString(), SlotId = "Scabbard" });
+            Console.WriteLine("[Tarkova-Cola] " + role + " con Melee Macchiato: solo cuerpo a cuerpo (" + gone.Count + " piezas de armas quitadas)");
+        }
+
+        // Equilibrio: cuantas mas perks lleve el jugador, mas enemigos con perks: +4% por perk activa, como mucho 50%
+        // (si la base ya es mayor, se respeta). El cliente avisa con /tarkovacola/perkload al beber o al empezar la raid.
+        internal static volatile int PlayerPerks;
+        internal const double PerPerk = 0.04, LoadCap = 0.50;
+        private static double Loaded(double baseChance) { return Math.Max(baseChance, Math.Min(LoadCap, baseChance + PerPerk * PlayerPerks)); }
 
         private static int Roll(double chance) { lock (LootContainers.Rng) return LootContainers.Rng.NextDouble() < chance ? 1 : 0; }
     }

@@ -23,132 +23,6 @@
   "legendary",
   "deadshot"
  ],
- "syncardio": [
-  "common",
-  [
-   "speedcola",
-   "staminup"
-  ]
- ],
- "synmedic": [
-  "common",
-  [
-   "speedcola",
-   "juggernog"
-  ]
- ],
- "synblast": [
-  "common",
-  [
-   "speedcola",
-   "phdflopper"
-  ]
- ],
- "synpin": [
-  "common",
-  [
-   "speedcola",
-   "widowswine"
-  ]
- ],
- "syntrigger": [
-  "common",
-  [
-   "speedcola",
-   "deadshot"
-  ]
- ],
- "syntank": [
-  "common",
-  [
-   "staminup",
-   "juggernog"
-  ]
- ],
- "synbounce": [
-  "common",
-  [
-   "staminup",
-   "phdflopper"
-  ]
- ],
- "syngetaway": [
-  "common",
-  [
-   "staminup",
-   "widowswine"
-  ]
- ],
- "synbreath": [
-  "common",
-  [
-   "staminup",
-   "deadshot"
-  ]
- ],
- "synshock": [
-  "common",
-  [
-   "juggernog",
-   "phdflopper"
-  ]
- ],
- "syniron": [
-  "common",
-  [
-   "juggernog",
-   "widowswine"
-  ]
- ],
- "synsights": [
-  "common",
-  [
-   "juggernog",
-   "deadshot"
-  ]
- ],
- "synwebblast": [
-  "common",
-  [
-   "phdflopper",
-   "widowswine"
-  ]
- ],
- "synabove": [
-  "common",
-  [
-   "phdflopper",
-   "deadshot"
-  ]
- ],
- "synspider": [
-  "common",
-  [
-   "widowswine",
-   "deadshot"
-  ]
- ],
- "synfive": [
-  "rare",
-  [
-   "speedcola",
-   "juggernog"
-  ]
- ],
- "synall": [
-  "legendary",
-  [
-   "widowswine",
-   "deadshot"
-  ]
- ],
- "synextract": [
-  "common",
-  [
-   "staminup",
-   "phdflopper"
-  ]
- ],
  "q01": [
   "common",
   "research"
@@ -332,5 +206,185 @@
  "xextract6": [
   "legendary",
   "research"
+ ],
+ "bbfresh": [
+  "common",
+  "bandolier"
+ ],
+ "bbtotal": [
+  "rare",
+  "bandolier"
+ ],
+ "bblvl5": [
+  "rare",
+  "bandolier"
+ ],
+ "bball": [
+  "legendary",
+  "bandolier"
+ ],
+ "bbsecret": [
+  "legendary",
+  "bandolier"
+ ],
+ "vafresh": [
+  "common",
+  "vultureaid"
+ ],
+ "vatotal": [
+  "rare",
+  "vultureaid"
+ ],
+ "valvl5": [
+  "rare",
+  "vultureaid"
+ ],
+ "vaall": [
+  "legendary",
+  "vultureaid"
+ ],
+ "vasecret": [
+  "legendary",
+  "vultureaid"
+ ],
+ "mmfresh": [
+  "common",
+  "meleemacchiato"
+ ],
+ "mmtotal": [
+  "rare",
+  "meleemacchiato"
+ ],
+ "mmlvl5": [
+  "rare",
+  "meleemacchiato"
+ ],
+ "mmall": [
+  "legendary",
+  "meleemacchiato"
+ ],
+ "mmsecret": [
+  "legendary",
+  "meleemacchiato"
+ ],
+ "qrfresh": [
+  "common",
+  "quickrevive"
+ ],
+ "qrtotal": [
+  "rare",
+  "quickrevive"
+ ],
+ "qrlvl5": [
+  "rare",
+  "quickrevive"
+ ],
+ "qrall": [
+  "legendary",
+  "quickrevive"
+ ],
+ "qrsecret": [
+  "legendary",
+  "quickrevive"
+ ],
+ "mkfresh": [
+  "common",
+  "mulekick"
+ ],
+ "mktotal": [
+  "rare",
+  "mulekick"
+ ],
+ "mklvl5": [
+  "rare",
+  "mulekick"
+ ],
+ "mkall": [
+  "legendary",
+  "mulekick"
+ ],
+ "mksecret": [
+  "legendary",
+  "mulekick"
+ ],
+ "ecfresh": [
+  "common",
+  "electriccherry"
+ ],
+ "ectotal": [
+  "rare",
+  "electriccherry"
+ ],
+ "eclvl5": [
+  "rare",
+  "electriccherry"
+ ],
+ "ecall": [
+  "legendary",
+  "electriccherry"
+ ],
+ "ecsecret": [
+  "legendary",
+  "electriccherry"
+ ],
+ "defresh": [
+  "common",
+  "deathperception"
+ ],
+ "detotal": [
+  "rare",
+  "deathperception"
+ ],
+ "delvl5": [
+  "rare",
+  "deathperception"
+ ],
+ "deall": [
+  "legendary",
+  "deathperception"
+ ],
+ "desecret": [
+  "legendary",
+  "deathperception"
+ ],
+ "tsfresh": [
+  "common",
+  "tombstone"
+ ],
+ "tstotal": [
+  "rare",
+  "tombstone"
+ ],
+ "tslvl5": [
+  "rare",
+  "tombstone"
+ ],
+ "tsall": [
+  "legendary",
+  "tombstone"
+ ],
+ "tssecret": [
+  "legendary",
+  "tombstone"
+ ],
+ "dbfresh": [
+  "common",
+  "doubletap"
+ ],
+ "dbtotal": [
+  "rare",
+  "doubletap"
+ ],
+ "dblvl5": [
+  "rare",
+  "doubletap"
+ ],
+ "dball": [
+  "legendary",
+  "doubletap"
+ ],
+ "dbsecret": [
+  "legendary",
+  "doubletap"
  ]
 }

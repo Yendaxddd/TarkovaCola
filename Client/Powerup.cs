@@ -111,7 +111,7 @@ namespace TarkovaCola.Client
                 return;
             }
             var pick = pool[Random.Range(0, pool.Length)];
-            Dbg.Log("POWERUP", "perk aleatoria: " + pick.Id + (!ClassicMode.Enabled && Perks.IsActive(pick.Id) ? " (ya la llevabas: eterna)" : ""));
+            Dbg.Log("POWERUP", "perk aleatoria: " + pick.Id + (!ClassicMode.Enabled && Perks.IsDrunk(pick.Id) ? " (ya la llevabas: eterna)" : ""));
             Hud.Notify(L.T("powerup.title"), pick.Name, pick.Id);
             DrinkAnim.Play(pick, () => { if (Plugin.InRaid) PerkGrant.Apply(pick, Plugin.Me, true); });     // se bebe la botella y, a media animacion, hace efecto
         }

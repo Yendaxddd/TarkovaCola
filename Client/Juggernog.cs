@@ -38,7 +38,19 @@ namespace TarkovaCola.Client
         private static float _dmgAcc;
         private static int _raidHits;
 
-        internal static void OnRaidStart() { _bastionUsed = false; _red = false; _dmgAcc = 0f; _raidHits = 0; _polled = false; }
+        // Armadura fria (dj_clank, 3.1): la reduccion empieza en 0 con el primer golpe de un combate y llega al total en 3 s
+        // (un combate acaba tras 10 s sin recibir golpes)
+        internal const float ColdRamp = 3f, ColdReset = 10f;
+        private static float _coldFirst = -99f, _coldLast = -99f;
+        private static float ColdFactor(bool hit)
+        {
+            if (!Perk.Has("dj_clank")) return 1f;
+            float now = Time.time;
+            if (hit) { if (now - _coldLast > ColdReset) _coldFirst = now; _coldLast = now; }
+            return Mathf.Clamp01((now - _coldFirst) / ColdRamp);
+        }
+
+        internal static void OnRaidStart() { _coldFirst = _coldLast = -99f; _bastionUsed = false; _red = false; _dmgAcc = 0f; _raidHits = 0; _polled = false; }
 
         // Desafios de Heavy Bones (arreglar fracturas) y Thick Skin (arreglar sangrados pesados): se vigila cada segundo que una fractura
         // o un sangrado pesado DESAPAREZCA de una parte del cuerpo que sigue en pie (si se pierde la parte, no cuenta como arreglo).
@@ -104,7 +116,7 @@ namespace TarkovaCola.Client
             bool hit = (t & PerkFx.Hits) != 0;
 
             float before = damage;
-            if (Reduces(t)) damage *= 1f - (1f - DamageMult) * Perks.Power(Id);      // como modificador (Classic) reduce solo una parte
+            if (Reduces(t)) damage *= 1f - (1f - DamageMult) * Perks.Power(Id) * ColdFactor(hit);      // como modificador (Classic) reduce solo una parte
             else if ((t & PerkFx.Bleeds) != 0) { if (Perk.Has("jg_thick")) damage *= ThickBleed; }
             else if ((t & PerkFx.Hunger) != 0) { if (Perk.Has("jg_keep")) damage *= KeepGoing; }
 

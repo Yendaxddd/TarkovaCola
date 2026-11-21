@@ -127,9 +127,6 @@ namespace TarkovaCola.Client
             AchTrack.CheckState();                                  // logros de la 2.0
         }
 
-        // Una sinergia se acaba de desbloquear (logros de sinergias)
-        internal static void OnSynergyUnlocked() { AchTrack.OnSynergyUnlocked(); }
-
         // Pide al servidor las recompensas pendientes (es idempotente: solo concede las que faltan).
         internal static void ClaimPending() { Claim(All.Where(a => IsDone(a.Key)).Select(a => a.ServerId).ToArray()); }
 

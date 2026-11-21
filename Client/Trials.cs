@@ -172,6 +172,7 @@ namespace TarkovaCola.Client
             var perk = Perks.All[Random.Range(0, Perks.All.Length)];
             if (me != null && _tedd != null) Drop(me, NewItem(perk.ItemTpl), _tedd.TransformPoint(new Vector3(0f, 1.2f, -0.6f)), _tedd.TransformDirection(new Vector3(0f, 1f, -2f)));
             Hud.Notify(L.T("tedd.title"), L.T("tedd.done") + "  ·  " + L.F("tedd.reward", perk.Name), perk.Id);
+            Jingle.ChallengeDone();
             Dbg.Log("TEDD", "prueba " + _kind + " superada: " + perk.Id);
         }
 

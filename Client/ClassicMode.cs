@@ -14,7 +14,7 @@ namespace TarkovaCola.Client
     // ============================================================================================
     //  Modo Classic (al estilo de Black Ops / MWZ):
     //   - No hay Research ni desventajas: cada perk lleva 1 mejora MENOR al azar (visible) al beberla.
-    //   - Hasta 4 perks principales; la 5.a perk bebida es un "modificador": da solo una parte de su efecto base y no lleva mejora.
+    //   - Hasta 4 perks principales; la 5.a perk bebida es un "modificador": da el 50% de su efecto base y lleva su mejora firma fija.
     //   - Las perks PERSISTEN entre raids: se quedan activas al extraer y se pierden solo cuando el operador muere (o no extrae).
     //   - Cada raid trae un desafio opcional (ClassicChallenge): si se cumple y extraes con vida, una perk principal al azar gana
     //     una 2.a mejora menor (maximo 2 por perk).
@@ -83,6 +83,9 @@ namespace TarkovaCola.Client
                 var e = new Entry { Perk = id, Modifier = (bool?)t["mod"] == true };
                 var m = t["minors"] as JArray;
                 if (m != null) foreach (var x in m) if (x.Type == JTokenType.String && Perks.OfNode((string)x) != null) e.Minors.Add((string)x);
+                // el modificador lleva siempre su mejora firma (3.1; las entradas guardadas antes no la tienen)
+                var sig = e.Modifier ? Perks.Get(id).Signature : null;
+                if (sig != null && !e.Minors.Contains(sig)) e.Minors.Insert(0, sig);
                 list.Add(e);
             }
             return list;
@@ -96,13 +99,13 @@ namespace TarkovaCola.Client
 
         internal static Entry Find(string perkId) { return Entries().FirstOrDefault(e => e.Perk == perkId); }
 
-        // mejoras menores equipadas por las perks principales (alimenta Perk.Has)
+        // mejoras menores equipadas (alimenta Perk.Has): las de las perks principales y la firma (+ la ganada) del modificador
         internal static IEnumerable<string> EquippedAugments()
         {
-            return Entries().Where(e => !e.Modifier).SelectMany(e => e.Minors);
+            return Entries().SelectMany(e => e.Minors);
         }
 
-        internal static bool HasEligiblePerk() { return Entries().Any(e => !e.Modifier && e.Minors.Count < MaxMinors); }
+        internal static bool HasEligiblePerk() { return Entries().Any(e => e.Minors.Count < MaxMinors); }
 
         // la mejora que acaba de ganar una perk con el desafio de raid (se muestra como NUEVA hasta la siguiente raid)
         internal static string RewardPerk { get { var r = Root["reward"] as JObject; return r != null ? (string)r["perk"] : null; } }
@@ -140,7 +143,11 @@ namespace TarkovaCola.Client
                 var aug = Roll(def, entry.Minors);
                 if (aug != null) entry.Minors.Add(aug);
             }
-            else if (!list.Any(e => e.Modifier)) entry.Modifier = true;
+            else if (!list.Any(e => e.Modifier))
+            {
+                entry.Modifier = true;
+                if (def.Signature != null) entry.Minors.Add(def.Signature);                 // su mejora firma
+            }
             else { Refund(def, "perks al maximo"); return null; }
 
             list.Add(entry);
@@ -154,7 +161,10 @@ namespace TarkovaCola.Client
         internal static void AfterDrink(PerkDef def, Entry entry)
         {
             if (entry.Modifier)
+            {
                 Hud.Enqueue(L.T("classic.tag.mod"), L.F("classic.mod.sub", Mathf.RoundToInt(Perks.ModifierPower * 100f)), def.Id);
+                if (entry.Minors.Count > 0) Hud.Enqueue(Data.Name(entry.Minors[0]), Data.Desc(entry.Minors[0]), def.Id);
+            }
             else if (entry.Minors.Count > 0)
                 Hud.Enqueue(Data.Name(entry.Minors[0]), Data.Desc(entry.Minors[0]), def.Id);
             ClassicChallenge.EnsureRolled();
@@ -236,11 +246,11 @@ namespace TarkovaCola.Client
             Dbg.Log("CLASSIC", "perks de Classic perdidas");
         }
 
-        // Una perk principal al azar (con menos de 2 mejoras) gana una mejora menor mas
+        // Una perk al azar (con menos de 2 mejoras, principal o modificador) gana una mejora menor mas
         private static void GrantSecondAugment()
         {
             var list = Entries();
-            var eligible = list.Where(e => !e.Modifier && e.Minors.Count < MaxMinors).ToList();
+            var eligible = list.Where(e => e.Minors.Count < MaxMinors).ToList();          // (3.1: el modificador tambien puede ganarla)
             if (eligible.Count == 0) { Dbg.Log("CLASSIC", "desafio cumplido, pero ninguna perk puede ganar mas mejoras"); return; }
             var e2 = eligible[UnityEngine.Random.Range(0, eligible.Count)];
             var def = Perks.Get(e2.Perk);
@@ -281,14 +291,16 @@ namespace TarkovaCola.Client
             {
                 var foodDrink = __0;
                 if (!Util.IsMe(__instance) || foodDrink == null) return true;
-                if (ClassicMode.Enabled && !Plugin.CfgClassicBlock.Value) return true;      // (el bloqueo de Classic se puede apagar en F12)
                 var def = Perks.ByItem(foodDrink.StringTemplateId);
                 if (def == null) return true;
-                string why = ClassicMode.DrinkBlockReason(def);
+                // en el Hideout no se bebe: antes la perk se activaba (o se volvia eterna) para la raid siguiente
+                bool hideout = __instance is HideoutPlayer;
+                if (!hideout && ClassicMode.Enabled && !Plugin.CfgClassicBlock.Value) return true;      // (el bloqueo de Classic se puede apagar en F12)
+                string why = hideout ? L.T("drink.hideout") : ClassicMode.DrinkBlockReason(def);
                 if (why == null) return true;
 
                 Dbg.Log("CLASSIC", "beber " + def.Id + " bloqueado: " + why);
-                Hud.Notify(L.T(ClassicMode.Enabled ? "classic.title" : "eternal.title"), why, def.Id);
+                Hud.Notify(hideout ? def.Name.ToUpperInvariant() : L.T(ClassicMode.Enabled ? "classic.title" : "eternal.title"), why, def.Id);
                 __instance.SetInHands(false);                                           // el cuerpo no debe quedarse en "usando un objeto"
                 if (callback != null) callback(new Result<IMedsController>(null, why));  // fallo normal: la interfaz se recupera
                 return false;

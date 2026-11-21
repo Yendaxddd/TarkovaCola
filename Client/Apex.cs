@@ -33,7 +33,8 @@ namespace TarkovaCola.Client
         internal const string CoreTpl = "6a1c00000000000000a0c001";       // Nucleo APEX (Server/Apex.cs)
         internal const float PenBonus = 10f;                               // Deadshot: +1 clase de blindaje = +10 de penetracion
         internal const float SprintBonus = 1.10f;                          // Stamin-Up: esprintar +10%
-        internal const float VultureChance = 0.5f;
+        internal const float VultureChance = 0.15f;                        // 3.1: antes 0.5 (demasiado dinero facil)
+        internal const float StaminaRegen = 3f;                            // Stamin-Up: la estamina se recupera x3 (3.1; antes infinita)
         internal const float WebTrigger = 3f;                              // Widow's Wine: distancia a un enemigo que hace detonar
 
         internal static readonly ApexDef[] All =
@@ -44,15 +45,22 @@ namespace TarkovaCola.Client
             new ApexDef { Id = "apex_phdflopper",     Perk = PhdFlopper.Id,     Goal = 30 },                            // absorber 30 explosiones o caidas
             new ApexDef { Id = "apex_widowswine",     Perk = WidowsWine.Id,     Goal = 40 },                            // atrapar a 40 enemigos
             new ApexDef { Id = "apex_deadshot",       Perk = Deadshot.Id,       Goal = 30 },                            // 30 bajas en la cabeza
-            new ApexDef { Id = "apex_bandolier",      Perk = Bandolier.Id,      Goal = 60 },                            // 60 bajas
+            new ApexDef { Id = "apex_bandolier",      Perk = Bandolier.Id,      Goal = 40 },                            // 40 bajas
             new ApexDef { Id = "apex_vultureaid",     Perk = VultureAid.Id,     Goal = 25 },                            // registrar 25 cuerpos de PMC
             new ApexDef { Id = "apex_meleemacchiato", Perk = MeleeMacchiato.Id, Goal = 25 },                            // 25 bajas cuerpo a cuerpo
+            // perks finales (3.1)
+            new ApexDef { Id = "apex_quickrevive",    Perk = QuickRevive.Id,    Goal = 2500 },                          // curar 2.500 PV con la regeneracion
+            new ApexDef { Id = "apex_mulekick",       Perk = MuleKick.Id,       Goal = 40 },                            // 40 bajas con el arma de Mule Kick
+            new ApexDef { Id = "apex_electriccherry", Perk = ElectricCherry.Id, Goal = 60 },                            // 60 recargas con el cargador vacio
+            new ApexDef { Id = "apex_deathperception",Perk = DeathPerception.Id,Goal = 40 },                            // 40 bajas de enemigos marcados
+            new ApexDef { Id = "apex_tombstone",      Perk = Tombstone.Id,      Goal = 15 },                            // 15 espectros
+            new ApexDef { Id = "apex_doubletap",      Perk = DoubleTap.Id,      Goal = 40 },                            // 40 bajas
         };
 
         // objetos que puede llevar un enemigo con el APEX de Vulture Aid (valiosos y de misiones)
         private static readonly string[] VultureLoot =
         {
-            "5c0530ee86f774697952d952" /* LEDX */, "57347ca924597744596b4e71" /* tarjeta grafica */, "59faff1d86f7746c51718c9c" /* bitcoin */,
+            // (3.1: sin LEDX, tarjeta grafica ni bitcoin)
             "5bc9bc53d4351e00367fbcee" /* gallo de oro */, "5c94bbff86f7747ee735c08f" /* tarjeta de Labs */, "5c05308086f7746b2101e90b" /* Virtex */,
             "5c05300686f7746dce784e5d" /* VPX */, "590c621186f774138d11ea29" /* memoria USB segura */, "5c12613b86f7743bbe2c3f76" /* carpeta de inteligencia */,
             "590a3efd86f77437d351a25b" /* analizador de gases */,
@@ -128,6 +136,11 @@ namespace TarkovaCola.Client
 
         internal static void AddProgress(string perk, float n)
         {
+            if (n > 0f && Perks.IsActive(perk))
+            {
+                // logros de las perks de la 3.x (contadores enteros: QR cura en tandas de 10)
+                try { AchTrack.OnPerkEvent(perk, Mathf.RoundToInt(n)); } catch (Exception e) { Dbg.Throttled("achperk", 30f, "ERROR", "logros: " + e.Message); }
+            }
             var a = ForPerk(perk);
             if (a == null || n <= 0f || !IsStarted(a.Id) || IsUnlocked(a.Id) || !Perks.IsActive(perk)) return;
             float acc; _acc.TryGetValue(a.Id, out acc); acc += n;
@@ -143,6 +156,7 @@ namespace TarkovaCola.Client
             PerkService.Save(); PerkService.Flush();
             Dbg.Log("APEX", a.Id + " desbloqueado");
             Hud.Enqueue(L.T("apex.unlocked"), Name(a), a.Perk);
+            Jingle.ChallengeDone();
         }
 
         internal static void OnDamageTaken(float damage) { AddProgress(Juggernog.Id, damage); }
@@ -190,8 +204,14 @@ namespace TarkovaCola.Client
             if (me == null) return;
             if (Has(StaminUp.Id) && me.Physical != null)
             {
-                if (me.Physical.Stamina != null) me.Physical.Stamina.Current = me.Physical.Stamina.TotalCapacity;
-                if (me.Physical.HandsStamina != null) me.Physical.HandsStamina.Current = me.Physical.HandsStamina.TotalCapacity;
+                // recuperacion x3: se suma 2 veces lo que el juego recupera solo (mismo calculo que Quick Recovery), solo mientras se recupera
+                float dt = Time.deltaTime;
+                var st = me.Physical.Stamina;
+                if (st != null && !me.Physical.Sprinting && st.Current < st.TotalCapacity && Time.time > st.DisableRestoration)
+                    st.Current = Mathf.Min(st.TotalCapacity, st.Current + (float)st.SelfRestoration * dt * st.Multiplier * (StaminaRegen - 1f));
+                var hs = me.Physical.HandsStamina;
+                if (hs != null && hs.Current < hs.TotalCapacity && Time.time > hs.DisableRestoration)
+                    hs.Current = Mathf.Min(hs.TotalCapacity, hs.Current + (float)hs.SelfRestoration * dt * hs.Multiplier * (StaminaRegen - 1f));
             }
             if (Has(WidowsWine.Id)) DetonateNear(me);
             if (Time.time < _next) return;
@@ -213,12 +233,22 @@ namespace TarkovaCola.Client
             if (Time.time < _closedAt + 0.5f) return;
             foreach (var it in me.Profile.Inventory.GetPlayerItems(EPlayerItems.Equipment).Where(i => i != null && i.StringTemplateId == CoreTpl).ToList())
             {
+                // ya no hace falta: todos los desafios empezados o superados (contando los nucleos que ya tienes): se queda como objeto
+                // normal y se puede vender
+                if (CoresNeeded() <= 0) { Dbg.Throttled("apexfull", 60f, "APEX", "nucleo no absorbido: no quedan desafios por empezar"); break; }
                 var op = ItemManipulator.Remove(it, me.InventoryController, false);
                 if (op.Failed) { Dbg.Throttled("apexcore", 10f, "APEX", "no se pudo absorber el nucleo: " + op.Error); continue; }
                 _pending++;
                 Hud.Notify(L.T("apex.core.title"), L.T("apex.core.sub"), null);
                 Dbg.Log("APEX", "nucleo absorbido (" + _pending + " en esta raid)");
             }
+        }
+
+        // nucleos que aun sirven: desafios sin empezar menos los nucleos guardados y los absorbidos en esta raid
+        internal static int CoresNeeded()
+        {
+            int open = All.Count(a => !IsStarted(a.Id) && !IsUnlocked(a.Id));
+            return open - Cores - _pending;
         }
 
         // Juggernog: ningun sangrado (los que aparezcan se cortan enseguida)
@@ -241,7 +271,7 @@ namespace TarkovaCola.Client
                 var pos = g.transform.position;
                 foreach (var p in world.AllAlivePlayersList)
                 {
-                    if (p == null || p.IsYourPlayer || BotPerks.IsFollower(p) || (p.Position - pos).sqrMagnitude > WebTrigger * WebTrigger) continue;
+                    if (p == null || p.IsYourPlayer || Allies.Is(p) || (p.Position - pos).sqrMagnitude > WebTrigger * WebTrigger) continue;
                     try { g.InvokeBlowUpEvent(); Dbg.Log("APEX", "Widow's Wine: granada detonada junto a " + p.Profile.Nickname); }
                     catch (Exception e) { Dbg.Throttled("apexww", 10f, "ERROR", "APEX (detonar): " + e.Message); }
                     break;
@@ -256,7 +286,7 @@ namespace TarkovaCola.Client
             if (world == null) return;
             foreach (var p in world.AllAlivePlayersList)
             {
-                if (p == null || p.IsYourPlayer || !_seen.Add(p.ProfileId) || BotPerks.IsFollower(p)) continue;
+                if (p == null || p.IsYourPlayer || !_seen.Add(p.ProfileId) || Allies.Is(p)) continue;
                 if (UnityEngine.Random.value >= VultureChance) continue;
                 string tpl = VultureLoot[UnityEngine.Random.Range(0, VultureLoot.Length)];
                 bool ok = NewPerkUtil.Give(p.Profile, tpl);
@@ -284,12 +314,13 @@ namespace TarkovaCola.Client
         }
 
         // PHD Flopper: explosion de granada entera en el cuerpo de la victima (tu eres inmune con PHD)
-        private static void Blast(Player me, Vector3 pos)
+        internal static void Blast(Player me, Vector3 pos)
         {
             try
             {
                 var w = Singleton<ItemFactory>.Instance.CreateItem(Guid.NewGuid().ToString("N").Substring(0, 24), "5448be9a4bdc2dfd2f8b456a", null) as ThrowWeap;   // RGD-5
                 if (w == null) return;
+                Allies.MarkBlast(w);                                       // su dano no toca a aliados ni al perro de K9
                 if (!string.IsNullOrEmpty(w.ExplosionEffectType)) Singleton<Systems.Effects.Effects>.Instance.EmitGrenade(w.ExplosionEffectType, pos, Vector3.up);
                 var calc = Singleton<IGameLevel>.Instance != null ? Singleton<IGameLevel>.Instance.CreateBallisticCalculator(0) : null;
                 Grenade.Explosion(null, w, pos, me.ProfileId, calc, w, new Vector3(0f, 0.08f, 0f));

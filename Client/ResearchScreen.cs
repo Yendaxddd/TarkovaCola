@@ -54,7 +54,6 @@ namespace TarkovaCola.Client
         private string _view = "progress";      // progress | equip | syn | eternal
         private PerkDef _perk = Perks.UiPerks.First();   // perk que se esta viendo
         private string _sel;                     // nodo seleccionado en Progreso
-        private string _synSel;                  // sinergia seleccionada en la pestana Sinergia
         private bool _animate = true;
         private bool _closing;
         private float _fade;                     // 0..1 (aparicion / desaparicion de toda la pantalla)
@@ -137,9 +136,9 @@ namespace TarkovaCola.Client
             foreach (var r in new[] { _header, _left, _stage })
                 for (int i = r.childCount - 1; i >= 0; i--) Destroy(r.GetChild(i).gameObject);
 
-            if (_view == "syn") { BuildSynergy(); return; }
+            if (_view == "syn") _view = "progress";                    
             if (_view == "apex") { BuildApex(); return; }                         // APEX (Modern y Classic)
-            if (_view == "eternal" && !ClassicMode.Enabled) { BuildEternal(); return; }              // sinergias (Modern y Classic)
+            if (_view == "eternal" && !ClassicMode.Enabled) { BuildEternal(); return; }              // (Modern)
             if (ClassicMode.Enabled) { BuildClassic(); return; }       // en modo Classic no hay Research: se muestra el resumen de perks
 
             BuildHeader();
@@ -347,16 +346,16 @@ namespace TarkovaCola.Client
             Fit(eff, 11, 14);
             UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 14, 258, w - 28, 1);
 
+            // mejoras menores (la 2.a viene del desafio de raid). El modificador lleva su mejora firma y una nota encima.
+            float top = 272f, step = 138f, bh = 128f;
             if (modSlot)
             {
-                var note = T(card.transform, L.F("classic.mod.note", Mathf.RoundToInt(Perks.ModifierPower * 100f)), 14, 274, w - 28, 80, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
+                var note = T(card.transform, L.F("classic.mod.note", Mathf.RoundToInt(Perks.ModifierPower * 100f)), 14, 266, w - 28, 40, 14, UiKit.Dim, TextAlignmentOptions.Top, true);
                 Fit(note, 11, 14);
-                return;
+                top = 312f; step = 120f; bh = 112f;
             }
-
-            // mejoras menores (la 2.a viene del desafio de raid)
             for (int i = 0; i < e.Minors.Count && i < ClassicMode.MaxMinors; i++)
-                AugBlock(card.transform, 14, 272 + i * 138, w - 28, 128, e, e.Minors[i], i == 1);
+                AugBlock(card.transform, 14, top + i * step, w - 28, bh, e, e.Minors[i], i == 1);
 
             // marca "NUEVA" en la tarjeta si la ultima mejora ganada con el desafio es de esta perk
             if (e.Perk == ClassicMode.RewardPerk && e.Minors.Contains(ClassicMode.RewardAug))
@@ -407,9 +406,10 @@ namespace TarkovaCola.Client
             var stored = Eternal.Stored();
             T(_stage, L.T("eternal.active"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             T(_stage, stored.Count + " / " + Perks.All.Length, 640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
-            float gap = 18f, cw = (1440f - gap * (Perks.All.Length - 1)) / Perks.All.Length;      // una ranura por perk
-            for (int i = 0; i < Perks.All.Length; i++)
-                EternalCard(i * (cw + gap), 60, cw, 560, i < stored.Count ? Perks.Get(stored[i]) : null);
+            int n = Perks.All.Length, rows = n > 8 ? 2 : 1, perRow = (n + rows - 1) / rows;      // una ranura por perk (en 2 filas si son muchas)
+            float gap = 18f, cw = (1440f - gap * (perRow - 1)) / perRow, ch = rows == 1 ? 560f : 400f;
+            for (int i = 0; i < n; i++)
+                EternalCard((i % perRow) * (cw + gap), 60 + (i / perRow) * (ch + gap), cw, ch, i < stored.Count ? Perks.Get(stored[i]) : null);
         }
 
         private void EternalCard(float x, float y, float w, float h, PerkDef def)
@@ -427,164 +427,40 @@ namespace TarkovaCola.Client
             }
             var card = UiKit.Panel(_stage, x, y, w, h, UiKit.Panel2, new Color(accent.r, accent.g, accent.b, 0.8f), 2f);
             Enter(card.rectTransform);
-            UiKit.Badge(card.transform, w / 2f, 84, 108, true, accent, Hud.IconSprite(def.Id), Color.white);
-            Fit(T(card.transform, def.Name.ToUpperInvariant(), 10, 148, w - 20, 32, 24, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 24);
-            T(card.transform, L.T("eternal.tag"), 10, 182, w - 20, 18, 13, accent, TextAlignmentOptions.Top, false, true);
-            var eff = T(card.transform, def.EffectText != null ? def.EffectText(1f) : "", 14, 206, w - 28, 44, 14, UiKit.Text, TextAlignmentOptions.Top, true);
+            bool compact = h < 500f; float dy = compact ? -36f : 0f;          // tarjeta baja (2 filas): todo mas arriba y sin la nota final
+            float descH = compact ? h - (326f + dy) - 12f : 120f;
+            UiKit.Badge(card.transform, w / 2f, compact ? 58 : 84, compact ? 80 : 108, true, accent, Hud.IconSprite(def.Id), Color.white);
+            Fit(T(card.transform, def.Name.ToUpperInvariant(), 10, 148 + dy, w - 20, 32, 24, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 24);
+            T(card.transform, L.T("eternal.tag"), 10, 182 + dy, w - 20, 18, 13, accent, TextAlignmentOptions.Top, false, true);
+            var eff = T(card.transform, def.EffectText != null ? def.EffectText(1f) : "", 14, 206 + dy, w - 28, 44, 14, UiKit.Text, TextAlignmentOptions.Top, true);
             Fit(eff, 11, 14);
-            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 14, 258, w - 28, 1);
+            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 14, 258 + dy, w - 28, 1);
 
-            T(card.transform, L.T("eternal.removed"), 14, 274, w - 28, 16, 12, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
+            T(card.transform, L.T("eternal.removed"), 14, 274 + dy, w - 28, 16, 12, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
             string drb = Eternal.PreviewDrawback(def);
             if (drb != null)
             {
-                Fit(T(card.transform, Data.Name(drb), 14, 296, w - 28, 24, 16, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 10, 16);
-                Fit(T(card.transform, Data.Desc(drb), 14, 326, w - 28, 120, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+                Fit(T(card.transform, Data.Name(drb), 14, 296 + dy, w - 28, 24, 16, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 10, 16);
+                Fit(T(card.transform, Data.Desc(drb), 14, 326 + dy, w - 28, descH, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
             }
             else
-                Fit(T(card.transform, L.T("eternal.removed.none"), 14, 296, w - 28, 120, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
-            Fit(T(card.transform, L.T("eternal.promise"), 14, h - 60, w - 28, 44, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+                Fit(T(card.transform, L.T("eternal.removed.none"), 14, 296 + dy, w - 28, descH, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
+            if (!compact) Fit(T(card.transform, L.T("eternal.promise"), 14, h - 60, w - 28, 44, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
         }
 
-        // ---------------------------------------------------------------- pestana SINERGIA
-        // Tres tarjetas (una por sinergia): las dos perks, el bono, el desafio para desbloquearla y el boton de equipar (maximo 2).
-        private void BuildSynergy()
-        {
-            T(_header, L.T("syn.kicker"), 60, 26, 400, 20, 14, UiKit.Dim);
-            T(_header, L.T("syn.title"), 60, 42, 480, 56, 44, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            NavTabs();
-            ModeToggle(1190, 46);
-            var close = UiButton.Make(_header, 1730, 46, 40, 40, Close, UiKit.C(18, 34, 50, 0.9f), UiKit.C(120, 30, 30, 0.95f));
-            var x = UiKit.Txt(close.transform, "X", 22, UiKit.White, TextAlignmentOptions.Center, false, true);
-            UiKit.Stretch(x.rectTransform);
-
-            // columna izquierda: reglas
-            var rt = T(_left, L.T("syn.rules"), 80, 210, 280, 700, 15, UiKit.Text, TextAlignmentOptions.TopLeft, true);
-            rt.lineSpacing = 8f; rt.paragraphSpacing = 12f;
-            float textH = rt.GetPreferredValues(rt.text, 280f, 0f).y + 6f;
-            var rules = UiKit.Panel(_left, 60, 150, 320, Mathf.Min(780f, 60f + textH + 24f), UiKit.PanelBg, UiKit.Line);
-            Enter(rules.rectTransform);
-            rt.transform.SetParent(rules.transform, false);
-            UiKit.Place(rt.rectTransform, 20, 60, 280, textH);
-            T(rules.transform, L.T("syn.rules.title"), 20, 18, 280, 22, 16, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
-            UiKit.Place(UiKit.Img(rules.transform, "Underline", UiKit.Gold).rectTransform, 20, 44, 280, 1);
-
-            // escenario
-            int n = Synergy.Equipped().Count;
-            T(_stage, L.T("syn.equipped"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
-            T(_stage, n + " / " + Synergy.MaxEquipped, 640, 14, 800, 22, 16, UiKit.Dim, TextAlignmentOptions.TopRight);
-            // rejilla con las 15 sinergias (3 columnas) y, a la derecha, el detalle de la elegida
-            if (Synergy.Get(_synSel ?? "") == null) _synSel = Synergy.Equipped().FirstOrDefault() ?? Synergy.All[0].Id;
-            const float tw = 300f, th = 154f, gx = 14f, gy = 12f;
-            for (int i = 0; i < Synergy.All.Length; i++)
-                SynTile((i % 3) * (tw + gx), 60 + (i / 3) * (th + gy), tw, th, Synergy.All[i]);
-            SynCard(950, 60, 490, 818, Synergy.Get(_synSel));
-        }
-
-        private void SynTile(float x, float y, float w, float h, SynDef s)
-        {
-            bool unlocked = Synergy.IsUnlocked(s.Id), eq = Synergy.IsEquipped(s.Id), on = s.Id == _synSel;
-            Color accent = eq ? UiKit.Green : unlocked ? UiKit.Gold : UiKit.C(110, 126, 142);
-            string id = s.Id;
-            var b = UiButton.Make(_stage, x, y, w, h, () => { if (_synSel != id) { _synSel = id; Rebuild(false); } },
-                                  on ? UiKit.C(240, 193, 75, 0.14f) : UiKit.Panel2, on ? UiKit.C(240, 193, 75, 0.22f) : UiKit.C(42, 68, 94, 0.97f));
-            Enter(b.GetComponent<RectTransform>());
-            Color border = on ? UiKit.Gold : new Color(accent.r, accent.g, accent.b, 0.6f);
-            float bw = on ? 2f : 1f;
-            UiKit.Place(UiKit.Img(b.transform, "bt", border).rectTransform, 0, 0, w, bw);
-            UiKit.Place(UiKit.Img(b.transform, "bb", border).rectTransform, 0, h - bw, w, bw);
-            UiKit.Place(UiKit.Img(b.transform, "bl", border).rectTransform, 0, 0, bw, h);
-            UiKit.Place(UiKit.Img(b.transform, "br", border).rectTransform, w - bw, 0, bw, h);
-
-            var a = Perks.Get(s.A); var c = Perks.Get(s.B);
-            Color tint = unlocked ? Color.white : UiKit.C(255, 255, 255, 0.55f);
-            var ia = UiKit.Img(b.transform, "IconA", tint, Hud.IconSprite(a.Id)); UiKit.Place(ia.rectTransform, 12, 12, 44, 44); ia.preserveAspect = true;
-            T(b.transform, "+", 56, 18, 20, 30, 22, accent, TextAlignmentOptions.Center, false, true);
-            var ib = UiKit.Img(b.transform, "IconB", tint, Hud.IconSprite(c.Id)); UiKit.Place(ib.rectTransform, 76, 12, 44, 44); ib.preserveAspect = true;
-            Fit(T(b.transform, Synergy.Name(s).ToUpperInvariant(), 130, 12, w - 142, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 11, 18);
-            T(b.transform, L.T(eq ? "syn.tag.eq" : unlocked ? "syn.tag.un" : "syn.tag.lock"), 130, 40, w - 142, 16, 12, accent, TextAlignmentOptions.TopLeft, false, true);
-            Fit(T(b.transform, Synergy.Desc(s), 12, 66, w - 24, 44, 12, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 9, 12);
-            if (!unlocked)
-            {
-                int p = Synergy.Progress(s.Id);
-                var tmp = new AugDef { Unit = s.Unit };
-                T(b.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, s.Goal), 12, 114, w - 24, 16, 12, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
-                Bar(b.transform, 12, 134, w - 24, 6, p / (float)s.Goal, UiKit.Gold);
-            }
-        }
-
-        private void SynCard(float x, float y, float w, float h, SynDef s)
-        {
-            bool unlocked = Synergy.IsUnlocked(s.Id), eq = Synergy.IsEquipped(s.Id);
-            Color accent = eq ? UiKit.Green : unlocked ? UiKit.Gold : UiKit.C(110, 126, 142);
-            var card = UiKit.Panel(_stage, x, y, w, h, UiKit.Panel2, new Color(accent.r, accent.g, accent.b, 0.75f), 2f);
-            Enter(card.rectTransform);
-            var a = Perks.Get(s.A); var b = Perks.Get(s.B);
-            UiKit.Badge(card.transform, w / 2f - 86f, 84, 100, true, accent, Hud.IconSprite(a.Id), unlocked ? Color.white : UiKit.C(255, 255, 255, 0.6f));
-            UiKit.Badge(card.transform, w / 2f + 86f, 84, 100, true, accent, Hud.IconSprite(b.Id), unlocked ? Color.white : UiKit.C(255, 255, 255, 0.6f));
-            T(card.transform, "+", w / 2f - 30f, 54, 60, 60, 44, accent, TextAlignmentOptions.Center, false, true);
-
-            Fit(T(card.transform, Synergy.Name(s).ToUpperInvariant(), 14, 152, w - 28, 34, 26, UiKit.White, TextAlignmentOptions.Top, false, true), 14, 26);
-            T(card.transform, a.Name + "  +  " + b.Name, 14, 190, w - 28, 20, 14, UiKit.Dim, TextAlignmentOptions.Top, false, false);
-            T(card.transform, L.T(eq ? "syn.tag.eq" : unlocked ? "syn.tag.un" : "syn.tag.lock"), 14, 214, w - 28, 18, 13, accent, TextAlignmentOptions.Top, false, true);
-            UiKit.Place(UiKit.Img(card.transform, "Sep", UiKit.Line).rectTransform, 20, 242, w - 40, 1);
-
-            T(card.transform, L.T("syn.bonus"), 20, 256, w - 40, 16, 12, UiKit.Cyan, TextAlignmentOptions.TopLeft, false, true);
-            Fit(T(card.transform, Synergy.Desc(s), 20, 276, w - 40, 96, 16, UiKit.Text, TextAlignmentOptions.TopLeft, true), 11, 16);
-            UiKit.Place(UiKit.Img(card.transform, "Sep2", UiKit.Line).rectTransform, 20, 384, w - 40, 1);
-
-            T(card.transform, L.T("syn.challenge"), 20, 398, w - 40, 16, 12, UiKit.Gold, TextAlignmentOptions.TopLeft, false, true);
-            Fit(T(card.transform, Synergy.Challenge(s), 20, 418, w - 40, 70, 15, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 11, 15);
-            if (unlocked)
-                T(card.transform, L.T("syn.done"), 20, 500, w - 40, 22, 16, UiKit.Green, TextAlignmentOptions.TopLeft, false, true);
-            else
-            {
-                int p = Synergy.Progress(s.Id);
-                var tmp = new AugDef { Unit = s.Unit };
-                T(card.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, s.Goal), 20, 496, w - 40, 20, 15, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
-                Bar(card.transform, 20, 522, w - 40, 8, p / (float)s.Goal, UiKit.Gold);
-            }
-            Fit(T(card.transform, L.F("syn.need", a.Name, b.Name), 20, 546, w - 40, 40, 13, UiKit.Dim, TextAlignmentOptions.TopLeft, true), 10, 13);
-
-            string id = s.Id;
-            if (unlocked)
-            {
-                var btn = UiButton.Make(card.transform, 20, h - 76, w - 40, 56, () => OnSyn(id),
-                                        eq ? UiKit.C(120, 30, 30, 0.9f) : UiKit.C(31, 138, 76, 0.9f), eq ? UiKit.C(160, 40, 40, 0.95f) : UiKit.C(40, 170, 96, 0.95f));
-                var bt = UiKit.Txt(btn.transform, L.T(eq ? "syn.unequip" : "syn.equip"), 20, UiKit.White, TextAlignmentOptions.Center, false, true);
-                UiKit.Stretch(bt.rectTransform);
-            }
-            else
-            {
-                var dim = UiKit.Panel(card.transform, 20, h - 76, w - 40, 56, UiKit.C(255, 255, 255, 0.04f), UiKit.Line);
-                var dt = UiKit.Txt(dim.transform, L.T("syn.locked"), 18, UiKit.Dim, TextAlignmentOptions.Center, false, true);
-                UiKit.Stretch(dt.rectTransform);
-            }
-        }
-
-        private void OnSyn(string id)
-        {
-            string err = Synergy.Toggle(id);
-            if (err != null) { Toast(L.T(err)); return; }
-            UiKit.Sound(EUISoundType.MenuInspectorWindowOpen);
-            Rebuild(false);
-        }
-
-        // las pestanas de arriba (Modern: progreso, equipar, sinergia, eternas, APEX; Classic: resumen, sinergia, APEX)
+        // las pestanas de arriba (Modern: progreso, equipar, eternas, APEX; Classic: resumen, APEX).
         private void NavTabs()
         {
             if (ClassicMode.Enabled)
             {
-                Tab("progress", L.T("nav.summary"), 600);
-                Tab("syn", L.T("nav.syn"), 780);
-                Tab("apex", "APEX", 960);
+                Tab("progress", L.T("nav.summary"), 690);
+                Tab("apex", "APEX", 870);
                 return;
             }
-            Tab("progress", L.T("nav.progress"), 540, 130);
-            Tab("equip", L.T("nav.equip"), 670, 130);
-            Tab("syn", L.T("nav.syn"), 800, 130);
-            Tab("eternal", L.T("nav.eternal"), 930, 130);
-            Tab("apex", "APEX", 1060, 130);
+            Tab("progress", L.T("nav.progress"), 605, 130);
+            Tab("equip", L.T("nav.equip"), 735, 130);
+            Tab("eternal", L.T("nav.eternal"), 865, 130);
+            Tab("apex", "APEX", 995, 130);
         }
 
         // ---------------------------------------------------------------- pestana APEX (Modern y Classic)
@@ -615,9 +491,12 @@ namespace TarkovaCola.Client
             T(_stage, L.T("apex.equipped"), 0, 8, 700, 30, 24, UiKit.White, TextAlignmentOptions.TopLeft, false, true);
             T(_stage, L.F("apex.cores", Apex.Cores), 640, 14, 800, 22, 16, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
             if (Apex.Get(_apexSel ?? "") == null) _apexSel = Apex.Equipped ?? Apex.All[0].Id;
-            const float tw = 300f, th = 230f, gx = 14f, gy = 12f;
+            int cols = Apex.All.Length > 9 ? 5 : 3, rowsA = (Apex.All.Length + cols - 1) / cols;      // 15 perks: 5 columnas
+            const float gx = 12f, gy = 12f;
+            float tw = cols == 3 ? 300f : (936f - gx * (cols - 1)) / cols;
+            float th = Mathf.Min(230f, (818f - gy * (rowsA - 1)) / rowsA);
             for (int i = 0; i < Apex.All.Length; i++)
-                ApexTile((i % 3) * (tw + gx), 60 + (i / 3) * (th + gy), tw, th, Apex.All[i]);
+                ApexTile((i % cols) * (tw + gx), 60 + (i / cols) * (th + gy), tw, th, Apex.All[i]);
             ApexCard(950, 60, 490, 818, Apex.Get(_apexSel));
         }
 
@@ -637,17 +516,19 @@ namespace TarkovaCola.Client
             UiKit.Place(UiKit.Img(b.transform, "br", border).rectTransform, w - bw, 0, bw, h);
 
             var perk = Perks.Get(a.Perk);
-            var ic = UiKit.Img(b.transform, "Icon", unlocked ? Color.white : UiKit.C(255, 255, 255, 0.55f), Hud.IconSprite(a.Perk)); UiKit.Place(ic.rectTransform, 12, 12, 52, 52); ic.preserveAspect = true;
-            Fit(T(b.transform, Apex.Name(a).ToUpperInvariant(), 76, 12, w - 88, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 11, 18);
-            T(b.transform, perk != null ? perk.Name : a.Perk, 76, 38, w - 88, 16, 12, UiKit.Dim, TextAlignmentOptions.TopLeft, false, false);
-            T(b.transform, L.T(eq ? "apex.tag.eq" : unlocked ? "apex.tag.un" : started ? "apex.tag.run" : "apex.tag.lock"), 76, 56, w - 88, 16, 12, accent, TextAlignmentOptions.TopLeft, false, true);
-            Fit(T(b.transform, Apex.Desc(a), 12, 82, w - 24, 90, 13, UiKit.Text, TextAlignmentOptions.TopLeft, true), 9, 13);
+            var ic = UiKit.Img(b.transform, "Icon", unlocked ? Color.white : UiKit.C(255, 255, 255, 0.55f), Hud.IconSprite(a.Perk));
+            float isz = w < 220f ? 40f : 52f, tx = isz + 24f;                  // casillas estrechas (5 columnas): icono mas pequeno
+            UiKit.Place(ic.rectTransform, 12, 12, isz, isz); ic.preserveAspect = true;
+            Fit(T(b.transform, Apex.Name(a).ToUpperInvariant(), tx, 12, w - tx - 12, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true), 10, 18);
+            Fit(T(b.transform, perk != null ? perk.Name : a.Perk, tx, 38, w - tx - 12, 16, 12, UiKit.Dim, TextAlignmentOptions.TopLeft, false, false), 9, 12);
+            Fit(T(b.transform, L.T(eq ? "apex.tag.eq" : unlocked ? "apex.tag.un" : started ? "apex.tag.run" : "apex.tag.lock"), tx, 56, w - tx - 12, 16, 12, accent, TextAlignmentOptions.TopLeft, false, true), 9, 12);
+            Fit(T(b.transform, Apex.Desc(a), 12, 82, w - 24, h - 82 - 46, 13, UiKit.Text, TextAlignmentOptions.TopLeft, true), 9, 13);
             if (started && !unlocked)
             {
                 int p = Apex.Progress(a.Id);
                 var tmp = new AugDef { Unit = a.Unit };
-                T(b.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, a.Goal), 12, 186, w - 24, 16, 12, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
-                Bar(b.transform, 12, 208, w - 24, 6, p / (float)a.Goal, UiKit.Gold);
+                T(b.transform, Data.Prog(tmp, p) + " / " + Data.Prog(tmp, a.Goal), 12, h - 44, w - 24, 16, 12, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
+                Bar(b.transform, 12, h - 22, w - 24, 6, p / (float)a.Goal, UiKit.Gold);
             }
         }
 
@@ -720,24 +601,26 @@ namespace TarkovaCola.Client
         {
             _idx = 0;
             var uiPerks = Perks.UiPerks.ToList();
+            float step = Mathf.Min(76f, 890f / Mathf.Max(1, uiPerks.Count)), rh = step - Mathf.Min(12f, step * 0.14f);   // 15 perks: filas mas bajas
+            float isz = Mathf.Min(40f, rh - 12f), fs = rh < 56f ? 17f : 20f;
             for (int i = 0; i < uiPerks.Count; i++)
             {
                 var def = uiPerks[i];
                 bool sel = def == _perk;
-                float y = 150 + i * 76;
-                var btn = UiKit.Panel(_left, 60, y, 320, 64, sel ? UiKit.C(31, 138, 76, 0.85f) : UiKit.C(18, 34, 50, 0.9f), sel ? UiKit.C(109, 240, 160, 0.9f) : UiKit.Line);
+                float y = 150 + i * step;
+                var btn = UiKit.Panel(_left, 60, y, 320, rh, sel ? UiKit.C(31, 138, 76, 0.85f) : UiKit.C(18, 34, 50, 0.9f), sel ? UiKit.C(109, 240, 160, 0.9f) : UiKit.Line);
                 var icon = Hud.IconSprite(def.Id);
                 if (icon != null)
                 {
-                    var ic = UiKit.Img(btn.transform, "Icon", Color.white, icon); UiKit.Place(ic.rectTransform, 12, 12, 40, 40);
+                    var ic = UiKit.Img(btn.transform, "Icon", Color.white, icon); UiKit.Place(ic.rectTransform, 12, (rh - isz) / 2f, isz, isz);
                 }
-                T(btn.transform, def.Name, 66, 20, 180, 26, 20, sel ? UiKit.White : UiKit.Dim, TextAlignmentOptions.TopLeft, false, true);
-                T(btn.transform, PerkService.Percent(def.Id) + "%", 240, 22, 70, 22, 16, sel ? UiKit.C(234, 255, 241) : UiKit.Dim, TextAlignmentOptions.TopRight);
+                Fit(T(btn.transform, def.Name, 66, (rh - 26f) / 2f, 176, 26, fs, sel ? UiKit.White : UiKit.Dim, TextAlignmentOptions.TopLeft, false, true), 13, fs);
+                T(btn.transform, PerkService.Percent(def.Id) + "%", 240, (rh - 22f) / 2f, 70, 22, 16, sel ? UiKit.C(234, 255, 241) : UiKit.Dim, TextAlignmentOptions.TopRight);
                 if (!sel)
                 {
                     var p = def;
                     // zona de clic: seleccionar otra perk
-                    UiButton.Make(_left, 60, y, 320, 64, () => { _perk = p; _sel = null; Rebuild(true); },
+                    UiButton.Make(_left, 60, y, 320, rh, () => { _perk = p; _sel = null; Rebuild(true); },
                                   UiKit.C(255, 255, 255, 0f), UiKit.C(255, 255, 255, 0.06f));
                 }
                 if (_animate) Enter(btn.rectTransform);
@@ -1001,7 +884,8 @@ namespace TarkovaCola.Client
             Section(p, 20, 384, 300, "equip.drawbacks", "dm");
             var drbMinor = PerkService.EquippedMinors(_perk.Id, true);
             Slot(p, 20, 424, PerkService.EquippedMajor(_perk.Id, true), "dm");
-            Slot(p, 126, 424, drbMinor.Count > 0 ? drbMinor[0] : null, "dn");
+            for (int i = 0; i < 2; i++)
+                Slot(p, 20 + (i + 1) * 106, 424, i < drbMinor.Count ? drbMinor[i] : null, "dn", off: i >= PerkService.MinorSlots(_perk.Id, false));
 
             // multiplicador de XP
             var box = UiKit.Panel(p, 20, 580, 300, 110, UiKit.Panel2, UiKit.Line);

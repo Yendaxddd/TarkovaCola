@@ -18,7 +18,7 @@ namespace TarkovaCola.Client
     //     en BepInEx/plugins/TarkovaCola/photos (para revisar si queda bien).
     internal static class Machines
     {
-        internal class Spot { public string map, perk; public float x, y, z, rot; }
+        internal class Spot { public string map, perk; public float x, y, z, rot; public bool auto; }     // auto: puesta por MachineAuto
 
         internal const string Power = "power";               // el interruptor de la luz del mapa (se coloca con el editor como una pieza mas)
         internal const string Wunderfizz = "wunderfizz";     // Der Wunderfizz: una perk al azar (la unica maquina de Bandolier, Vulture Aid y Melee Macchiato)
@@ -33,7 +33,9 @@ namespace TarkovaCola.Client
         private static PerkDef _rollPerk;
         private static float _rollUntil;
         private const string Roubles = "5449016a4bdc2d6f028b456f";
-        private const float UseRange = 2.2f, HoldTime = 1.2f;
+        private const float UseRange = 1.6f, HoldTime = 1.2f;
+        private const float UseBelow = 0.5f, UseAbove = 0.9f;     // desnivel permitido entre tus pies y la base de la maquina (antes no habia: se usaba desde otro piso)
+        private const float UseFacing = 0.7f;                      // hay que mirarla de frente (coseno; antes 0.55)
 
         // energia: sin interruptor en el mapa (o con la opcion apagada) las maquinas funcionan desde el principio
         private static bool _powered;
@@ -47,6 +49,11 @@ namespace TarkovaCola.Client
         private static readonly Dictionary<string, GameObject> _prefabs = new Dictionary<string, GameObject>();
         private static List<Spot> _all = new List<Spot>();
         private static readonly List<KeyValuePair<Spot, GameObject>> _placed = new List<KeyValuePair<Spot, GameObject>>();
+        // maquinas puestas en esta raid (perk/tipo, objeto): para el mapa de Dynamic Maps (DynMapsCompat)
+        internal static IEnumerable<KeyValuePair<string, GameObject>> Placed()
+        {
+            foreach (var kv in _placed) if (kv.Value != null) yield return new KeyValuePair<string, GameObject>(kv.Key.perk, kv.Value);
+        }
         private static string _map;
 
         // editor
@@ -159,10 +166,11 @@ namespace TarkovaCola.Client
                 var resp = JObject.Parse(RequestHandler.PostJson("/tarkovacola/machines/get", "{}"));
                 _all = JsonConvert.DeserializeObject<List<Spot>>((string)resp["json"] ?? "[]") ?? new List<Spot>();
                 int n = 0;
-                bool hasSwitch = _all.Any(s => s.perk == Power && string.Equals(MapKey(s.map), _map, StringComparison.OrdinalIgnoreCase));
-                _powered = !Plugin.CfgMachinesNeedPower.Value || !hasSwitch;
-                if (!Plugin.CfgMachinesEnabled.Value && !Plugin.CfgMachineEditor.Value) { Dbg.Log("MAQUINAS", "desactivadas en F12"); return; }
+                if (!Plugin.CfgMachinesEnabled.Value && !Plugin.CfgMachineEditor.Value) { _powered = true; Dbg.Log("MAQUINAS", "desactivadas en F12"); return; }
                 var here = _all.Where(s => string.Equals(MapKey(s.map), _map, StringComparison.OrdinalIgnoreCase)).ToList();
+                here = AutoSpots(here, me);
+                bool hasSwitch = here.Any(s => s.perk == Power);
+                _powered = !Plugin.CfgMachinesNeedPower.Value || !hasSwitch;
                 if (!Plugin.CfgMachineEditor.Value) here = PickRandom(here);
                 foreach (var s in here)
                 {
@@ -175,6 +183,25 @@ namespace TarkovaCola.Client
                 Dbg.Log("MAQUINAS", _map + ": " + n + " piezas colocadas (" + _all.Count + " en total), energia: " + (_powered ? "si" : "no (falta el interruptor)"));
             }
             catch (Exception e) { Plugin.Log.LogError("Maquinas (inicio): " + e); }
+        }
+
+        // Mapas sin piezas puestas a mano: colocacion automatica (MachineAuto). Lo puesto a mano manda; las automaticas fijas se
+        // guardan en machines.json para repetirse (y poder retocarlas con el editor).
+        private static List<Spot> AutoSpots(List<Spot> here, Player me)
+        {
+            var mode = Plugin.CfgMachinesAuto.Value;
+            if (mode == MachineAuto.Mode.Off || here.Any(s => !s.auto)) return here;
+            bool redo = Plugin.CfgMachinesAutoRedo.Value;
+            if (mode == MachineAuto.Mode.Fixed && here.Count > 0 && !redo) return here;
+            if (here.Count > 0) { foreach (var s in here) _all.Remove(s); }
+            var gen = MachineAuto.Generate(_map, me.Position);
+            if (mode == MachineAuto.Mode.Fixed)
+            {
+                _all.AddRange(gen);
+                Save();
+                if (redo) Plugin.CfgMachinesAutoRedo.Value = false;
+            }
+            return gen;
         }
 
         // de los puntos de la caja, uno al azar; de los de TEDD, uno al azar y solo con la probabilidad de F12
@@ -279,7 +306,8 @@ namespace TarkovaCola.Client
                 var p = kv.Value.transform.position;
                 Vector3 to = p + Vector3.up * 1.1f - cam.transform.position;
                 float d = new Vector2(p.x - me.Position.x, p.z - me.Position.z).magnitude;
-                if (d > bestD || Vector3.Dot(cam.transform.forward, to.normalized) < 0.55f) continue;
+                float dy = me.Position.y - p.y;
+                if (d > bestD || dy < -UseBelow || dy > UseAbove || Vector3.Dot(cam.transform.forward, to.normalized) < UseFacing) continue;
                 best = kv.Key; bestD = d;
             }
             if (best != _target) { _target = best; _hold = 0f; }
@@ -330,7 +358,7 @@ namespace TarkovaCola.Client
         // perks que puede dar la Wunderfizz: las que podrias comprar ahora mismo, sin volver eterna una que ya llevas
         private static List<PerkDef> WunderPool()
         {
-            return Perks.All.Where(d => !Perks.IsActive(d.Id) && Reason(d, out int _) == null).ToList();
+            return Perks.All.Where(d => !Perks.IsDrunk(d.Id) && Reason(d, out int _) == null).ToList();
         }
 
         private static void Roll(Player me)
@@ -349,7 +377,7 @@ namespace TarkovaCola.Client
             price = Price;
             if (ClassicMode.Enabled) return ClassicMode.DrinkBlockReason(def);
             if (Eternal.Is(def.Id)) return L.F("eternal.block", def.Name);
-            if (Perks.IsActive(def.Id)) price = EternalPrice;
+            if (Perks.IsDrunk(def.Id)) price = EternalPrice;
             return null;
         }
 
@@ -403,7 +431,10 @@ namespace TarkovaCola.Client
                 try { MysteryBox.Tick(me0); } catch (Exception e) { Dbg.Throttled("box", 10f, "ERROR", "caja misteriosa: " + e); }
                 try { Trials.Tick(me0); } catch (Exception e) { Dbg.Throttled("tedd", 10f, "ERROR", "TEDD: " + e); }
             }
+            if (Plugin.InRaid && Input.GetKeyDown(Plugin.CfgMachineEditorKey.Value)) Plugin.CfgMachineEditor.Value = !Plugin.CfgMachineEditor.Value;
             bool on = Plugin.InRaid && Plugin.CfgMachineEditor.Value;
+            if (on && !_editorWasOn) ShowAllSpots();       // al abrir el editor se ven TODOS los puntos (cajas y TEDD incluidos), no solo los de esta raid
+            _editorWasOn = on;
             if (!on) { if (_ghost != null) { UnityEngine.Object.Destroy(_ghost); _ghost = null; } return; }
             var me = Plugin.Me;
             var cam = Powerup.Cam();
@@ -432,6 +463,23 @@ namespace TarkovaCola.Client
             if (Input.GetKeyDown(Plugin.CfgMachinePlace.Value) && _ghostValid && _ghost != null) Place();
             if (Input.GetKeyDown(Plugin.CfgMachineDelete.Value)) DeleteNearest(me.Position);
             if (Input.GetKeyDown(Plugin.CfgMachinePhoto.Value)) Photo();
+        }
+
+        private static bool _editorWasOn;
+
+        // pone en el mapa los puntos guardados de este mapa que aun no estan (los de caja/TEDD que no salieron esta raid)
+        private static void ShowAllSpots()
+        {
+            if (_map == null) return;
+            int n = 0;
+            foreach (var s in _all.Where(x => string.Equals(MapKey(x.map), _map, StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                if (_placed.Any(p => p.Key == s)) continue;
+                var go = Spawn(s, false);
+                if (go != null) { _placed.Add(new KeyValuePair<Spot, GameObject>(s, go)); n++; }
+            }
+            if (n > 0) SetPower(_powered);
+            Status(L.F("machine.count", _placed.Count, _map));
         }
 
         private static void Rebuild()
@@ -478,7 +526,7 @@ namespace TarkovaCola.Client
             catch (Exception e) { Plugin.Log.LogError("Maquinas (foto): " + e); }
         }
 
-        private static string Name(string id)
+        internal static string Name(string id)
         {
             return id == Power ? L.T("machine.switch") : id == Wunderfizz ? "Der Wunderfizz" : id == Box ? L.T("box.name") : id == Tedd ? "TEDD" : Perks.Get(id).Name;
         }

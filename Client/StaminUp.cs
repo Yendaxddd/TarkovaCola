@@ -26,6 +26,7 @@ namespace TarkovaCola.Client
         internal const float CapacityMult = 1.5f;       // base: estamina de piernas x1.5
         internal const float KillWindow = 180f;          // Rush Hour (desafio): 3 bajas en menos de 3 min
         internal const float LowHealth = 0.30f;          // Second Wind: salud "en rojo" (parte vital o total por debajo del 30%)
+        internal const float WindCooldown = 90f;         //   Second Wind: 90 s de espera entre activaciones (3.1; antes sin cooldown)
         internal const float WindSeconds = 5f;           //   duracion de la estamina infinita y la inmunidad al dolor (sin cooldown: se reactiva cada vez que la salud vuelve a estar en rojo)
         internal const float RecoveryBonus = 0.25f;      // Quick Recovery: +25% de recuperacion
         internal const float LandingMult = 0.70f;        // Soft Landing: -30% de dano por caida
@@ -57,7 +58,7 @@ namespace TarkovaCola.Client
         {
             _raidStart = Time.time;
             JellyOn = false;
-            _windUntil = 0f; _sprintStart = 0f; _jellyUntil = 0f; _nextBoots = 0f; _nextDrain = 0f;
+            _windUntil = -999f; _sprintStart = 0f; _jellyUntil = 0f; _nextBoots = 0f; _nextDrain = 0f;
             _wasSprinting = false; _exhaustArmed = true;
             _kills = 0; _doubleKills = 0; _distance = 0f; _hasPos = false;
             _killTimes.Clear(); _earlyKills.Clear();
@@ -130,7 +131,7 @@ namespace TarkovaCola.Client
             else if (stamina.Current > cap * 0.3f) _exhaustArmed = true;
 
             // ---- Second Wind: cada vez que la salud esta en rojo, 5 s de estamina infinita e inmunidad al dolor (sin cooldown) ----
-            if (now >= _windUntil && Perk.Has("st_wind") && me.HealthController.IsAlive && PerkFx.NearDeath(me.HealthController, LowHealth))
+            if (now >= _windUntil + WindCooldown && Perk.Has("st_wind") && me.HealthController.IsAlive && PerkFx.NearDeath(me.HealthController, LowHealth))
             {
                 _windUntil = now + WindSeconds;
                 me.ActiveHealthController.AddEffect<ActiveHealthController.PainKiller>(EBodyPart.Head, 0f, WindSeconds, 0f);

@@ -20,7 +20,7 @@ namespace TarkovaCola.Client
     {
         private static ConfigFile _file;
         private static readonly List<Entry> _entries = new List<Entry>();
-        private static bool? _shownSpanish;
+        private static string _shown;
         private static float _next;
         private static int _order = 1000;
 
@@ -28,7 +28,7 @@ namespace TarkovaCola.Client
 
         private static readonly Dictionary<string, string> SectionsEn = new Dictionary<string, string>
         {
-            ["Idioma"] = "Language", ["HUD"] = "HUD", ["Perks"] = "Perks", ["Menu"] = "Menu", ["Audio"] = "Audio",
+            ["Idioma"] = "Language", ["HUD"] = "HUD", ["Perks"] = "Perks", ["Maquinas"] = "Machines", ["Menu"] = "Menu", ["Audio"] = "Audio",
             ["Powerup"] = "Powerup", ["Desafios"] = "Challenges", ["Herramientas"] = "Tools", ["Debug"] = "Debug", ["Arena"] = "Arena", ["???"] = "???",
         };
 
@@ -44,7 +44,7 @@ namespace TarkovaCola.Client
             var e = _file.Bind(section, key, def, new ConfigDescription(descEn, range, attr));
             string secEn;
             _entries.Add(new Entry { Attr = attr, SecEs = section, SecEn = SectionsEn.TryGetValue(section, out secEn) ? secEn : section, NameEs = dispEs ?? key, NameEn = nameEn, DescEs = descEs, DescEn = descEn });
-            Apply(L.Spanish);
+            Apply();
             return e;
         }
 
@@ -53,18 +53,32 @@ namespace TarkovaCola.Client
         {
             if (Time.realtimeSinceStartup < _next) return;
             _next = Time.realtimeSinceStartup + 1f;
-            Apply(L.Spanish);
+            Apply();
         }
 
-        private static void Apply(bool es)
+        private static void Apply()
         {
-            if (_shownSpanish == es && _entries.TrueForAll(x => x.Attr.DispName != null)) return;
-            _shownSpanish = es;
+            string lang = L.Current;
+            if (_shown == lang && _entries.TrueForAll(x => x.Attr.DispName != null)) return;
+            _shown = lang;
             foreach (var x in _entries)
             {
-                x.Attr.Category = es ? x.SecEs : x.SecEn;
-                x.Attr.DispName = es ? x.NameEs : x.NameEn;
-                x.Attr.Description = es ? x.DescEs : x.DescEn;
+                x.Attr.Category = L.CfgText("cfg.section." + x.SecEs, x.SecEs, x.SecEn);
+                x.Attr.DispName = L.CfgText(Key(x) + ".name", x.NameEs, x.NameEn);
+                x.Attr.Description = L.CfgText(Key(x) + ".desc", x.DescEs, x.DescEn);
+            }
+        }
+
+        private static string Key(Entry x) { return "cfg." + x.SecEs + "." + x.NameEs; }
+
+        // textos de F12 para las plantillas de traduccion (L.Export)
+        internal static IEnumerable<KeyValuePair<string, string[]>> Texts()
+        {
+            foreach (var x in _entries)
+            {
+                yield return new KeyValuePair<string, string[]>("cfg.section." + x.SecEs, new[] { x.SecEs, x.SecEn });
+                yield return new KeyValuePair<string, string[]>(Key(x) + ".name", new[] { x.NameEs, x.NameEn });
+                yield return new KeyValuePair<string, string[]>(Key(x) + ".desc", new[] { x.DescEs ?? "", x.DescEn ?? "" });
             }
         }
     }

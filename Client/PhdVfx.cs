@@ -43,6 +43,135 @@ namespace TarkovaCola.Client
             }
         }
 
+        // ---------------------------------------------------------------- deslizamiento (SAM) con PHD
+        // Mientras dura: estela de energia rosa/naranja por el suelo, chispas y un brillo que te sigue; al empezar, una onda pequena y un
+        // zumbido de energia (generado en codigo). SlideStop() deja de emitir y lo que ya salio se apaga solo.
+        private static GameObject _slide;
+        private static AudioClip _whoosh;
+
+        internal static void SlideStart(Transform follow, float seconds)
+        {
+            if (_failed || !Plugin.CfgPhdVfx.Value || follow == null) return;
+            try
+            {
+                Build();
+                SlideStop();
+                var root = new GameObject("TarkovaCola_PHD_Slide");
+                root.transform.SetParent(follow, false);
+                root.transform.localPosition = new Vector3(0f, 0.1f, 0f);
+                _slide = root;
+
+                var kick = new GameObject("TarkovaCola_PHD_SlideKick");       // la onda se queda donde empezaste
+                kick.transform.position = follow.position + Vector3.up * 0.08f;
+                Ring(kick.transform, 5f, 0.45f, 0f, new Color(1f, 0.55f, 0.95f), new Color(1f, 0.55f, 0.2f));
+                UnityEngine.Object.Destroy(kick, 1.5f);
+
+                Trail(root.transform);
+                TrailSparks(root.transform);
+                root.AddComponent<PhdVfxLight>().Init(4.5f, 2.2f, Mathf.Max(0.3f, seconds + 0.2f));
+                UnityEngine.Object.Destroy(root, Mathf.Clamp(seconds, 0.2f, 4f) + 1.5f);       // por si no llega el final
+                Whoosh(follow);
+            }
+            catch (Exception e)
+            {
+                _failed = true;
+                Plugin.Log.LogWarning("PHD Flopper: no se pudo crear el efecto del deslizamiento: " + e.Message);
+            }
+        }
+
+        internal static void SlideStop()
+        {
+            if (_slide == null) return;
+            var root = _slide;
+            _slide = null;
+            try
+            {
+                root.transform.SetParent(null, true);
+                foreach (var ps in root.GetComponentsInChildren<ParticleSystem>()) ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                var l = root.GetComponent<Light>();
+                if (l != null) l.enabled = false;
+                UnityEngine.Object.Destroy(root, 1.2f);
+            }
+            catch { }
+        }
+
+        // nubecitas de energia que salen por donde pasas (en el mundo: se quedan atras formando la estela)
+        private static void Trail(Transform parent)
+        {
+            var ps = NewSystem(parent, "Trail", _softMat);
+            var main = ps.main;
+            main.duration = 5f; main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.9f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.35f, 0.8f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.45f, 0.9f, 0.8f), new Color(1f, 0.6f, 0.25f, 0.8f));
+            main.gravityModifier = -0.05f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 160;
+            var em = ps.emission; em.rateOverTime = 20f; em.rateOverDistance = 9f;
+            var shape = ps.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Sphere; shape.radius = 0.3f;
+            var size = ps.sizeOverLifetime; size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(0.3f, 1f), new Keyframe(1f, 0f)));
+            var col = ps.colorOverLifetime; col.enabled = true;
+            col.color = new ParticleSystem.MinMaxGradient(Fade(Color.white, new Color(1f, 0.4f, 0.75f)));
+            ps.Play();
+        }
+
+        // chispas que saltan de los pies
+        private static void TrailSparks(Transform parent)
+        {
+            var ps = NewSystem(parent, "TrailSparks", _softMat);
+            var main = ps.main;
+            main.duration = 5f; main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.55f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 4f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.16f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.85f, 0.5f), new Color(1f, 0.45f, 0.9f));
+            main.gravityModifier = 0.8f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 120;
+            var em = ps.emission; em.rateOverTime = 35f; em.rateOverDistance = 6f;
+            var shape = ps.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Hemisphere; shape.radius = 0.25f;
+            var col = ps.colorOverLifetime; col.enabled = true;
+            col.color = new ParticleSystem.MinMaxGradient(Fade(Color.white, new Color(1f, 0.6f, 0.3f)));
+            ps.Play();
+        }
+
+        // zumbido de energia: ruido filtrado que sube y baja con un tono grave debajo (sin archivos)
+        private static void Whoosh(Transform follow)
+        {
+            if (_whoosh == null)
+            {
+                const int rate = 44100; const float len = 0.7f;
+                int n = (int)(rate * len);
+                var data = new float[n];
+                var rnd = new System.Random(7);
+                float lp = 0f, lp2 = 0f, phase = 0f;
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)n;
+                    float env = Mathf.Clamp01(t / 0.06f) * Mathf.Pow(1f - t, 1.6f);
+                    float cut = Mathf.Lerp(0.04f, 0.35f, Mathf.Sin(Mathf.PI * Mathf.Min(1f, t * 1.4f)));    // barrido del filtro
+                    float noise = (float)rnd.NextDouble() * 2f - 1f;
+                    lp += (noise - lp) * cut; lp2 += (lp - lp2) * cut;
+                    phase += 2f * Mathf.PI * Mathf.Lerp(150f, 70f, t) / rate;
+                    float hum = Mathf.Sin(phase) * 0.35f + Mathf.Sin(phase * 2.01f) * 0.12f;
+                    float crackle = rnd.NextDouble() < 0.0025 ? ((float)rnd.NextDouble() - 0.5f) * 1.2f : 0f;
+                    data[i] = Mathf.Clamp((lp2 * 1.6f + hum + crackle) * env, -1f, 1f) * 0.8f;
+                }
+                _whoosh = AudioClip.Create("TC_PHD_Slide", n, 1, rate, false);
+                _whoosh.SetData(data, 0);
+            }
+            var go = new GameObject("TarkovaCola_PHD_SlideSound");
+            go.transform.SetParent(follow, false);
+            var src = go.AddComponent<AudioSource>();
+            src.playOnAwake = false; src.spatialBlend = 0f; src.dopplerLevel = 0f; src.priority = 40;
+            src.volume = Plugin.CfgSfxVolume.Value;
+            src.pitch = UnityEngine.Random.Range(0.95f, 1.08f);
+            src.PlayOneShot(_whoosh);
+            UnityEngine.Object.Destroy(go, 1.2f);
+        }
+
         // ---------------------------------------------------------------- piezas
         // Anillo plano que se expande por el suelo (size = diametro final en metros)
         private static void Ring(Transform parent, float size, float life, float delay, Color from, Color to)

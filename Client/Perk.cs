@@ -17,13 +17,13 @@ namespace TarkovaCola.Client
         internal const float MagJugglerSpeed = 1.5f; // Mag Juggler: +50% al cargar cargadores del arma principal
         internal const float SteadyDamage = 0.7f;    // Steady Fingers: -30% de dano en brazos
         internal const float JitterSway = 1.25f;     // Jittery Hands: +25% de balanceo
-        internal const float StickyMalf = 1.10f;     // Sticky Mags: +10% de probabilidad de encasquillamiento
+        internal const float StickyMalf = 1.50f;     // Sticky Mags: probabilidad de encasquillamiento x1.5 (3.1; antes x1.1, no se notaba)
         internal const float DryMouth = 1.20f;       // Dry Mouth: la hidratacion baja +20%
         internal const float CrashStep = 0.25f;      // Sugar Crash: +0.25 de sed por tramo
         internal const float CrashMax = 2f;          //   maximo x2
         internal const float CrashInterval = 120f;   //   cada 2 min sin matar
         internal const float SweetToothTime = 2f;    // Sweet Tooth: comer/beber otra cosa tarda el doble
-        internal const float SlurpMeters = 30f;      // Loud Slurp: radio del ruido
+        internal const float SlurpMeters = 15f;      // Recarga ruidosa (d_slurp): radio del ruido de cada recarga
 
         private static readonly HashSet<string> _eq = new HashSet<string>();
 
@@ -93,7 +93,7 @@ namespace TarkovaCola.Client
                 if (!Plugin.SpeedColaActive) return 1f;
                 if (Rev.NoReloadBonus) return 1f;           // Bajon (2 min sin matar) y A medias (recarga con balas en el cargador)
                 float full = _eq.Contains("a_rush") ? RushReload : BaseReload;
-                return (1f + (full - 1f) * Perks.Power("speedcola")) * Synergy.ReloadBoost;        // como modificador (Classic) da solo una parte; la sinergia con PHD Flopper suma un empujon temporal
+                return (1f + (full - 1f) * Perks.Power("speedcola"));        // como modificador (Classic) da solo una parte
             }
         }
 
@@ -105,7 +105,8 @@ namespace TarkovaCola.Client
                 float m = Has("a_quick") ? QuickHandsDraw : 1f;
                 if (Has("va_d_clumsy")) m *= VultureAid.ClumsyDraw;
                 m *= MeleeMacchiato.DrawMult(Plugin.Me);           // Quick Draw (cuchillo) / Butterfingers (armas de fuego)
-                return m * Synergy.DrawMult;
+                m *= MuleKick.DrawMult(Plugin.Me);                 // Mule Kick: cambio a/desde la 3.a arma, Holster, Quick Change
+                return m;
             }
         }
     }

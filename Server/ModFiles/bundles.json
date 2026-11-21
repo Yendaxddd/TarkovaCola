@@ -141,6 +141,255 @@
         "cubemaps",
         "shaders"
       ]
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/quickrevive.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/quickrevive_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/mulekick.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/mulekick_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/electriccherry.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/electriccherry_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/deathperception.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/deathperception_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/tombstone.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/tombstone_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/doubletap.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/consumables/tarkovacola/doubletap_inj.bundle",
+      "dependencyKeys": []
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/pk_barrel.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/pk_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/pk_pgrip.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/pk_sight_rear.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/pk_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/pk_upper.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vk_barrel.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vk_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vk_pgrip.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vk_sight_rear.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vk_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vk_upper.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mx_barrel.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mx_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mx_pgrip.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mx_sight_rear.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mx_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/mx_upper.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vs_barrel.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vs_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vs_sight_rear.bundle",
+      "dependencyKeys": [
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vs_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/vs_upper.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/br_barrel.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/br_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/br_sight_rear.bundle",
+      "dependencyKeys": [
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/br_stock.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/hw_mag.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
+    },
+    {
+      "key": "assets/content/items/mods/tarkovacola/hw_pgrip.bundle",
+      "dependencyKeys": [
+        "cubemaps",
+        "shaders"
+      ]
     }
   ]
 }

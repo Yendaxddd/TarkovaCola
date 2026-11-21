@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "3.0.1")]
+    [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "4.0.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -33,27 +33,29 @@ namespace TarkovaCola.Client
         internal static ConfigEntry<bool> CfgRaidPanel;
         internal static ConfigEntry<float> CfgSwapWindow;
         internal static ConfigEntry<float> CfgHandScale;
-        internal static ConfigEntry<bool> CfgInjectors;
+        internal static ConfigEntry<bool> CfgInjectors, CfgPauseEffects;
         internal static ConfigEntry<bool> CfgBotPerks;
+        internal static ConfigEntry<bool> CfgBotPerkIcons;
+        internal static ConfigEntry<float> CfgOutlineAlpha;
         internal static ConfigEntry<bool> CfgJingle;
         internal static ConfigEntry<float> CfgJingleVolume;
+        internal static ConfigEntry<float> CfgSfxVolume;
         internal static ConfigEntry<bool> CfgPhdVfx;
+        internal static ConfigEntry<bool> CfgMuleWheel;
         internal static ConfigEntry<bool> CfgWebVfx;
         internal static ConfigEntry<bool> CfgClassicBlock;
-        internal static ConfigEntry<KeyCode> CfgPosKey, CfgRerollKey, CfgClipKey;
-        internal static ConfigEntry<float> CfgClipSeconds, CfgClipFps, CfgClipSlow;
-        internal static ConfigEntry<bool> CfgClipHands;
+        internal static ConfigEntry<KeyCode> CfgRerollKey;
         internal static ConfigEntry<bool> CfgVoice;
         internal static ConfigEntry<bool> CfgGuardsAlways;
         internal static ConfigEntry<bool> CfgLeftKeeps;
         internal static ConfigEntry<bool> CfgSalesUnlocked;
         internal static ConfigEntry<bool> CfgShowIcons;
-        internal static ConfigEntry<bool> CfgMeleeStyles, CfgMeleeCenter, CfgMeleeDebug;
         internal static ConfigEntry<float> CfgMeleeLift, CfgMeleeSide;
-        internal static ConfigEntry<bool> CfgMachineEditor, CfgMachinesEnabled, CfgMachinesNeedPower;
+        internal static ConfigEntry<bool> CfgMachineEditor, CfgMachinesEnabled, CfgMachinesNeedPower, CfgMachinesAutoRedo;
+        internal static ConfigEntry<MachineAuto.Mode> CfgMachinesAuto;
         internal static ConfigEntry<KeyCode> CfgMachineNext, CfgMachinePrev, CfgMachineRotL, CfgMachineRotR, CfgMachineSnap, CfgMachinePlace, CfgMachineDelete, CfgMachinePhoto;
-        internal static ConfigEntry<KeyCode> CfgBoxModKey;
-        internal static ConfigEntry<bool> CfgCodDrink;
+        internal static ConfigEntry<KeyCode> CfgBoxModKey, CfgMachineEditorKey;
+        internal static ConfigEntry<bool> CfgCodDrink, CfgBo7Melee;
         internal static ConfigEntry<float> CfgTeddChance;
         internal static ConfigEntry<bool> CfgJr;
         internal static ConfigEntry<bool> CfgArenaZombies;
@@ -96,6 +98,9 @@ namespace TarkovaCola.Client
                 "Distancia a la que se avisa", "Distance at which the alert triggers", new AcceptableValueRange<float>(5f, 150f));
             CfgPhdVfx = Cfg.Bind("HUD", "Efecto visual de PHD Flopper", true, "PHD Flopper visual effect",
                 "Anillo de energia y chispas cuando PHD Flopper te salva de una caida o una explosion", "Energy ring and sparks when PHD Flopper saves you from a fall or blast");
+            CfgMuleWheel = Cfg.Bind("Perks", "Mule Kick: cambiar de arma con la rueda", true, "Mule Kick: mouse wheel swaps weapons",
+                "Con un arma en la ranura de Mule Kick, la rueda del raton cambia de arma (principal, secundaria, pistola y Mule Kick) en vez de la velocidad al andar",
+                "With a weapon in the Mule Kick slot, the mouse wheel swaps weapons (primary, secondary, pistol and Mule Kick) instead of walking speed");
             CfgWebVfx = Cfg.Bind("HUD", "Efecto visual de la telarana", true, "Web visual effect",
                 "Telarana en el suelo donde tu granada atrapa enemigos", "Web on the ground where your grenade catches enemies");
             CfgIgnoreArmPenalty = Cfg.Bind("Perks", "Ignorar penalizacion de brazos", true, "Ignore arm penalty",
@@ -112,14 +117,28 @@ namespace TarkovaCola.Client
                 "Las perks son inyectores (animacion de inyectarse) en vez de latas. Se aplica al reiniciar el servidor y el juego",
                 "Perks are injectors (injection animation) instead of cans. Applies after restarting the server and the game");
             CfgInjectors.SettingChanged += (s, e) => InjectorMode.Sync(true);
+            InjectorMode.ClearIconsIfModeChanged();             // si las perks cambiaron de lata a inyector (o al reves), iconos nuevos
+            CfgPauseEffects = Cfg.Bind("Perks", "Pausar efectos de perks", false, "Pause perk effects",
+                "Para probar sin ellas: las perks bebidas siguen contando (HUD, XP, eternas) pero no hacen nada mientras esta activado. Se puede cambiar en plena raid",
+                "For testing without them: drunk perks still count (HUD, XP, eternal) but do nothing while enabled. Can be toggled mid-raid");
+            CfgPauseEffects.SettingChanged += (s, e) => PerkFx.OnPauseChanged();
             CfgBotPerks = Cfg.Bind("Perks", "Efectos de perks en enemigos y companeros", true, "Perk effects on enemies and teammates",
-                "Los enemigos que llevan perks encima tienen su efecto (Juggernog aguanta el doble, Speed Cola dispara mas rapido, Deadshot te ve a traves de las paredes...). A los companeros de PIT Fireteam les equipas hasta 4 en las casillas de su inventario",
-                "Enemies carrying perks get their effect (Juggernog takes twice the damage, Speed Cola fires faster, Deadshot sees you through walls...). PIT Fireteam teammates get up to 4 you equip in the slots of their inventory");
+                "Los enemigos que llevan perks encima tienen su efecto (Juggernog aguanta el doble, Speed Cola recarga mas rapido, Deadshot te ve a traves de las paredes...). A los companeros de PIT Fireteam les equipas hasta 4 en las casillas de su inventario",
+                "Enemies carrying perks get their effect (Juggernog takes half damage, Speed Cola reloads faster, Deadshot sees you through walls...). PIT Fireteam teammates get up to 4 you equip in the slots of their inventory");
+            CfgBotPerkIcons = Cfg.Bind("Perks", "Iconos de perks sobre los enemigos", true, "Perk icons over enemies",
+                "Sobre los enemigos que llevan perks se ven sus iconos (solo a la vista y a menos de 60 m)",
+                "Enemies carrying perks show their icons above their head (only in line of sight and within 60 m)");
+            CfgOutlineAlpha = Cfg.Bind("Perks", "Opacidad del contorno (Death Perception)", 0.5f, "Outline opacity (Death Perception)",
+                "Lo visible que es el borde de los enemigos marcados (0 = invisible, 1 = maximo)", "How visible the edge of marked enemies is (0 = invisible, 1 = full)",
+                new AcceptableValueRange<float>(0f, 1f));
             CfgOpenKey = Cfg.Bind("Menu", "Tecla para abrir Research", KeyCode.F9, "Research shortcut",
                 "Atajo alternativo al boton Research del menu principal", "Alternative shortcut to the Research button");
             CfgJingle = Cfg.Bind("Audio", "Cancion al beber", true, "Jingle when drinking",
                 "Reproduce la cancion de la perk al beberla", "Plays the perk jingle when drinking");
-            CfgJingleVolume = Cfg.Bind("Audio", "Volumen de la cancion", 0.6f, "Jingle volume", "Volumen 0-1", "Volume 0-1", new AcceptableValueRange<float>(0f, 1f));
+            CfgJingleVolume = Cfg.Bind("Audio", "Volumen de las jingles de las perks", 0.4f, "Perk jingle volume",
+                "Volumen de la cancion de cada perk al beberla (0 = muda, 1 = maximo)", "Volume of each perk's jingle when you drink it (0 = mute, 1 = full)", new AcceptableValueRange<float>(0f, 1f));
+            CfgSfxVolume = Cfg.Bind("Audio", "Volumen de los efectos", 0.6f, "Effects volume",
+                "Caja misteriosa, desafios completados, granadas del mod... (0-1)", "Mystery box, completed challenges, mod grenades... (0-1)", new AcceptableValueRange<float>(0f, 1f));
             CfgVoice = Cfg.Bind("Audio", "Voz del locutor", true, "Announcer voice",
                 "Voz de 'Random Perk' y 'Eternal Perk'", "Announcer voice for 'Random Perk' and 'Eternal Perk'");
             CfgVoiceVolume = Cfg.Bind("Audio", "Volumen de la voz", 0.9f, "Announcer volume", "Volumen 0-1", "Volume 0-1", new AcceptableValueRange<float>(0f, 1f));
@@ -129,56 +148,49 @@ namespace TarkovaCola.Client
                 "Probabilidad de que caiga al matar a un enemigo", "Chance that it drops when you kill an enemy", new AcceptableValueRange<float>(0f, 100f));
             CfgSwapWindow = Cfg.Bind("Desafios", "Ventana tras cambiar de arma (s)", 6f, "Weapon swap window (s)",
                 "Quick Hands: tiempo tras cambiar de arma en que cuentan las bajas", "Quick Hands: time after swapping weapons during which kills count");
-            CfgPosKey = Cfg.Bind("Herramientas", "Tecla para copiar la posicion", KeyCode.F10, "Copy position key",
-                "En raid, copia al portapapeles el mapa y tus coordenadas (para colocar misiones)", "In raid, copies the map and your coordinates to the clipboard (to place quests)");
-            CfgMeleeStyles = Cfg.Bind("Perks", "Estilos de cuerpo a cuerpo", true, "Melee styles",
-                "Combos con armas cuerpo a cuerpo: ligeras (horizontal, vertical, estocada), medias (horizontal, reves, vertical) y pesadas (un golpe con peso)",
-                "Melee combos: light (horizontal, vertical, stab), medium (horizontal, backhand, vertical) and heavy (one weighty swing)");
-            CfgMeleeCenter = Cfg.Bind("Perks", "Cuchillos mas centrados", true, "Center light melee",
-                "Con armas ligeras, el arma se ve un poco mas al centro de la pantalla", "With light melee weapons, the weapon sits a bit closer to the screen center");
             CfgRerollKey = Cfg.Bind("Perks", "Tecla de re-roll (Vulture Aid)", KeyCode.J, "Re-roll key (Vulture Aid)",
                 "Mirando un contenedor de cerca, vuelve a tirar su botin (mejora Re-roll de Vulture Aid)", "Looking at a container up close, rolls its loot again (Vulture Aid's Re-roll augment)");
-            CfgClipKey = Cfg.Bind("Herramientas", "Grabar clip: tecla", KeyCode.F9, "Record clip: key",
-                "Graba unos segundos de pantalla y los junta en una hoja de fotogramas (carpeta clips del mod), para revisar animaciones",
-                "Records a few seconds of screen into one frame sheet (the mod's clips folder), to review animations");
-            CfgClipSeconds = Cfg.Bind("Herramientas", "Grabar clip: segundos", 2f, "Record clip: seconds", "Duracion de la grabacion (tiempo real)", "Recording length (real time)", new AcceptableValueRange<float>(0.5f, 6f));
-            CfgClipFps = Cfg.Bind("Herramientas", "Grabar clip: fotogramas por segundo", 8f, "Record clip: frames per second", "Fotogramas por segundo de tiempo real", "Frames per real-time second", new AcceptableValueRange<float>(2f, 20f));
-            CfgClipSlow = Cfg.Bind("Herramientas", "Grabar clip: camara lenta", 0.3f, "Record clip: slow motion",
-                "Velocidad del juego mientras se graba (1 = normal). Con 0.3 un golpe de 0.4 s ocupa unos 8 fotogramas", "Game speed while recording (1 = normal). At 0.3 a 0.4 s swing spans about 8 frames", new AcceptableValueRange<float>(0.1f, 1f));
-            CfgClipHands = Cfg.Bind("Herramientas", "Grabar clip: solo la zona de las manos", false, "Record clip: hands area only",
-                "Graba solo el cuarto inferior derecho de la pantalla, con mas detalle (para ver las manos y el arma)", "Records only the lower-right part of the screen, in more detail (to see hands and weapon)");
             CfgMeleeLift = Cfg.Bind("Perks", "Altura de las manos (cuerpo a cuerpo)", 0.10f, "Melee hands height",
                 "Sube las manos y el arma cuerpo a cuerpo en pantalla (metros)", "Raises the hands and melee weapon on screen (meters)", new AcceptableValueRange<float>(0f, 0.3f));
             CfgMeleeSide = Cfg.Bind("Perks", "Manos hacia el centro (cuerpo a cuerpo)", 0.08f, "Melee hands toward center",
                 "Mueve las manos y el arma cuerpo a cuerpo hacia el centro de la pantalla (metros)", "Moves the hands and melee weapon toward the screen center (meters)", new AcceptableValueRange<float>(0f, 0.25f));
-            CfgMeleeDebug = Cfg.Bind("Herramientas", "Depurar cuerpo a cuerpo", false, "Debug melee",
-                "Muestra en pantalla el estado de cada golpe (clase, paso del combo, giro, velocidad, fases)", "Shows each swing's state on screen (class, combo step, roll, speed, phases)");
-            CfgMachinesEnabled = Cfg.Bind("Perks", "Maquinas de perks en los mapas", true, "Perk machines on maps",
+            CfgMachinesEnabled = Cfg.Bind("Maquinas", "Maquinas de perks en los mapas", true, "Perk machines on maps",
                 "Aparecen las maquinas de perks colocadas en los mapas (comprar: 30.000 rublos; si ya la tienes, eterna por 15.000)",
                 "Perk machines placed on maps appear (buy: 30,000 roubles; if you already have it, Eternal for 15,000)");
-            CfgMachinesNeedPower = Cfg.Bind("Perks", "Las maquinas necesitan encender la luz", true, "Machines need power",
+            CfgMachinesNeedPower = Cfg.Bind("Maquinas", "Las maquinas necesitan encender la luz", true, "Machines need power",
                 "Las maquinas no funcionan hasta que enciendes el interruptor de la luz del mapa (si el mapa no tiene, funcionan desde el principio)",
                 "Machines do not work until you turn on the map's power switch (if the map has none, they work from the start)");
-            // experimental: se mezcla con la animacion de EFT (manos negras, lata flotando). Clave nueva para que quede apagada en todos.
-            CfgCodDrink = Cfg.Bind("Debug", "Animacion de beber de Black Ops (experimental)", false, "Black Ops drinking animation (experimental)",
-                "EXPERIMENTAL: al beber una perk, la mano izquierda hace la animacion de Black Ops 7 encima de la de EFT. Aun se ve mal",
-                "EXPERIMENTAL: when drinking a perk, the left hand plays the Black Ops 7 animation on top of EFT's. Still looks wrong");
-            CfgBoxModKey = Cfg.Bind("Perks", "Caja misteriosa: tecla para accesorio", KeyCode.Y, "Mystery Box: attachment key",
+            // clips de BO7 horneados sobre el rig de la lata (Bo7Drink); la version vieja que movia la mano encima de EFT (CodDrink) ya no se usa
+            CfgCodDrink = Cfg.Bind("Perks", "Animacion de beber de Black Ops", true, "Black Ops drinking animation",
+                "Al beber una perk (en lata) se usa la animacion de beber de Black Ops 7 en vez de la de EFT",
+                "When drinking a perk (can) the Black Ops 7 drinking animation is used instead of EFT's");
+            CfgBo7Melee = Cfg.Bind("Perks", "Animaciones de cuerpo a cuerpo de Black Ops", true, "Black Ops melee animations",
+                "Las armas cuerpo a cuerpo usan animaciones de Black Ops 7 (cuchillos, machetes, hachas, palancas y mazos). Sustituye a los estilos de cuerpo a cuerpo",
+                "Melee weapons use Black Ops 7 animations (knives, machetes, axes, crowbars and sledgehammers). Replaces the melee styles");
+            CfgBoxModKey = Cfg.Bind("Maquinas", "Caja misteriosa: tecla para accesorio", KeyCode.Y, "Mystery Box: attachment key",
                 "Mantener F en la caja da un arma; mantener esta tecla, un accesorio", "Hold F at the box for a weapon; hold this key for an attachment");
-            CfgTeddChance = Cfg.Bind("Perks", "Probabilidad de TEDD (%)", 15f, "TEDD chance (%)",
+            CfgTeddChance = Cfg.Bind("Maquinas", "Probabilidad de TEDD (%)", 15f, "TEDD chance (%)",
                 "Probabilidad de que TEDD aparezca en la raid (en uno de sus puntos del mapa) con una prueba", "Chance that TEDD shows up in the raid (at one of his map spots) with a trial",
                 new AcceptableValueRange<float>(0f, 100f));
-            CfgMachineEditor = Cfg.Bind("Herramientas", "Editor de maquinas", false, "Machine editor",
-                "En raid: una maquina de perks sigue tu mira para colocarla en el mapa (se guarda en el servidor al momento)",
-                "In raid: a perk machine follows your aim so you can place it on the map (saved on the server right away)");
-            CfgMachineNext = Cfg.Bind("Herramientas", "Editor: siguiente perk", KeyCode.PageUp, "Editor: next perk", "", "");
-            CfgMachinePrev = Cfg.Bind("Herramientas", "Editor: perk anterior", KeyCode.PageDown, "Editor: previous perk", "", "");
-            CfgMachineRotL = Cfg.Bind("Herramientas", "Editor: girar a la izquierda", KeyCode.LeftBracket, "Editor: rotate left", "", "");
-            CfgMachineRotR = Cfg.Bind("Herramientas", "Editor: girar a la derecha", KeyCode.RightBracket, "Editor: rotate right", "", "");
-            CfgMachineSnap = Cfg.Bind("Herramientas", "Editor: redondear giro a 45", KeyCode.Backslash, "Editor: snap rotation to 45", "", "");
-            CfgMachinePlace = Cfg.Bind("Herramientas", "Editor: colocar", KeyCode.Insert, "Editor: place", "", "");
-            CfgMachineDelete = Cfg.Bind("Herramientas", "Editor: borrar la mas cercana", KeyCode.Delete, "Editor: delete nearest", "", "");
-            CfgMachinePhoto = Cfg.Bind("Herramientas", "Editor: foto", KeyCode.F11, "Editor: screenshot",
+            CfgMachinesAuto = Cfg.Bind("Maquinas", "Colocacion automatica de maquinas", MachineAuto.Mode.Fixed, "Automatic machine placement",
+                "En los mapas sin maquinas puestas a mano se buscan sitios solos (junto a paredes, cerca del botin). Fixed: se buscan una vez y se guardan (se pueden retocar con el editor). EveryRaid: sitios nuevos en cada raid. Off: solo las puestas a mano",
+                "On maps without hand-placed machines, spots are found automatically (against walls, near loot). Fixed: found once and saved (can be tweaked with the editor). EveryRaid: new spots every raid. Off: hand-placed only");
+            CfgMachinesAutoRedo = Cfg.Bind("Maquinas", "Rehacer las maquinas automaticas", false, "Redo automatic machines",
+                "En la siguiente raid se descartan las maquinas automaticas de ese mapa y se buscan sitios nuevos (luego se apaga solo)",
+                "Next raid, that map's automatic machines are discarded and new spots are found (turns itself off afterwards)");
+            CfgMachineEditor = Cfg.Bind("Maquinas", "Editor de maquinas", false, "Machine editor",
+                "En raid: coloca tus propias maquinas, puntos de la caja misteriosa, de TEDD y el interruptor de la luz donde quieras. Una pieza fantasma sigue tu mira; con las teclas de abajo eliges pieza, la giras, la colocas o borras la mas cercana (tambien las automaticas). Se guarda al momento y vale para las siguientes raids",
+                "In raid: place your own machines, Mystery Box spots, TEDD spots and the power switch wherever you want. A ghost piece follows your aim; with the keys below you pick the piece, rotate it, place it or delete the nearest one (automatic ones too). Saved right away for later raids");
+            CfgMachineEditorKey = Cfg.Bind("Maquinas", "Editor: tecla para abrir/cerrar", KeyCode.End, "Editor: toggle key",
+                "En raid, enciende o apaga el editor de maquinas", "In raid, turns the machine editor on or off");
+            CfgMachineNext = Cfg.Bind("Maquinas", "Editor: siguiente perk", KeyCode.PageUp, "Editor: next perk", "", "");
+            CfgMachinePrev = Cfg.Bind("Maquinas", "Editor: perk anterior", KeyCode.PageDown, "Editor: previous perk", "", "");
+            CfgMachineRotL = Cfg.Bind("Maquinas", "Editor: girar a la izquierda", KeyCode.LeftBracket, "Editor: rotate left", "", "");
+            CfgMachineRotR = Cfg.Bind("Maquinas", "Editor: girar a la derecha", KeyCode.RightBracket, "Editor: rotate right", "", "");
+            CfgMachineSnap = Cfg.Bind("Maquinas", "Editor: redondear giro a 45", KeyCode.Backslash, "Editor: snap rotation to 45", "", "");
+            CfgMachinePlace = Cfg.Bind("Maquinas", "Editor: colocar", KeyCode.Insert, "Editor: place", "", "");
+            CfgMachineDelete = Cfg.Bind("Maquinas", "Editor: borrar la mas cercana", KeyCode.Delete, "Editor: delete nearest", "", "");
+            CfgMachinePhoto = Cfg.Bind("Maquinas", "Editor: foto", KeyCode.F11, "Editor: screenshot",
                 "Guarda una captura en BepInEx/plugins/TarkovaCola/photos", "Saves a screenshot to BepInEx/plugins/TarkovaCola/photos");
             CfgGuardsAlways = Cfg.Bind("Debug", "Guardias siempre", false, "Always spawn guards",
                 "Hace aparecer a los Embotelladores de las misiones de este mapa aunque la mision no este en marcha (para probar)",
@@ -211,21 +223,21 @@ namespace TarkovaCola.Client
                 try { harmony.CreateClassProcessor(t).Patch(); ok++; Dbg.Log("PARCHE", "ok: " + t.Name); }
                 catch (Exception e) { fail++; Log.LogError("parche FALLO " + t.Name + ": " + e.Message); }
             }
-            Log.LogInfo("Tarkova-Cola cliente cargado (v3.0.1) - parches: " + ok + " ok, " + fail + " con error");
+            Log.LogInfo("Tarkova-Cola cliente cargado (v4.0.0) - parches: " + ok + " ok, " + fail + " con error");
+            L.Export(Cfg.Texts());                       // plantillas de traduccion (locales/en.json y es.json)
         }
 
         private void Update()
         {
             if (!InRaidWorld && Input.GetKeyDown(CfgOpenKey.Value)) { Dbg.Log("MENU", "tecla " + CfgOpenKey.Value + " pulsada"); ResearchScreen.Toggle(); }
-            if (InRaid && Input.GetKeyDown(CfgPosKey.Value)) CopyPosition();
             Tracker.Tick();
             PerkSense.Tick();
             try { BotPerks.Tick(); } catch (Exception e) { Log.LogError("Perks en bots: " + e); }
             try { PitPerks.Tick(); } catch (Exception e) { Log.LogError("Perks de PIT: " + e); }
+            try { if (AnyMe != null) Bo7Anims.Tick(); } catch (Exception e) { Dbg.Throttled("bo7anims", 10f, "ERROR", "animaciones BO7: " + e); }
             try { Machines.Tick(); } catch (Exception e) { Log.LogError("Maquinas (editor): " + e); }
             ArenaCompat.Tick();
             Cfg.Tick();
-            try { ClipCapture.Tick(); } catch (Exception e) { Log.LogError("Clips: " + e); }
             if (InRaidWorld) _lastInWorld = Time.realtimeSinceStartup;
             if (ServerSafe) { try { Achievements.FlushNative(); Achievements.FlushClaims(); PerkService.FlushRefunds(); } catch (Exception e) { Log.LogWarning("logros/correo (menu): " + e.Message); } }
             Hud.TickRaidPanel();
@@ -235,26 +247,8 @@ namespace TarkovaCola.Client
         private void OnGUI()
         {
             Hud.Draw();
-            try { MeleeStyle.DrawDebug(); } catch (Exception e) { Dbg.Throttled("meleedbg", 10f, "ERROR", "cuerpo a cuerpo (debug): " + e.Message); }
             try { VultureAid.DrawGui(); } catch (Exception e) { Dbg.Throttled("vulturegui", 10f, "ERROR", "Vulture (marcas): " + e.Message); }
-        }
-
-        // Herramienta de autor: copia "mapa x y z" de donde estas para poner las zonas y puntos de aparicion de las misiones
-        private static void CopyPosition()
-        {
-            try
-            {
-                var me = Me;
-                string map = Singleton<GameWorld>.Instance.LocationId;
-                var p = me.Position;
-                string text = "map=" + map + " at={ \"x\": " + p.x.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
-                              + ", \"y\": " + p.y.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
-                              + ", \"z\": " + p.z.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " }";
-                GUIUtility.systemCopyBuffer = text;
-                Log.LogInfo("[POSICION] " + text);
-                Hud.Notify(L.T("pos.title"), text, null);
-            }
-            catch (Exception e) { Log.LogError("No se pudo copiar la posicion: " + e.Message); }
+            try { FinalPerks.DrawGui(); } catch (Exception e) { Dbg.Throttled("finalgui", 10f, "ERROR", "perks finales (pantalla): " + e.Message); }
         }
 
         // El jugador de la RAID. En el Hideout tambien existe un mundo de juego con jugador (HideoutPlayer), pero no es una raid:
@@ -268,6 +262,9 @@ namespace TarkovaCola.Client
                 return p is HideoutPlayer ? null : p;
             }
         }
+
+        // el jugador local tambien en el Hideout (galeria de tiro): para lo que no es de raid, como las animaciones de las armas de BO7
+        internal static Player AnyMe { get { return Singleton<GameWorld>.Instantiated ? Singleton<GameWorld>.Instance.MainPlayer : null; } }
 
         // Hay una raid cargada (aunque estes muerto o en el menu de pausa).
         internal static bool InRaidWorld { get { return Me != null; } }
@@ -353,7 +350,7 @@ namespace TarkovaCola.Client
                 catch (Exception e) { Plugin.Log.LogError("Eternal (inicio): " + e); }
                 try { ClassicMode.OnPlayerReady(me); }          // modo Classic: aplica las perks persistentes y sortea el desafio de la raid
                 catch (Exception e) { Plugin.Log.LogError("Classic (inicio): " + e); }
-                Bandolier.Reset(); VultureAid.Reset(); MeleeMacchiato.Reset(); NewPerkUtil.Reset();
+                Bandolier.Reset(); VultureAid.Reset(); MeleeMacchiato.Reset(); NewPerkUtil.Reset(); FinalPerks.Reset();
                 try { Machines.OnPlayerReady(me); }
                 catch (Exception e) { Plugin.Log.LogError("Maquinas (inicio): " + e); }
                 try { Achievements.CheckState(); Achievements.ClaimPending(); }     // logros (fuera del arranque de la raid)
@@ -366,13 +363,15 @@ namespace TarkovaCola.Client
             catch (Exception e) { Dbg.Throttled("staminfail", 10f, "ERROR", "Stamin-Up: " + e); }
             try { ClassicMode.Tick(me); }
             catch (Exception e) { Dbg.Throttled("classicfail", 10f, "ERROR", "Classic (frame): " + e); }
-            Synergy.Tick(me);
             if (!ArenaCompat.InArena) try { Apex.Tick(me); }       // APEX: nucleos que coges y efectos continuos
             catch (Exception e) { Dbg.Throttled("apexfail", 10f, "ERROR", "APEX (frame): " + e); }
             try { Powerup.Tick(me); }    // perk aleatoria: caducidad y recogida
             catch (Exception e) { Dbg.Throttled("powerupfail", 10f, "ERROR", "powerup (frame): " + e); }
             try { Bandolier.Tick(me); VultureAid.Tick(me); MeleeMacchiato.Tick(me, Time.deltaTime); }
             catch (Exception e) { Dbg.Throttled("newperksfail", 10f, "ERROR", "Bandolier/Vulture (frame): " + e); }
+            FinalPerks.Tick(me);         // perks finales (3.1)
+            try { SamCompat.Tick(me); DynMapsCompat.Tick(me); }       // compatibilidad: SAM (plancha con PHD) y Dynamic Maps (marcadores)
+            catch (Exception e) { Dbg.Throttled("compatfail", 10f, "ERROR", "compat (frame): " + e); }
             try { PerkFx.Tick(me); }     // efectos por frame de Juggernog, PHD Flopper, Widow's Wine y las mejoras comunes (sale enseguida sin perks activas)
             catch (Exception e) { Dbg.Throttled("perkfxfail", 10f, "ERROR", "perks (frame): " + e); }
 
@@ -438,7 +437,7 @@ namespace TarkovaCola.Client
 
             // Sprint Shooter (desafio): bebidas energeticas encontradas (la cantidad sube durante la raid)
             int drinks = StaminUp.CountDrinks(me);
-            if (Time.time - _initTime >= 8f && drinks > _drinkCount && me.HealthController.IsAlive)
+            if (Time.time - _initTime >= 8f && drinks > _drinkCount && me.HealthController.IsAlive && Perks.IsActive(StaminUp.Id))
             {
                 Dbg.Log("DESAFIO", "bebidas energeticas encontradas: +" + (drinks - _drinkCount));
                 PerkService.AddProgress("st_shooter", drinks - _drinkCount);
@@ -456,6 +455,7 @@ namespace TarkovaCola.Client
             }
 
             Rev.OnHandsChanged(hc);                     // Impulsivo (Melee Macchiato)
+            FinalPerks.OnHandsChanged(me, hc);          // Mule Kick
             _prevWeapon = newWeapon;
         }
 
@@ -471,7 +471,7 @@ namespace TarkovaCola.Client
             Perk.LastKillOrDrink = Time.time;                       // Bajon: matar devuelve el bonus de recarga
 
             if (Plugin.SpeedColaActive && sinceSwap <= Plugin.CfgSwapWindow.Value) PerkService.AddProgress("a_quick");
-            if (pmc) PerkService.AddProgress("a_rush");
+            if (pmc && Plugin.SpeedColaActive) PerkService.AddProgress("a_rush");
             if (Plugin.SpeedColaActive && boss) PerkService.AddProgress("s_slot");
 
             if (Plugin.SpeedColaActive)
@@ -541,10 +541,10 @@ namespace TarkovaCola.Client
             Safe("perk", Perk.OnRaidStart);
             Safe("progreso", () => PerkService.EnsureLoaded(force: true));
             Safe("arena", ArenaCompat.OnRaidStart);              // Arena Mode: restaura el perfil si una partida anterior no termino bien
-            Safe("sinergias", Synergy.OnRaidStart);              // sinergias equipadas
             Safe("APEX", Apex.OnRaidStart);                      // APEX equipado y nucleos de la raid
             Safe("guardias", QuestGuards.OnRaidStart);           // puntos de los guardias de las misiones
             Safe("logros", AchTrack.OnRaidStart);
+            Safe("compat", () => { ModCompat.Init(); SamCompat.OnRaidStart(); DynMapsCompat.OnRaidStart(); });   // Advanced Movement (SAM) y Dynamic Maps
             Safe("classic", ClassicMode.OnRaidStart);            // modo Classic: reactiva las perks que persisten de raids anteriores
             Safe("sanear", () => PerkService.Sanitize());        // sin su desventaja, una mejora no puede estar equipada
             Safe("equipo", Perk.Refresh);
@@ -595,7 +595,7 @@ namespace TarkovaCola.Client
                 Awarded = true;
                 int raidXp = knownXp;
                 if (profile != null && profile.EftStats != null) raidXp = Math.Max(raidXp, profile.EftStats.TotalSessionExperience);
-                var active = Perks.ActivePerks.ToList();
+                var active = Perks.DrunkPerks.ToList();
                 Plugin.Log.LogInfo("Fin de raid (" + source + "): XP de la sesion=" + raidXp + ", perks activas=" + (active.Count == 0 ? "(ninguna)" : string.Join(", ", active.Select(p => p.Id).ToArray())));
                 raidXp = ArenaCompat.ScaleXp(raidXp);         // Arena: Zombies da XP reducido, los demas modos nada
                 if (raidXp > 0)
@@ -620,10 +620,15 @@ namespace TarkovaCola.Client
             {
                 Juggernog.OnConsumed(item);
                 ClassicChallenge.OnConsumed(item);
-                Synergy.OnConsumed(item);
                 return;
             }
 
+            if (__instance.Player is HideoutPlayer)                       // (se bloquea antes de beber; si aun asi pasa, no cuenta y se devuelve)
+            {
+                Dbg.Log("BEBIDA", def.Id + " bebida en el Hideout: sin efecto, botella devuelta");
+                PerkService.RequestRefund(def.ItemTpl, 1);
+                return;
+            }
             PerkGrant.Apply(def, __instance.Player, false);               // activa la perk (o la vuelve eterna si ya la llevabas)
         }
     }
@@ -640,13 +645,6 @@ namespace TarkovaCola.Client
         {
             Dbg.Log("BEBIDA", "Speed Cola: recarga x" + Perk.ReloadMult.ToString("0.0") + (Perk.Has("a_rush") ? " (Sugar Rush equipada)" : ""));
 
-            // Loud Slurp: beberla hace ruido que oyen los bots cercanos
-            if (Perk.Has("d_slurp"))
-            {
-                var p = health.Player;
-                Singleton<GlobalEventDispatcher>.Instance.PlaySound(p, p.Position, Perk.SlurpMeters, AISoundType.step);
-                Dbg.Log("EFECTO", "Loud Slurp: ruido de " + Perk.SlurpMeters.ToString("0") + " m");
-            }
 
             // recalcula la recarga del arma en mano ya con el multiplicador
             var fc = health.Player.HandsController as Player.FirearmController;

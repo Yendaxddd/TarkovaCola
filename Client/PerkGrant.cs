@@ -17,7 +17,7 @@ namespace TarkovaCola.Client
                 entry = ClassicMode.OnDrink(def);
                 if (entry == null) return;
             }
-            else if (Perks.IsActive(def.Id))
+            else if (Perks.IsDrunk(def.Id))
             {
                 if (!Eternal.Is(def.Id)) { Eternal.Grant(def, me, powerup); AchTrack.OnDrink(def, powerup); return; }
                 if (!powerup)                                              // (no deberia pasar: se bloquea antes de beber)

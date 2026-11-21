@@ -33,7 +33,8 @@ namespace TarkovaCola.Client
         internal const float TunnelDraw = 0.85f;        // Tunnel Vision: sacar el arma -15%
         internal const float BreathingDrain = 0.15f;    // Heavy Breathing: correr gasta un 15% mas
         internal const float ShakySway = 1.20f;         // Shaky Hands: balanceo +20% sin apuntar
-        internal const float SqueakRadius = 12f;        // Squeaky Boots
+        internal const float TiredAfter = 8f;           // Ojo cansado (antes Squeaky Boots)
+        private static float _aimSince = -1f;
         internal const float MovingSpeed = 0.8f;        // "te estas moviendo" (m/s) para el desafio de Dead Aim
 
         internal static bool Active { get { return Perks.IsActive(Id); } }
@@ -67,7 +68,6 @@ namespace TarkovaCola.Client
                 if (p <= 0f) return 0f;
                 float b = BaseAim * p;
                 if (Perk.Has("dd_quick")) b += QuickAim;
-                b += Synergy.AimBonus;                      // sinergia Speed Cola + Deadshot
                 return b;
             }
         }
@@ -102,11 +102,12 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- Dead Aim: el arma se queda fija en el centro
-        // Se quitan de la animacion del arma la respiracion (balanceo al apuntar y en reposo), el andar, la inercia al girar y el
-        // temblor de manos. El retroceso (Shooting) y el resto se mantienen. Al dejar de tenerla se devuelven solo los que se quitaron.
-        private const EFT.Animations.EProceduralAnimationMask NoSway = EFT.Animations.EProceduralAnimationMask.Breathing
-            | EFT.Animations.EProceduralAnimationMask.Walking | EFT.Animations.EProceduralAnimationMask.MotionReaction
-            | EFT.Animations.EProceduralAnimationMask.HandShake;
+        // Se quitan de la animacion del arma el andar y la inercia al girar. La respiracion y el temblor se quedan, pero con el
+        // balanceo x0.35 (SwayFactor; antes x0, demasiado fuerte y anulaba las desventajas de balanceo). El retroceso se mantiene.
+        // Al dejar de tenerla se devuelven solo los que se quitaron.
+        internal const float DeadAimSway = 0.35f;
+        private const EFT.Animations.EProceduralAnimationMask NoSway = EFT.Animations.EProceduralAnimationMask.Walking
+            | EFT.Animations.EProceduralAnimationMask.MotionReaction;
         private static EFT.Animations.ProceduralWeaponAnimation _deadAimPwa;
         private static EFT.Animations.EProceduralAnimationMask _deadAimRemoved;
 
@@ -145,8 +146,11 @@ namespace TarkovaCola.Client
         {
             float p = Perks.Power(Id);
             if (p <= 0f) return 1f;
+            // Ojo cansado (dd_d_squeak, 3.1): tras 8 s apuntando sin parar, el bono base de balanceo se queda en la mitad
+            if (!aiming) _aimSince = -1f; else if (_aimSince < 0f) _aimSince = Time.time;
+            if (aiming && Perk.Has("dd_d_squeak") && Time.time - _aimSince >= TiredAfter) p *= 0.5f;
             float m = 1f - BaseSway * p;
-            if (Perk.Has("dd_aim")) m = 0f;                             // Dead Aim: sin balanceo
+            if (Perk.Has("dd_aim")) m = Mathf.Min(m, DeadAimSway);      // Dead Aim: balanceo x0.35 (las desventajas se aplican despues)
             return m;
         }
 
@@ -209,10 +213,11 @@ namespace TarkovaCola.Client
         private static void Postfix(string player, int fragmentIndex, Shot __result)
         {
             if (__result == null) return;
-            if (QuestGuards.Any && QuestGuards.Has(player, Deadshot.Id)) { __result.PenetrationPower *= QuestGuards.Penetration; return; }   // Embotellador con Deadshot
+            if (BotPerks.Any && BotPerks.Has(player, Deadshot.Id)) { __result.PenetrationPower *= BotPerks.Penetration; return; }   // bot o Embotellador con Deadshot
             var me = Plugin.Me;
             if (fragmentIndex == 0 && Bandolier.Active && me != null && player == me.ProfileId)
                 try { Bandolier.OnShot(me); } catch (Exception e) { Dbg.Throttled("bbshot", 10f, "ERROR", "Bandolier (disparo): " + e.Message); }
+            if (fragmentIndex == 0 && me != null && player == me.ProfileId) FinalPerks.OnShot(me);         // Double Tap (ritmo)
             if (!Deadshot.Active) return;
             if (me == null || player != me.ProfileId) return;
             if (Apex.Has(Deadshot.Id)) __result.PenetrationPower += Apex.PenBonus;      // APEX: +1 clase de penetracion, sea cual sea la municion

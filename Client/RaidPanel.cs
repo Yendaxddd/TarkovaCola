@@ -121,7 +121,7 @@ namespace TarkovaCola.Client
             {
                 sb.Append('C');
                 foreach (var e in ClassicMode.Entries())
-                    sb.Append('|').Append(e.Perk).Append(e.Modifier ? 'm' : 'p').Append(Perks.IsActive(e.Perk) ? 'a' : 'i').Append(string.Join("+", e.Minors.ToArray()));
+                    sb.Append('|').Append(e.Perk).Append(e.Modifier ? 'm' : 'p').Append(Perks.IsDrunk(e.Perk) ? 'a' : 'i').Append(string.Join("+", e.Minors.ToArray()));
                 var cur = ClassicChallenge.Current;
                 if (cur != null) sb.Append('#').Append(cur.Id).Append(ClassicChallenge.Progress).Append(ClassicChallenge.Done).Append(ClassicChallenge.Hurt);
                 return sb.ToString();
@@ -129,7 +129,7 @@ namespace TarkovaCola.Client
             sb.Append('M').Append(_selPerk).Append(Mathf.RoundToInt(RawXp()));
             foreach (var def in Perks.UiPerks)
             {
-                sb.Append('|').Append(def.Id).Append(PerkService.Xp(def.Id)).Append(Perks.IsActive(def.Id) ? (Eternal.Is(def.Id) ? 'e' : 'a') : 'i');
+                sb.Append('|').Append(def.Id).Append(PerkService.Xp(def.Id)).Append(Perks.IsDrunk(def.Id) ? (Eternal.Is(def.Id) ? 'e' : 'a') : 'i');
                 foreach (var c in PerkService.ActiveChallenges(def.Id)) sb.Append(',').Append(c.Id).Append(PerkService.Progress(c.Id));
             }
             return sb.ToString();
@@ -138,7 +138,7 @@ namespace TarkovaCola.Client
         // ---------------------------------------------------------------- pestanas
         private static PerkDef Selected(List<PerkDef> perks)
         {
-            return perks.FirstOrDefault(p => p.Id == _selPerk) ?? perks.FirstOrDefault(p => Perks.IsActive(p.Id)) ?? perks[0];
+            return perks.FirstOrDefault(p => p.Id == _selPerk) ?? perks.FirstOrDefault(p => Perks.IsDrunk(p.Id)) ?? perks[0];
         }
 
         private static void Select(string perkId)
@@ -231,18 +231,18 @@ namespace TarkovaCola.Client
         // Una pestana por perk: icono (apagado si no esta activa en esta raid), punto verde si esta activa y cuantos desafios tiene pendientes.
         private float Tabs(Transform root, List<PerkDef> perks, PerkDef sel, float y, float Pad, float Inner)
         {
-            int n = perks.Count;
-            float Tile = Mathf.Min(56f, (Inner - (n - 1) * 6f) / n);         // con 6 perks las pestanas se estrechan para caber
-            float gap = n > 1 ? Mathf.Min(10f, (Inner - n * Tile) / (n - 1)) : 0f;
+            int n = perks.Count, rows = n > 9 ? 2 : 1, perRow = (n + rows - 1) / rows;      // con muchas perks: 2 filas
+            float Tile = Mathf.Min(56f, (Inner - (perRow - 1) * 6f) / perRow);
+            float gap = perRow > 1 ? Mathf.Min(10f, (Inner - perRow * Tile) / (perRow - 1)) : 0f;
             float pad = Mathf.Round(Tile / 7f), icSize = Tile - pad * 2f;
             for (int i = 0; i < n; i++)
             {
                 var def = perks[i];
                 string id = def.Id;
-                bool on = def == sel, active = Perks.IsActive(id);
-                float x = Pad + i * (Tile + gap);
+                bool on = def == sel, active = Perks.IsDrunk(id);
+                float x = Pad + (i % perRow) * (Tile + gap), ty = y + (i / perRow) * (Tile + 6f);
 
-                var b = UiButton.Make(root, x, y, Tile, Tile, () => Select(id),
+                var b = UiButton.Make(root, x, ty, Tile, Tile, () => Select(id),
                                       on ? UiKit.C(240, 193, 75, 0.16f) : UiKit.C(18, 34, 50, 0.95f),
                                       on ? UiKit.C(240, 193, 75, 0.26f) : UiKit.C(42, 68, 94, 0.97f));
                 Color border = Eternal.Is(id) ? EternalBlue : on ? UiKit.Gold : UiKit.Line;       // Eternal Perk: borde azul
@@ -263,7 +263,7 @@ namespace TarkovaCola.Client
                 int pending = PerkService.ActiveChallenges(id).Count();
                 if (pending > 0) T(b.transform, pending.ToString(), Tile - 30, Tile - 17, 26, 14, 11, UiKit.Gold, TextAlignmentOptions.TopRight, false, true);
             }
-            return y + Tile;
+            return y + rows * Tile + (rows - 1) * 6f;
         }
 
         // Nivel, XP y desafios pendientes de la perk elegida. Los desafios van ordenados por lo cerca que estan de completarse.
@@ -272,7 +272,7 @@ namespace TarkovaCola.Client
             string id = def.Id;
             int lvl, cur, max;
             PerkService.LevelInfo(PerkService.Xp(id), out lvl, out cur, out max);
-            bool isMax = PerkService.IsMax(id), active = Perks.IsActive(id);
+            bool isMax = PerkService.IsMax(id), active = Perks.IsDrunk(id);
             int live = active ? Mathf.RoundToInt(rawXp * (1f + (float)PerkService.XpBonus)) : 0;
             var challenges = PerkService.ActiveChallenges(id)
                 .OrderByDescending(c => Mathf.Min(PerkService.Progress(c.Id), c.Goal) / (float)c.Goal)
@@ -346,7 +346,7 @@ namespace TarkovaCola.Client
                 var icon = Hud.IconSprite(def.Id);
                 if (icon != null)
                 {
-                    var ic = UiKit.Img(root, "Icon", Perks.IsActive(e.Perk) ? Color.white : UiKit.C(255, 255, 255, 0.5f), icon);
+                    var ic = UiKit.Img(root, "Icon", Perks.IsDrunk(e.Perk) ? Color.white : UiKit.C(255, 255, 255, 0.5f), icon);
                     UiKit.Place(ic.rectTransform, Pad, y, 30, 30);
                 }
                 T(root, def.Name.ToUpperInvariant(), Pad + 38, y + 3, Inner - 38 - 104, 26, 18, UiKit.White, TextAlignmentOptions.TopLeft, false, true);

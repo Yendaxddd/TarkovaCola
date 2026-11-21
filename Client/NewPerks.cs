@@ -88,7 +88,26 @@ namespace TarkovaCola.Client
                 && mag.Cartridges.CheckCompatibility(a));
         }
 
-        internal static int Price(Item it) { return it.Template.CreditsPrice * Math.Max(1, it.StackObjectsCount); }
+        // precio base del Handbook (SPT 4 ya no trae CreditsPrice en las plantillas: valia 0 y Vulture Aid no marcaba nada)
+        private static readonly Dictionary<string, int> _prices = new Dictionary<string, int>();
+        internal static int Price(Item it)
+        {
+            string tpl = it.TemplateId;
+            int p;
+            if (!_prices.TryGetValue(tpl, out p))
+            {
+                p = it.Template.CreditsPrice;
+                try
+                {
+                    var hb = Comfort.Common.Singleton<EFT.HandBook.Handbook>.Instance;
+                    var node = hb != null ? hb[tpl] : null;
+                    if (node != null && node.Data != null) p = Mathf.RoundToInt(node.Data.Price);
+                }
+                catch { }
+                _prices[tpl] = p;
+            }
+            return p * Math.Max(1, it.StackObjectsCount);
+        }
 
         internal static int ProfileValue(Player p)
         {
@@ -132,6 +151,7 @@ namespace TarkovaCola.Client
         internal const int LeechRounds = 2;
         internal const float StrapWeight = 0.5f;         // Padded Strap
         internal const float LooseChance = 0.10f;        // Loose Rounds
+        internal const float LooseShare = 0.10f;         //   ...y se cae el 10% del cargador
         internal const float NumbCut = 0.30f;            // Numb: los analgesicos duran un 30% menos
         internal const float ClatterRadius = 20f;        // Gear Clatter
         internal const float PinCut = 0.5f;              // Itchy Pin: s menos de mecha
@@ -142,7 +162,6 @@ namespace TarkovaCola.Client
         private static float _next, _lastTrigger;
         private static int _killsNoReload, _lastReloadSeen;
         private static bool _wasGrounded = true, _armsZero;
-        private static readonly Dictionary<ThrowWeapTemplate, float> _fuses = new Dictionary<ThrowWeapTemplate, float>();
         private static float _strapDist;
         private static Vector3 _lastPos;
 
@@ -153,12 +172,11 @@ namespace TarkovaCola.Client
         internal static void Reset()
         {
             _next = _lastTrigger = 0f; _killsNoReload = 0; _lastReloadSeen = 0; _wasGrounded = true; _armsZero = false; _strapDist = 0f; _lastPos = Vector3.zero;
-            RestoreFuses();
         }
 
         internal static void Tick(Player me)
         {
-            if (!Active) { RestoreFuses(); return; }
+            if (!Active) return;
             var fc = me.HandsController as Player.FirearmController;
             if (fc != null && fc.IsTriggerPressed) _lastTrigger = Time.time;
 
@@ -167,7 +185,7 @@ namespace TarkovaCola.Client
             {
                 _lastReloadSeen = Perk.ReloadCount;
                 _killsNoReload = 0;
-                if (Perk.Has("bb_d_loose") && UnityEngine.Random.value < LooseChance) DropOneRound(me, fc);
+                if (Perk.Has("bb_d_loose") && UnityEngine.Random.value < LooseChance) DropRounds(me, fc);
             }
 
             // Gear Clatter: al saltar y al aterrizar haces ruido
@@ -184,9 +202,8 @@ namespace TarkovaCola.Client
             if (fc != null && Perk.Has("bb_d_fumble") && fc.IsInReloadOperation() && mc != null)
                 mc.ChangeSpeedLimit(FumbleSpeed * mc.MaxSpeed, Player.ESpeedLimit.Swamp, 0.3f);
 
-            // Itchy Pin: con una granada en la mano, la mecha es mas corta
-            if (Perk.Has("bb_d_pin") && me.HandsController is Player.GrenadeHandsController gh) ShortenFuse(gh.Item as ThrowWeap);
-            else if (!(me.HandsController is Player.GrenadeHandsController)) RestoreFuses();
+            // (Itchy Pin: la mecha mas corta se aplica a cada granada al lanzarla, en GrenadeInitPatch; antes se tocaba la plantilla
+            //  y afectaba tambien a las granadas de los bots)
 
             // Strap Burn: los brazos se recuperan mas lento
             NewPerkUtil.SlowArmRecovery(me, Perk.Has("bb_d_burn") ? BurnKeep : 1f);
@@ -257,32 +274,19 @@ namespace TarkovaCola.Client
             }
         }
 
-        private static void DropOneRound(Player me, Player.FirearmController fc)
+        // Loose Rounds (3.1): se cae el 10% de las balas del cargador (minimo 1; antes siempre 1), del monton de arriba
+        private static void DropRounds(Player me, Player.FirearmController fc)
         {
             var w = fc != null ? fc.Item as Weapon : null;
             var mag = w != null ? w.GetCurrentMagazine() : null;
             var top = mag != null ? mag.Cartridges.Last : null;
             if (top == null) return;
+            int n = Mathf.Min(top.StackObjectsCount, Mathf.Max(1, Mathf.RoundToInt(mag.Count * LooseShare)));
             var ctrl = me.InventoryController;
-            var op = top.StackObjectsCount > 1 ? (object)ItemManipulator.SplitToNowhere(top, 1, ctrl, ctrl, true) : ItemManipulator.Remove(top, ctrl, true);
+            var op = top.StackObjectsCount > n ? (object)ItemManipulator.SplitToNowhere(top, n, ctrl, ctrl, true) : ItemManipulator.Remove(top, ctrl, true);
             if (op is Diz.LanguageExtensions.OperationResult<SplitToNowhereResult> s) { if (s.Succeeded) ctrl.TryRunNetworkTransaction(s); }
             else if (op is Diz.LanguageExtensions.OperationResult<RemoveResult> r) { if (r.Succeeded) ctrl.TryRunNetworkTransaction(r); }
-            Dbg.Log("EFECTO", "Loose Rounds: se cae una bala del cargador");
-        }
-
-        private static void ShortenFuse(ThrowWeap g)
-        {
-            var t = g != null ? g.Template as ThrowWeapTemplate : null;
-            if (t == null || _fuses.ContainsKey(t)) return;
-            _fuses[t] = t.ExplDelay;
-            t.ExplDelay = Mathf.Max(0.5f, t.ExplDelay - PinCut);
-        }
-
-        private static void RestoreFuses()
-        {
-            if (_fuses.Count == 0) return;
-            foreach (var kv in _fuses) kv.Key.ExplDelay = kv.Value;
-            _fuses.Clear();
+            Dbg.Log("EFECTO", "Loose Rounds: se caen " + n + " balas del cargador");
         }
 
         // ---- bajas propias ----
@@ -359,12 +363,13 @@ namespace TarkovaCola.Client
         internal const string Id = "vultureaid";
         internal const string ItemTpl = "6a1c00000000000000000c08";
         internal const float Range = 15f, SharpRange = 30f;
-        internal const int MinValue = 50000;              // valor (precio base) para que un contenedor "valga la pena"
+        internal const int BaseMinValue = 50000;          // valor (precio base) para que un contenedor "valga la pena"
+        internal const int PickyMinValue = 100000;        // Buitre exigente (va_d_stench, 3.1)
+        internal static int MinValue { get { return Perk.Has("va_d_stench") ? PickyMinValue : BaseMinValue; } }
         internal const int RichPmc = 250000;              // Scent of Money
         internal const float ScentRange = 80f, ScentShow = 4f, ScentCooldown = 60f;
         internal const float LeftoverChance = 0.25f, FieldKitChance = 0.15f, LuckyChance = 0.10f;
         internal const string FieldKit = "5755356824597772cb798962";   // AI-2
-        internal const float StenchRadius = 15f;
         internal const float MyopiaAim = 0.10f;
         internal const float ClumsyDraw = 0.90f;
         internal const float WeakGripKeep = 0.85f;
@@ -447,12 +452,13 @@ namespace TarkovaCola.Client
             Hud.Enqueue(L.T("va_scent.n"), L.F("notice.va_scent", Mathf.RoundToInt(Mathf.Sqrt(d2)), v / 1000));
         }
 
-        // Un contenedor se da por registrado cuando el juego lo marca, o tras quedarte a menos de 1.5 m (ahi cuentan los desafios)
+        // Un contenedor se da por registrado cuando el juego lo marca, o al abrirlo de verdad: a menos de 2 m con el inventario abierto
+        // (antes bastaba con pasar a 1.5 m, y los desafios se hacian andando junto a los contenedores)
         private static bool Searched(Item root, float d2, bool body, bool pmc = false)
         {
             if (_searched.Contains(root.Id)) return true;
             var s = root as SearchableItem;
-            if ((s != null && s.IsSearched) || d2 < 1.5f * 1.5f)
+            if ((s != null && s.IsSearched) || (d2 < 2f * 2f && Hud.MenuOpen))
             {
                 _searched.Add(root.Id);
                 OnSearched(root, body, pmc);
@@ -592,7 +598,6 @@ namespace TarkovaCola.Client
         internal const float JitterSway = 1.20f;         // Caffeine Jitters
         internal const float CrashDrain = 0.15f;         // Caffeine Crash
         internal const float ButterDraw = 0.85f;         // Butterfingers
-        internal const float LoudRadius = 12f;           // Loud Steps
 
         private static string _target;
         private static int _streak;
@@ -610,7 +615,9 @@ namespace TarkovaCola.Client
         internal static float SpeedFactor { get { float p = Perks.Power(Id); return p <= 0f ? 1f : 1f + (Speed - 1f) * p; } }
         internal static bool KnifeOut(Player me) { return me != null && me.HandsController is Player.KnifeController; }
 
-        internal static void Reset() { _target = null; _streak = 0; _lastHit = 0f; _sprintDist = 0f; }
+        private static bool _ironUsed;                    // Iron Skull: una vez por raid (3.1)
+        private static readonly HashSet<string> _edgeHit = new HashSet<string>();
+        internal static void Reset() { _target = null; _streak = 0; _lastHit = 0f; _sprintDist = 0f; _ironUsed = false; _edgeHit.Clear(); }
 
         internal static void Tick(Player me, float dt)
         {
@@ -647,6 +654,8 @@ namespace TarkovaCola.Client
         {
             float m = DamageFactor;
             if (!Active) return damage * m;
+            // Filo fugaz (mm_d_loud, 3.1): el x2 de Macchiato solo vale en el primer golpe a cada enemigo
+            if (!_edgeHit.Add(victim.ProfileId) && Perk.Has("mm_d_loud")) m = 1f;
             PerkService.AddProgress("mm_hone");
             Rev.OnMeleeHit();                                // Golpe en falso, Sed de sangre
             if (Time.time - _lastHit > FrenzyWindow || victim.ProfileId != _target) { _target = victim.ProfileId; _streak = 0; }
@@ -679,10 +688,15 @@ namespace TarkovaCola.Client
             if (knife && Perk.Has("mm_charge") && me.Physical != null && me.Physical.Sprinting) damage *= ChargeTaken;
             if (!knife && me.HandsController is Player.FirearmController && Perk.Has("mm_d_glass")) damage *= GlassTaken;
             // Iron Skull: con el cuchillo en la mano, un golpe en la cabeza no te mata (te deja a 1)
-            if (knife && part == EBodyPart.Head && Perk.Has("mm_iron"))
+            if (knife && part == EBodyPart.Head && Perk.Has("mm_iron") && !_ironUsed)
             {
                 float cur = hc.GetBodyPartHealth(EBodyPart.Head).Current;
-                if (damage >= cur - 1f) { damage = Mathf.Max(0f, cur - 1f); Dbg.Log("EFECTO", "Iron Skull: tiro en la cabeza absorbido"); }
+                if (damage >= cur - 1f)
+                {
+                    damage = Mathf.Max(0f, cur - 1f); _ironUsed = true;
+                    Hud.Notify(Data.Name("mm_iron"), L.T("notice.mm_iron"), Id);
+                    Dbg.Log("EFECTO", "Iron Skull: tiro en la cabeza absorbido (ya no queda en esta raid)");
+                }
             }
             return damage;
         }

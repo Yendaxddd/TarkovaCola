@@ -89,7 +89,6 @@ Un efecto **muy fuerte** para cada perk. Solo puedes llevar **uno** equipado (en
 ## Pendiente (próximas versiones)
 - **Máquinas, caja y TEDD en más mapas** (por ahora solo Factory). Se colocan con el editor de máquinas de F12.
 - Misiones nuevas: APEX (3), Caja Misteriosa (1) y TEDD (2).
-- Sinergias, logros y misiones para Bandolier, Vulture Aid y Melee Macchiato.
 - Arreglar la animación de beber de Black Ops.
 - Sonidos de la Caja Misteriosa.
 - Master of Movement (deslizamiento de PHD) y pestaña de estadísticas.

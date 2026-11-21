@@ -25,22 +25,28 @@ namespace TarkovaCola.Client
     internal static class Creatura
     {
         internal const string ItemId = "6a1c00000000000000000b01";
+        internal const string MiiId = "6a1c00000000000000000b03";     // duplicado con la piel de Mii (assets/mii.bundle)
         internal const string Rgd5 = "5448be9a4bdc2dfd2f8b456a";
-        private static readonly string[] Sounds = { "jr_throw_1.mp3", "jr_throw_2.mp3", "jr_throw_3.mp3", "jr_throw_4.mp3", "jr_throw_5.mp3" };
+
+        // una piel por granada: bundle y sonidos al lanzarla (los que falten simplemente no suenan)
+        private class Skin { public string Bundle; public string[] Sounds; public GameObject Prefab; public AssetBundle Loaded; public float RetryAt; }
+        private static readonly Dictionary<string, Skin> Skins = new Dictionary<string, Skin>
+        {
+            [ItemId] = new Skin { Bundle = "jr.bundle", Sounds = new[] { "jr_throw_1.mp3", "jr_throw_2.mp3", "jr_throw_3.mp3", "jr_throw_4.mp3", "jr_throw_5.mp3" } },
+            [MiiId] = new Skin { Bundle = "mii.bundle", Sounds = new[] { "mii_throw_1.mp3", "mii_throw_2.mp3", "mii_throw_3.mp3", "mii_throw_4.mp3" } },
+        };
 
         // racimo
-        private const float SoundSeconds = 10f;      // los sonidos se cortan a los 10 s
+        private const float SoundSeconds = 5f;       // los sonidos se cortan a los 5 s
 
         internal const int Bomblets = 3;
         private const float BombletDelay = 0.35f, BombletGap = 0.18f;
         private const float BombletRadiusMin = 1.8f, BombletRadiusMax = 3.2f;
         private const float BombletFragments = 0.4f, BombletRange = 0.6f;      // cada explosion pequena: 40% de fragmentos y 60% de radio
 
-        private static GameObject _prefab;
-        private static bool _loadFailed;
         [ThreadStatic] private static bool _inBomblet;
 
-        internal static bool Is(Item item) { return item != null && item.StringTemplateId == ItemId; }
+        internal static bool Is(Item item) { return item != null && Skins.ContainsKey(item.StringTemplateId); }
 
         // ---------------------------------------------------------------- opcion secreta
         internal static void SyncSale()
@@ -59,25 +65,30 @@ namespace TarkovaCola.Client
         }
 
         // ---------------------------------------------------------------- modelo
-        private static GameObject Prefab()
+        // el bundle se guarda: cargarlo dos veces falla ("ya esta cargado") y la granada se quedaba sin modelo para siempre
+        private static GameObject Prefab(string tpl)
         {
-            if (_prefab != null || _loadFailed) return _prefab;
+            Skin s;
+            if (tpl == null || !Skins.TryGetValue(tpl, out s)) return null;
+            if (s.Prefab != null || Time.realtimeSinceStartup < s.RetryAt) return s.Prefab;
             try
             {
-                string path = Path.Combine(Path.GetDirectoryName(typeof(Plugin).Assembly.Location), Path.Combine("assets", "jr.bundle"));
-                var bundle = AssetBundle.LoadFromFile(path);
-                _prefab = bundle != null ? bundle.LoadAllAssets<GameObject>().FirstOrDefault() : null;
-                if (_prefab == null) { _loadFailed = true; Plugin.Log.LogWarning("le creatura: no se pudo cargar " + path); }
+                string path = Path.Combine(Path.GetDirectoryName(typeof(Plugin).Assembly.Location), Path.Combine("assets", s.Bundle));
+                if (s.Loaded == null) s.Loaded = AssetBundle.LoadFromFile(path);
+                s.Prefab = s.Loaded != null ? s.Loaded.LoadAllAssets<GameObject>().FirstOrDefault() : null;
+                if (s.Prefab == null) { s.RetryAt = Time.realtimeSinceStartup + 30f; Plugin.Log.LogWarning("le creatura: no se pudo cargar " + path); }
             }
-            catch (Exception e) { _loadFailed = true; Plugin.Log.LogError("le creatura (bundle): " + e); }
-            return _prefab;
+            catch (Exception e) { s.RetryAt = Time.realtimeSinceStartup + 30f; Plugin.Log.LogError("le creatura (bundle): " + e); }
+            return s.Prefab;
         }
 
         // Pone a Jr en lugar de la malla de la RGD-5 (idempotente)
-        internal static void Dress(GameObject go)
+        internal static void Dress(GameObject go, string tpl)
         {
-            if (go == null || go.GetComponent<JrDress>() != null) return;
-            var prefab = Prefab();
+            if (go == null) return;
+            var old = go.GetComponent<JrDress>();
+            if (old != null) { if (old.Tpl == tpl) return; Undress(go); }          // objeto reutilizado del pool con otra piel
+            var prefab = Prefab(tpl);
             if (prefab == null) return;
             var renderers = go.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled && !(r is ParticleSystemRenderer)).ToList();
             if (renderers.Count == 0) return;
@@ -102,6 +113,7 @@ namespace TarkovaCola.Client
             foreach (var t in jr.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = layer;
 
             var dress = go.AddComponent<JrDress>();
+            dress.Tpl = tpl;
             dress.Model = jr;
             dress.Hidden = renderers;
             foreach (var r in renderers) r.enabled = false;
@@ -122,7 +134,7 @@ namespace TarkovaCola.Client
             try
             {
                 if (go == null || item == null) return;
-                if (Is(item)) Dress(go);
+                if (Is(item)) Dress(go, item.StringTemplateId);
                 else if (item.StringTemplateId == Rgd5) Undress(go);
             }
             catch (Exception e) { Plugin.Log.LogError("le creatura (modelo): " + e); }
@@ -134,11 +146,12 @@ namespace TarkovaCola.Client
             if (!Is(w)) return;
             try
             {
-                Dress(g.gameObject);
+                Dress(g.gameObject, w.StringTemplateId);
                 var me = Plugin.Me;
                 if (me != null && me.ProfileId == profileId)
                 {
-                    string s = Sounds[UnityEngine.Random.Range(0, Sounds.Length)];
+                    var sounds = Skins[w.StringTemplateId].Sounds;
+                    string s = sounds[UnityEngine.Random.Range(0, sounds.Length)];
                     Jingle.Sfx(s, SoundSeconds);
                     Dbg.Log("JR", "le creatura lanzada (" + s + ")");
                 }
@@ -203,6 +216,7 @@ namespace TarkovaCola.Client
     internal class JrDress : MonoBehaviour
     {
         internal GameObject Model;
+        internal string Tpl;
         internal List<Renderer> Hidden = new List<Renderer>();
 
         private void LateUpdate()
@@ -227,7 +241,7 @@ namespace TarkovaCola.Client
         {
             if (item == null || __result == null) return;
             string tpl = item.StringTemplateId;
-            if (tpl != Creatura.ItemId && tpl != Creatura.Rgd5) return;
+            if (!Creatura.Is(item) && tpl != Creatura.Rgd5) return;
             var task = __result;
             if (task.IsCompleted) { if (task.Status == TaskStatus.RanToCompletion) Creatura.OnItemObject(item, task.Result); return; }
             __result = task.ContinueWith(t =>

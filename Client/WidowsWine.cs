@@ -21,14 +21,11 @@ namespace TarkovaCola.Client
         internal const string ItemTpl = "6a1c00000000000000000c05";
 
         // --- balance ---
-        internal const float Radius = 10f;          // base: radio de la telarana alrededor de la granada (m)
+        internal const float Radius = 8f;           // base: radio de la telarana alrededor de la granada (m; 3.1: antes 10)
         internal const float SpeedLeft = 0.40f;     // velocidad que les queda (x0.40 = -60%)
         internal const float Seconds = 6f;          // duracion (se renueva mientras la granada siga cerca)
         internal const float SpinRadius = 2f;       // Spinneret: doble radio...
         internal const float SpinExtra = 2f;        //   ...y 2 s mas
-        internal const float ModRadius = 6f;        // como modificador (Classic): radio, velocidad que les queda y duracion reducidos
-        internal const float ModSpeedLeft = 0.75f;
-        internal const float ModSeconds = 3f;
         internal const float StunSeconds = 3f;      // Venomous Bite / Web Burst: duracion del aturdimiento
         internal const float TangledLeft = 0.60f;   // Entangled: dentro de tu propia telarana te queda el 60% de velocidad
         internal const float BrittleDamage = 1.25f; // Brittle Plates: la armadura recibe un 25% mas de desgaste de las balas
@@ -62,6 +59,7 @@ namespace TarkovaCola.Client
 
         internal static void OnRaidStart()
         {
+            _slowed.Clear();
             _mine.Clear(); _announced.Clear(); _until.Clear(); _perGrenade.Clear(); _fuseDone.Clear(); _hits.Clear();
             _nextCheck = 0f; _nextBurst = 0f; _lastTime = 0f; _burstPending = false; _lastRefunded = true; _lastTpl = null;
         }
@@ -73,7 +71,6 @@ namespace TarkovaCola.Client
             if (g == null) return;
             PerkService.AddProgress("ww_quick");                                    // desafio de Quick Spinner: granadas lanzadas
             var me = Plugin.Me;
-            Synergy.OnThrown(me);                                                   // sinergias con Speed Cola y Stamin-Up
             if (me != null && Perk.Has("dw_loud"))
             {
                 Singleton<GlobalEventDispatcher>.Instance.PlaySound(me, me.Position, LoudRadius, AISoundType.step);
@@ -87,6 +84,7 @@ namespace TarkovaCola.Client
         // Cada 0.2 s: las granadas vivas telarañan a los enemigos que tengan cerca. Tambien resuelve Web Burst pendiente.
         internal static void Update(Player me)
         {
+            WebVfx.Tick();
             if (_burstPending) { _burstPending = false; Burst(me); }
             if (_mine.Count == 0) return;
             float now = Time.time;
@@ -123,9 +121,9 @@ namespace TarkovaCola.Client
         private static float WebRadius()
         {
             bool mod = Perks.IsModifier(Id);
-            return (mod ? ModRadius : Radius * (Perk.Has("ww_spin") ? SpinRadius : 1f)) * Synergy.WebMult;
+            return (mod ? Radius * Perks.ModifierPower : Radius * (Perk.Has("ww_spin") ? SpinRadius : 1f));
         }
-        private static float WebSeconds() { return Perks.IsModifier(Id) ? ModSeconds : Seconds + (Perk.Has("ww_spin") ? SpinExtra : 0f); }
+        private static float WebSeconds() { return Perks.IsModifier(Id) ? Seconds * Perks.ModifierPower : Seconds + (Perk.Has("ww_spin") ? SpinExtra : 0f); }
 
         // Atrapa a todos los enemigos vivos cerca de 'center'. Devuelve cuantos hay dentro ahora.
         //   key = id de la granada (para contar enemigos distintos por granada); 0 = sin seguimiento. burst = Web Burst (aturde a todos).
@@ -135,9 +133,10 @@ namespace TarkovaCola.Client
             var me = Plugin.Me;
             if (world == null || me == null) return 0;
             bool spin = Perk.Has("ww_spin"), venom = Perk.Has("ww_venom"), mod = Perks.IsModifier(Id);
-            float radius = (mod ? ModRadius : Radius * (spin ? SpinRadius : 1f)) * Synergy.WebMult;      // sinergia PHD Flopper + Widow's Wine
-            float secs = mod ? ModSeconds : Seconds + (spin ? SpinExtra : 0f);
-            float speedLeft = mod ? ModSpeedLeft : SpeedLeft;
+            // como modificador (Classic) todo escala con su fuerza (50%), igual que las demas perks
+            float radius = (mod ? Radius * Perks.ModifierPower : Radius * (spin ? SpinRadius : 1f));
+            float secs = mod ? Seconds * Perks.ModifierPower : Seconds + (spin ? SpinExtra : 0f);
+            float speedLeft = mod ? 1f - (1f - SpeedLeft) * Perks.ModifierPower : SpeedLeft;
             float r2 = radius * radius, now = Time.time;
 
             HashSet<string> seen = null;
@@ -169,12 +168,12 @@ namespace TarkovaCola.Client
                     if ((center - me.Position).sqrMagnitude >= StickyFar * StickyFar) PerkService.AddProgress("ww_sticky");   // Sticky Floor: telarana lejos de ti
                     Achievements.Unlock("ww_first");                                 // logros: primer enemigo atrapado y 50 en total
                     PerkService.AddStat("widow_webbed", 1);
-                    Synergy.OnWebbed();
                     AchTrack.OnWebbed();
                     if (PerkService.Stat("widow_webbed") >= WebbedNeeded) Achievements.Unlock("ww_webbed");
                     if (venom || burst) Stun(p, StunSeconds);
-                    WebVfx.OnVictim(p.Position, secs);
                 }
+                Slow(mc, speedLeft, secs);
+                WebVfx.OnVictim(p, secs);
                 if (seen != null) seen.Add(p.ProfileId);
             }
             if (seen != null)
@@ -186,17 +185,54 @@ namespace TarkovaCola.Client
         }
 
         // Aturdimiento (prototipo): el efecto de aturdimiento del juego + casi sin poder moverse unos segundos
-        private static void Stun(Player p, float seconds)
+        // aturdidos ahora mismo (perfil -> hasta): no disparan (StunTriggerPatch, por SAIN)
+        private static readonly Dictionary<string, float> _stunned = new Dictionary<string, float>();
+        internal static bool AnyStunned { get { return _stunned.Count > 0; } }
+        internal static bool IsStunned(Player p)
+        {
+            float until;
+            if (p == null || !_stunned.TryGetValue(p.ProfileId, out until)) return false;
+            if (Time.time <= until) return true;
+            _stunned.Remove(p.ProfileId);
+            return false;
+        }
+
+        internal static void Stun(Player p, float seconds)
         {
             try
             {
+                if (p == null || Allies.Is(p)) return;                     // nunca a un aliado (companeros de otros mods)
+                float prev;
+                float until = Time.time + seconds;
+                _stunned[p.ProfileId] = _stunned.TryGetValue(p.ProfileId, out prev) ? Mathf.Max(prev, until) : until;
+                try { var bot = p.AIData != null ? p.AIData.BotOwner : null; if (bot != null) bot.ShootData?.EndShoot(); } catch { }
                 var hc = p.ActiveHealthController;
                 if (hc != null) hc.DoStun(seconds, 1f);
                 var mc = p.MovementContext;
-                if (mc != null) mc.ChangeSpeedLimit(0.05f * mc.MaxSpeed, Player.ESpeedLimit.Shot, seconds);
+                if (mc != null) { mc.ChangeSpeedLimit(0.05f * mc.MaxSpeed, Player.ESpeedLimit.Shot, seconds); Slow(mc, 0.05f, seconds); }
                 Dbg.Log("EFECTO", "enemigo aturdido " + seconds.ToString("0.0") + " s");
             }
             catch (Exception e) { Dbg.Throttled("stunfail", 10f, "ERROR", "aturdimiento: " + e.Message); }
+        }
+
+        // freno aplicado al movimiento de cada fotograma (WebSlowPatch). El limitador del juego solo no bastaba: no frena el esprint y
+        // algunos bots (SAIN) lo saltan, asi que parecia que a algunos no les afectaba
+        private static readonly Dictionary<MovementContext, Vector2> _slowed = new Dictionary<MovementContext, Vector2>();     // x = hasta, y = velocidad que queda
+        internal static void Slow(MovementContext mc, float left, float secs)
+        {
+            if (mc == null) return;
+            float until = Time.time + secs;
+            Vector2 cur;
+            if (_slowed.TryGetValue(mc, out cur) && cur.x > Time.time) { until = Mathf.Max(until, cur.x); left = Mathf.Min(left, cur.y); }
+            _slowed[mc] = new Vector2(until, left);
+        }
+        internal static float SlowFactor(MovementContext mc)
+        {
+            if (_slowed.Count == 0) return 1f;
+            Vector2 v;
+            if (!_slowed.TryGetValue(mc, out v)) return 1f;
+            if (Time.time > v.x) { _slowed.Remove(mc); return 1f; }
+            return v.y;
         }
 
         internal static bool IsWebbed(Player victim)
@@ -267,6 +303,19 @@ namespace TarkovaCola.Client
                 return tw;
             }
             return null;
+        }
+    }
+
+    [HarmonyLib.HarmonyPatch(typeof(MovementState), "ApplyMotion")]
+    internal static class WebSlowPatch
+    {
+        [HarmonyLib.HarmonyPrefix]
+        private static void Prefix(MovementState __instance, ref Vector3 motion)
+        {
+            var mc = __instance.MovementContext;
+            if (mc == null) return;
+            float k = WidowsWine.SlowFactor(mc);
+            if (k < 1f) motion *= k;
         }
     }
 }

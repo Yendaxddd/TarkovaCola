@@ -40,10 +40,10 @@ namespace TarkovaCola.Client
         private static readonly EBodyPart[] Parts =
             { EBodyPart.Head, EBodyPart.Chest, EBodyPart.Stomach, EBodyPart.LeftArm, EBodyPart.RightArm, EBodyPart.LeftLeg, EBodyPart.RightLeg };
 
-        private static float _acc, _lastBlast = -99f;
+        private static float _acc, _lastBlast = -99f, _lastFallAbsorb = -99f;
         private static readonly System.Collections.Generic.List<float> _grenadeKills = new System.Collections.Generic.List<float>();
 
-        internal static void OnRaidStart() { _acc = 0f; _lastBlast = -99f; _grenadeKills.Clear(); }
+        internal static void OnRaidStart() { _acc = 0f; _lastBlast = -99f; _lastFallAbsorb = -99f; _grenadeKills.Clear(); }
 
         internal static bool IsImmune(EDamageType type) { return (type & PerkFx.Blast) != 0 || ((type & EDamageType.Fall) != 0 && InFall); }
 
@@ -71,7 +71,11 @@ namespace TarkovaCola.Client
                 var me = Plugin.Me;
                 bool fall = (t & EDamageType.Fall) != 0;
                 if (me != null && (!fall || damage >= VfxMinDamage)) PhdVfx.Play(me.Position, fall ? Mathf.Clamp01(damage / 40f) : 1f);   // efecto visual (caidas pequenas = efecto pequeno)
-                if ((t & PerkFx.Blast) != 0) OnBlast();
+                if ((t & PerkFx.Blast) != 0) { OnBlast(); if (Perk.Has("dp_stomp")) PerkFx.OwnWaveUntil = Time.time + PerkFx.OwnWaveSeconds; }
+                else if (fall && damage >= VfxMinDamage && me != null && Time.time - _lastFallAbsorb > BlastGap)
+                {
+                    _lastFallAbsorb = Time.time;                              // una caida que de verdad hacia dano (las dos piernas = una)
+                }
                 return 0f;
             }
             if (t == EDamageType.Barbed && Perk.Has("pf_terrain"))
@@ -89,7 +93,6 @@ namespace TarkovaCola.Client
             bool fresh = now - _lastBlast > BlastGap;
             _lastBlast = now;
             if (!fresh) return;
-            if (Plugin.Me != null) Synergy.OnAbsorb(Plugin.Me);
             PerkService.AddProgress("pf_drop");                                         // desafio de Caida explosiva: explosiones aguantadas
             PerkService.AddStat("phd_blasts", 1);
             if (PerkService.Stat("phd_blasts") >= HugsNeeded) Achievements.Unlock("pf_hugs");
@@ -98,7 +101,7 @@ namespace TarkovaCola.Client
         // Aterrizaje (desde FallPatch, con la perk activa y una caida de MinFall m o mas): logros de caidas y Stagger.
         internal static void OnFall(Player me, float height)
         {
-            Synergy.OnAbsorb(me);
+            // (el desafio de "absorber" ya no cuenta cualquier salto de 2 m: solo las caidas con dano de verdad, en OnDamage)
             if (height >= FlopHeight) Achievements.Unlock("pf_flop");
             PerkService.AddStat("phd_fall_m", Mathf.RoundToInt(height));
             if (PerkService.Stat("phd_fall_m") >= GravityMeters) Achievements.Unlock("pf_gravity");

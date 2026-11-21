@@ -31,17 +31,21 @@ namespace TarkovaCola.Client
             PlayFile(file, Plugin.CfgVoiceVolume.Value, delay);
         }
 
-        // Efecto de sonido con duracion maxima (volumen de las canciones, aunque las canciones esten apagadas).
+        // Efecto de sonido con duracion maxima (volumen de los efectos, aunque las canciones esten apagadas).
         // Cada uno suena en su propia fuente para poder cortarlo sin cortar lo demas: a los 'maxSeconds' se desvanece en medio segundo.
+        // Sonido de desafio completado (el "rank up" de BO3)
+        internal const string ChallengeFile = "challenge_complete.mp3";
+        public static void ChallengeDone() { Sfx(ChallengeFile, 6f); }
+
         public static void Sfx(string file, float maxSeconds)
         {
-            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgJingleVolume.Value, maxSeconds, null, Vector3.zero));
+            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgSfxVolume.Value, maxSeconds, null, Vector3.zero));
         }
 
         // Igual pero en 3D, sonando desde un punto del mapa (y siguiendo a 'follow' si se da). Si falta el archivo, no suena nada.
         public static void At(string file, Vector3 pos, float maxSeconds, Transform follow = null)
         {
-            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgJingleVolume.Value, maxSeconds, follow, pos));
+            Plugin.Instance.StartCoroutine(SfxRoutine(file, Plugin.CfgSfxVolume.Value, maxSeconds, follow, pos));
         }
 
         private static IEnumerator SfxRoutine(string file, float volume, float maxSeconds, Transform follow, Vector3 pos)

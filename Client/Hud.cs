@@ -165,7 +165,7 @@ namespace TarkovaCola.Client
             float scale = Screen.height / 1080f;
             EnsureStyles(scale);
 
-            if (!_escOpen && !_menuOpen) { QuestGuards.DrawIcons(scale); if (Plugin.CfgShowIcons.Value) DrawPermanentIcons(scale); Powerup.DrawMarker(scale, _white); }
+            if (!_escOpen && !_menuOpen) { QuestGuards.DrawIcons(scale); BotPerks.DrawIcons(scale); if (Plugin.CfgShowIcons.Value) DrawPermanentIcons(scale); Powerup.DrawMarker(scale, _white); }
             if (Event.current != null && Event.current.type == EventType.Repaint) ShowPending();      // (OnGUI se llama varias veces por frame)
             if (Plugin.CfgShowNotice.Value) DrawNotice(scale);
             Machines.DrawGui(scale);
@@ -242,7 +242,7 @@ namespace TarkovaCola.Client
         // un icono por cada perk activa, apilados hacia arriba desde la posicion configurada
         private static void DrawPermanentIcons(float scale)
         {
-            var list = Perks.ActivePerks.Where(p => _icons.ContainsKey(p.Id) && _icons[p.Id] != null).ToList();
+            var list = Perks.DrunkPerks.Where(p => _icons.ContainsKey(p.Id) && _icons[p.Id] != null).ToList();
             if (list.Count == 0) return;
             float size = Plugin.CfgIconSize.Value * scale, gap = 6f * scale;
             float total = list.Count * size + (list.Count - 1) * gap;
