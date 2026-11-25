@@ -1,4 +1,4 @@
-# Tarkova-Cola 4.0.0
+# Tarkova-Cola 4.0.1
 
 **Perk-a-Colas de Call of Duty Zombies para SPT** · *Call of Duty Zombies Perk-a-Colas for SPT*
 
@@ -8,6 +8,10 @@ Opcional / Optional: **VisitAPI 1.3.5+** (para la historia y las misiones / for 
 ---
 
 ## Español
+
+### Hotfix 4.0.1
+- Compatibilidad con **Maps Expanded**: las máquinas de perks, Der Wunderfizz, la Caja Misteriosa, TEDD, el interruptor de la luz y las marcas de Death Perception también salen en su mapa. Aportado por **mattpsvreis** (PR #2, ¡gracias!).
+- Texturas limitadas a 1024 para que la descarga pese menos (593 MB en vez de 1,3 GB).
 
 ### Novedades de la 4.0: La Última Ronda
 La última gran actualización de Tarkova-Cola, y la más grande con diferencia: **6 perks nuevas** (15 en total), **6 armas más de Black Ops 7** (8 en total), animaciones de beber y de cuerpo a cuerpo de Black Ops, máquinas en **todos los mapas**, un estuche de perks, 45 logros nuevos, un repaso de equilibrio a todas las perks y compatibilidad con muchos mods populares. Además, todos los textos se pueden **traducir**.
@@ -534,6 +538,10 @@ Un efecto **muy fuerte** para cada perk. Solo puedes llevar **uno** equipado (en
 ---
 
 ## English
+
+### Hotfix 4.0.1
+- **Maps Expanded** support: perk machines, Der Wunderfizz, the Mystery Box, TEDD, the power switch and Death Perception marks also show on its map. Contributed by **mattpsvreis** (PR #2, thanks!).
+- Textures capped at 1024 so the download is smaller (593 MB instead of 1.3 GB).
 
 ### What's new in 4.0: The Last Round
 This is the last big update of Tarkova-Cola, and the biggest by far. It adds **6 new perks** (15 in total), **6 more Black Ops 7 weapons** (8 in total), Black Ops drinking and melee animations, machines on **every map**, a perk case, 45 new achievements, a balance pass on every perk and compatibility with many popular mods. All the texts can now also be **translated**.
@@ -1069,3 +1077,4 @@ MIT License (código / code)
 - Icons, jingles, announcer voice lines and the challenge sound: Call of Duty, property of their owners (not MIT).
 - Ray Gun, Ray Gun Mark II and Wunderwaffe DG-2 are **Kenner's mods** and are **not included**: Tarkova-Cola only puts them in the Mystery Box when they are installed.
 - Kaganari for the injector fix (PR #1).
+- mattpsvreis for the Maps Expanded support (PR #2).

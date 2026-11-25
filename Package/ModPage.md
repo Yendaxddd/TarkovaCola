@@ -6,6 +6,8 @@
 
 Drink a perk in raid and it stays active until the raid ends. Level each perk up with the XP you earn, complete challenges to unlock augments, and pair them with drawbacks. The build you equip changes what you chase in raid and which playstyle fits you.
 
+**4.0.1:** Maps Expanded support (thanks mattpsvreis!) and a smaller download.
+
 **4.0 "The Last Round" is out: the last big update, and the biggest one.** 6 new perks, 6 more Black Ops 7 weapons, Black Ops animations, machines on every map, compatibility with lots of mods and much more. See below.
 
 **The 15 perks**
@@ -42,7 +44,7 @@ Drink a perk in raid and it stays active until the raid ends. Level each perk up
 - **Perk case**: a 2x2 case (5x4 inside) for perks and APEX cores. Therapist (65,000 ₽) and flea.
 - **45 new achievements** (127 in total), and a new challenge-complete sound (the Black Ops 3 rank-up).
 - **Classic mode**: the modifier perk now gives 50% of its effect **plus a fixed signature augment**.
-- **Compatibility** with SAM (Advanced Movement), Dynamic Maps, SAIN, QuestingBots, K9 Companion, PIT Fireteam, TacticalReload and more. See the **Compatibility** tab.
+- **Compatibility** with SAM (Advanced Movement), Dynamic Maps, Maps Expanded, SAIN, QuestingBots, K9 Companion, PIT Fireteam, TacticalReload and more. See the **Compatibility** tab.
 - **Translations**: every text can be translated with JSON files. See `TRANSLATING.md` in the zip, and send yours to get it bundled.
 - **Balance pass**: cheesable challenges fixed, lower goals, and the drawbacks that were generic now hit their own perk (Cold Armor, Own Wave, Tired Eye, Picky Vulture, Fleeting Edge, Noisy Reload).
 - **Other**: PHD Flopper no longer lets explosions wear your armor; F12 volume for jingles and effects; F12 *Pause perk effects*; Bandolier and Widow's Wine have their own cans; perks can't be drunk in the Hideout.
@@ -102,6 +104,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 - **Icons, jingles, announcer voice lines and the challenge sound:** Call of Duty, property of their respective owners.
 - **Ray Gun, Ray Gun Mark II and Wunderwaffe DG-2** are **Kenner's mods** and are **not included**: Tarkova-Cola only puts them in the Mystery Box when you have them installed.
 - **Kaganari**, for the injector fix (PR #1).
+- **mattpsvreis**, for the Maps Expanded support (PR #2).
 
 If you are the owner of any of this material and want it removed, please open an issue on GitHub and it will be taken down.
 
@@ -454,7 +457,7 @@ Everything is optional and detected automatically: without these mods nothing ch
 | Mod | What Tarkova-Cola does with it |
 | --- | ------------------------------ |
 | **SAM (Sage's Advanced Movement)** | With **PHD Flopper**, landing a dive sets off an explosion where you land (the classic dolphin dive; it never hurts you or your armor). The slide is **twice as fast** and goes 50% farther, with a pink energy trail, sparks and sound. Crouching again ends it instantly, and you come out of it sprinting at full speed. |
-| **Dynamic Maps** | Its map and minimap show the perk machines (with their icon), Der Wunderfizz, the Mystery Box, TEDD, the power switch and the enemies marked by **Death Perception**, live. |
+| **Dynamic Maps** / **Maps Expanded** | Whichever is installed: its map and minimap show the perk machines (with their icon), Der Wunderfizz, the Mystery Box, TEDD, the power switch and the enemies marked by **Death Perception**, live. |
 | **SAIN** | Stunned bots (Widow's Wine, Electric Cherry, Tombstone) stop shooting while the stun lasts. |
 | **QuestingBots** | The storyline guards and bosses stay at their post instead of going off on quests. |
 | **K9 Companion** | Your dog takes no damage from perk explosions. |

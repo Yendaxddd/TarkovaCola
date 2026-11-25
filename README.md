@@ -1,4 +1,4 @@
-# Tarkova-Cola 4.0.0
+# Tarkova-Cola 4.0.1
 *Call of Duty Zombies Perk-a-Colas for SPT*
 
 Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika, Report issues on SPT Page/Here). Optional: **VisitAPI 1.3.5+** for the storyline.
@@ -6,6 +6,10 @@ Compatible with: **SPT 4.1.x** (single player, Not guaranteed to work with Fika,
 > El README del zip (Package/README.md) está en español e inglés.
 
 ---
+
+## Hotfix 4.0.1
+- **Maps Expanded** support: perk machines, Der Wunderfizz, the Mystery Box, TEDD, the power switch and Death Perception marks also show on its map. Contributed by **mattpsvreis** (PR #2, thanks!).
+- Textures capped at 1024 so the download is smaller (593 MB instead of 1.3 GB).
 
 ## What's new in 4.0: The Last Round
 This is the last big update of Tarkova-Cola, and the biggest by far. It adds **6 new perks** (15 in total), **6 more Black Ops 7 weapons** (8 in total), Black Ops drinking and melee animations, machines on **every map**, a perk case, 45 new achievements, a balance pass on every perk and compatibility with many popular mods. All the texts can now also be **translated**.
@@ -541,6 +545,7 @@ MIT License (code)
 - Icons, jingles, announcer voice lines and the challenge sound: Call of Duty, property of their owners (not MIT).
 - Ray Gun, Ray Gun Mark II and Wunderwaffe DG-2 are **Kenner's mods** and are **not included**: Tarkova-Cola only puts them in the Mystery Box when they are installed.
 - Kaganari for the injector fix (PR #1).
+- mattpsvreis for the Maps Expanded support (PR #2).
 
 ---
 
