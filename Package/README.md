@@ -25,7 +25,7 @@ La última gran actualización de Tarkova-Cola, y la más grande con diferencia:
 | **Estuche de perks** | Un estuche que solo guarda perks y núcleos APEX |
 | **Logros** | 45 nuevos, 127 en total |
 | **Clásico** | La perk modificadora da ahora el 50 % de su efecto más una mejora firma fija |
-| **Compatibilidad** | SAM (Advanced Movement), Dynamic Maps, SAIN, QuestingBots, K9 Companion, PIT Fireteam, TacticalReload, Weapon Camo and Stickers y las armas maravilla de Kenner |
+| **Compatibilidad** | SAM (Advanced Movement), Dynamic Maps, Maps Expanded, SAIN, QuestingBots, K9 Companion, PIT Fireteam, TacticalReload, Weapon Camo and Stickers y las armas maravilla de Kenner |
 | **Traducciones** | Todos los textos se pueden traducir con archivos JSON (ver `TRANSLATING.md`) |
 
 ---
@@ -203,7 +203,7 @@ Seis armas nuevas, portadas con sus **propios modelos, animaciones en primera pe
 
 - **Der Wunderfizz** es la máquina de las 9 perks sin máquina propia (Bandolier, Vulture Aid, Melee Macchiato y las 6 nuevas).
 - Las máquinas son más fáciles de usar: 1.6 m de alcance y más tolerancia a las diferencias de altura.
-- **Dynamic Maps** muestra las máquinas y el interruptor en su mapa (ver Compatibilidad).
+- **Dynamic Maps** o **Maps Expanded** muestra las máquinas y el interruptor en su mapa (ver Compatibilidad). Se usa el que esté instalado; ninguno es obligatorio.
 
 #### Caja Misteriosa
 - **Armas maravilla:** con la **Ray Gun**, la **Ray Gun Mark II** o la **Wunderwaffe DG-2** de Kenner instaladas, la caja tiene un 10 % de dar una de ellas, cargada igual que en su compra de pared.
@@ -248,7 +248,7 @@ Todo es opcional y se detecta solo: sin estos mods no cambia nada.
 | Mod | Qué hace Tarkova-Cola con él |
 |---|---|
 | **SAM (Sage's Advanced Movement)** | Con **PHD Flopper**, aterrizar una plancha provoca una explosión donde caes (el clásico *dolphin dive*; nunca te hace daño a ti ni a tu armadura). El deslizamiento es **el doble de rápido** y llega un 50 % más lejos, sin la cola lenta, con estela de energía rosa, chispas y sonido. Agacharte otra vez lo termina al instante, y sales de él esprintando a toda velocidad. |
-| **Dynamic Maps** | Su mapa y su minimapa muestran las máquinas de perks (con el icono de su perk), Der Wunderfizz, la Caja Misteriosa, TEDD y el interruptor de la luz, y los enemigos marcados por **Death Perception**, en directo. |
+| **Dynamic Maps** / **Maps Expanded** | Opcional. Si está instalado uno de los dos, su mapa y su minimapa muestran las máquinas de perks (con el icono de su perk), Der Wunderfizz, la Caja Misteriosa, TEDD y el interruptor de la luz, y los enemigos marcados por **Death Perception**, en directo. Los marcadores se añaden en caliente; Tarkova-Cola carga igual si no hay ninguno de los dos. Esos dos mods de mapa no pueden ir juntos. |
 | **SAIN** | Los bots aturdidos (Widow's Wine, Electric Cherry, Tombstone) dejan de disparar mientras dura el aturdimiento. |
 | **QuestingBots** | Los guardias y jefes de la historia se quedan en su puesto en vez de irse a hacer misiones. |
 | **K9 Companion** | Tu perro no recibe daño de las explosiones de las perks (plancha de PHD, APEX). |
@@ -551,7 +551,7 @@ This is the last big update of Tarkova-Cola, and the biggest by far. It adds **6
 | **Perk case** | A case that only holds perks and APEX cores |
 | **Achievements** | 45 new, 127 in total |
 | **Classic** | The modifier perk now gives 50% of its effect plus a fixed signature augment |
-| **Compatibility** | SAM (Advanced Movement), Dynamic Maps, SAIN, QuestingBots, K9 Companion, PIT Fireteam, TacticalReload, Weapon Camo and Stickers, and Kenner's wonder weapons |
+| **Compatibility** | SAM (Advanced Movement), Dynamic Maps, Maps Expanded, SAIN, QuestingBots, K9 Companion, PIT Fireteam, TacticalReload, Weapon Camo and Stickers, and Kenner's wonder weapons |
 | **Translations** | Every text can be translated with JSON files (see `TRANSLATING.md`) |
 
 ---
@@ -729,7 +729,7 @@ Six new weapons, ported with their **own models, first-person animations and sou
 
 - **Der Wunderfizz** is the machine for the 9 perks without their own machine (Bandolier, Vulture Aid, Melee Macchiato and the 6 new ones).
 - Machines are easier to use: 1.6 m reach and more tolerance for height differences.
-- **Dynamic Maps** shows the machines and the power switch on its map (see Compatibility).
+- **Dynamic Maps** or **Maps Expanded** shows the machines and the power switch on its map (see Compatibility). Whichever of the two is installed is used; neither is required.
 
 #### Mystery Box
 - **Wonder weapons:** with Kenner's **Ray Gun**, **Ray Gun Mark II** or **Wunderwaffe DG-2** installed, the box has a 10% chance to give one of them, loaded the same way their wall buy hands them out.
@@ -774,7 +774,7 @@ Everything is optional and detected automatically: without these mods nothing ch
 | Mod | What Tarkova-Cola does with it |
 |---|---|
 | **SAM (Sage's Advanced Movement)** | With **PHD Flopper**, landing a dive sets off an explosion where you land (the classic dolphin dive; it never hurts you or your armor). The slide is **twice as fast** and goes 50% farther, with no slow tail, pink energy trail, sparks and sound. Crouching again ends it instantly, and you come out of it sprinting at full speed. |
-| **Dynamic Maps** | Its map and minimap show the perk machines (with their perk icon), Der Wunderfizz, the Mystery Box, TEDD and the power switch, and the enemies marked by **Death Perception**, live. |
+| **Dynamic Maps** / **Maps Expanded** | Optional. If either mod is installed, its map and minimap show the perk machines (with their perk icon), Der Wunderfizz, the Mystery Box, TEDD and the power switch, and the enemies marked by **Death Perception**, live. The markers are added at runtime; Tarkova-Cola still loads if neither map mod is present. The two map mods cannot be installed together. |
 | **SAIN** | Stunned bots (Widow's Wine, Electric Cherry, Tombstone) stop shooting while the stun lasts. |
 | **QuestingBots** | The storyline guards and bosses stay at their post instead of going off on quests. |
 | **K9 Companion** | Your dog takes no damage from perk explosions (PHD dive, APEX). |

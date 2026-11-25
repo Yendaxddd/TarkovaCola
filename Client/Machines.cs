@@ -49,7 +49,7 @@ namespace TarkovaCola.Client
         private static readonly Dictionary<string, GameObject> _prefabs = new Dictionary<string, GameObject>();
         private static List<Spot> _all = new List<Spot>();
         private static readonly List<KeyValuePair<Spot, GameObject>> _placed = new List<KeyValuePair<Spot, GameObject>>();
-        // maquinas puestas en esta raid (perk/tipo, objeto): para el mapa de Dynamic Maps (DynMapsCompat)
+        // maquinas puestas en esta raid (perk/tipo, objeto): para Dynamic Maps y Maps Expanded (DynMapsCompat)
         internal static IEnumerable<KeyValuePair<string, GameObject>> Placed()
         {
             foreach (var kv in _placed) if (kv.Value != null) yield return new KeyValuePair<string, GameObject>(kv.Key.perk, kv.Value);

@@ -9,108 +9,152 @@ using UnityEngine;
 
 namespace TarkovaCola.Client
 {
-    // Compatibilidad con Dynamic Maps (mpstark, com.mpstark.DynamicMaps): en su mapa (y minimapa) salen
+    // Marcadores opcionales en Dynamic Maps (com.mpstark.dynamicmaps) y Maps Expanded (com.dark.mapsexpanded).
+    // En el mapa y el minimapa salen:
     //  - las maquinas de perks de la raid (con el icono de la perk; Wunderfizz, caja misteriosa y TEDD con el de Research)
     //  - los enemigos marcados por Death Perception, mientras sigan marcados (siguen al enemigo en directo)
-    // Todo por reflexion: sin Dynamic Maps no hace nada y no hace falta su DLL para compilar ni para cargar.
+    // Los dos mods se excluyen entre si. Cada uno se engancha por reflexion solo si esta cargado:
+    // sin ellos no se hace nada, y no hace falta ninguna de sus DLL para compilar ni para cargar.
     internal static class DynMapsCompat
     {
         private const string Category = "Tarkova-Cola";
-        private static bool _looked, _ok;
-        private static object _plugin;                     // DynamicMaps.Plugin.Instance
-        private static FieldInfo _instance, _map;          // Plugin.Instance, Plugin.Map (ModdedMapScreen)
-        private static PropertyInfo _mapViewProp;          // ModdedMapScreen.MapView (internal)
-        private static Type _defType;
-        private static MethodInfo _addMarker, _addTransform, _removeMarker, _toMapPos;
-
-        private static object _view;                       // MapView donde estan puestos nuestros marcadores
-        private static readonly List<UnityEngine.Object> _machines = new List<UnityEngine.Object>();
-        private static int _machineCount = -1;
-        private static readonly Dictionary<string, UnityEngine.Object> _dp = new Dictionary<string, UnityEngine.Object>();
-        private static float _next;
+        private static bool _looked;
+        private static readonly List<MapBackend> _maps = new List<MapBackend>();
 
         internal static bool Present { get { return Lookup(); } }
 
+        private sealed class MapBackend
+        {
+            internal string Name;
+            internal FieldInfo Instance, Map;
+            internal PropertyInfo MapViewProp;
+            internal Type DefType;
+            internal MethodInfo AddMarker, AddTransform, RemoveMarker, ToMapPos;
+            internal object View;
+            internal readonly List<UnityEngine.Object> Machines = new List<UnityEngine.Object>();
+            internal int MachineCount = -1;
+            internal readonly Dictionary<string, UnityEngine.Object> Dp = new Dictionary<string, UnityEngine.Object>();
+        }
+
         private static bool Lookup()
         {
-            if (_looked) return _ok;
+            if (_looked) return _maps.Count > 0;
             _looked = true;
+            Try("Dynamic Maps",
+                "DynamicMaps.Plugin", "Map",
+                "DynamicMaps.UI.ModdedMapScreen", "MapView",
+                "DynamicMaps.UI.Components.MapView",
+                "DynamicMaps.Data.MapMarkerDef",
+                "DynamicMaps.Utils.MathUtils");
+            Try("Maps Expanded",
+                "MapsExtended.Plugin", "Map",
+                "MapsExtended.Presentation.RaidMapHost", "MapCanvas",
+                "MapsExtended.Presentation.Overlays.MapCanvas",
+                "MapsExtended.Core.MapMarkerDef",
+                "MapsExtended.Core.MathUtils");
+            return _maps.Count > 0;
+        }
+
+        private static void Try(string name, string pluginType, string mapField, string screenType, string viewProp, string viewType, string defType, string mathType)
+        {
             try
             {
-                var plugin = AccessTools.TypeByName("DynamicMaps.Plugin");
-                var screen = AccessTools.TypeByName("DynamicMaps.UI.ModdedMapScreen");
-                var view = AccessTools.TypeByName("DynamicMaps.UI.Components.MapView");
-                _defType = AccessTools.TypeByName("DynamicMaps.Data.MapMarkerDef");
-                var math = AccessTools.TypeByName("DynamicMaps.Utils.MathUtils");
-                if (plugin == null || screen == null || view == null || _defType == null || math == null) return false;
-                _instance = AccessTools.Field(plugin, "Instance");
-                _map = AccessTools.Field(plugin, "Map");
-                _mapViewProp = AccessTools.Property(screen, "MapView");
-                _addMarker = AccessTools.Method(view, "AddMapMarker", new[] { _defType });
-                _addTransform = view.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                var plugin = AccessTools.TypeByName(pluginType);
+                var screen = AccessTools.TypeByName(screenType);
+                var view = AccessTools.TypeByName(viewType);
+                var def = AccessTools.TypeByName(defType);
+                var math = AccessTools.TypeByName(mathType);
+                if (plugin == null || screen == null || view == null || def == null || math == null) return;
+                var backend = new MapBackend
+                {
+                    Name = name,
+                    Instance = AccessTools.Field(plugin, "Instance"),
+                    Map = AccessTools.Field(plugin, mapField),
+                    MapViewProp = AccessTools.Property(screen, viewProp),
+                    DefType = def,
+                    AddMarker = AccessTools.Method(view, "AddMapMarker", new[] { def }),
+                    RemoveMarker = view.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(m => m.Name == "RemoveMapMarker"),
+                    ToMapPos = AccessTools.Method(math, "ConvertToMapPosition", new[] { typeof(Vector3) }),
+                };
+                backend.AddTransform = view.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                     .FirstOrDefault(m => m.Name == "AddTransformMarker" && m.GetParameters().Length == 5 && m.GetParameters()[4].ParameterType == typeof(Sprite));
-                _removeMarker = view.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(m => m.Name == "RemoveMapMarker");
-                _toMapPos = AccessTools.Method(math, "ConvertToMapPosition", new[] { typeof(Vector3) });
-                _ok = _instance != null && _map != null && _mapViewProp != null && _addMarker != null && _addTransform != null && _removeMarker != null && _toMapPos != null;
-                Plugin.Log.LogInfo(_ok ? "Dynamic Maps detectado: maquinas y enemigos marcados en su mapa" : "Dynamic Maps: version no compatible (no se anaden marcadores)");
+                if (backend.Instance == null || backend.Map == null || backend.MapViewProp == null
+                    || backend.AddMarker == null || backend.AddTransform == null || backend.RemoveMarker == null || backend.ToMapPos == null)
+                {
+                    Plugin.Log.LogInfo(name + ": version no compatible (no se anaden marcadores)");
+                    return;
+                }
+                _maps.Add(backend);
+                Plugin.Log.LogInfo(name + " detectado: maquinas y enemigos marcados en su mapa");
             }
-            catch (Exception e) { _ok = false; Plugin.Log.LogWarning("Dynamic Maps: " + e.Message); }
-            return _ok;
+            catch (Exception e) { Plugin.Log.LogWarning(name + ": " + e.Message); }
         }
 
-        private static object View()
+        private static object View(MapBackend map)
         {
-            _plugin = _instance.GetValue(null);
-            var map = _plugin != null ? _map.GetValue(_plugin) : null;
-            return map != null ? _mapViewProp.GetValue(map, null) : null;
+            var plugin = map.Instance.GetValue(null);
+            var screen = plugin != null ? map.Map.GetValue(plugin) : null;
+            return screen != null ? map.MapViewProp.GetValue(screen, null) : null;
         }
 
-        internal static void OnRaidStart() { _machines.Clear(); _machineCount = -1; _dp.Clear(); _view = null; _next = 0f; }
+        internal static void OnRaidStart()
+        {
+            foreach (var map in _maps)
+            {
+                map.Machines.Clear();
+                map.MachineCount = -1;
+                map.Dp.Clear();
+                map.View = null;
+            }
+        }
+
+        private static float _next;
 
         // cada frame en raid (Plugin)
         internal static void Tick(Player me)
         {
             if (me == null || Time.time < _next || !Lookup()) return;
             _next = Time.time + 0.5f;
-            try
+            foreach (var map in _maps)
             {
-                var view = View();
-                if (view == null || (view is UnityEngine.Object uo && uo == null)) return;
-                var def = view.GetType().GetProperty("CurrentMapDef");                      // aun sin mapa cargado: se espera
-                if (def != null && def.GetValue(view, null) == null) return;
-                if (!ReferenceEquals(view, _view)) { _view = view; _machines.Clear(); _machineCount = -1; _dp.Clear(); }
-                Machines_(view);
-                Marks(view);
+                try
+                {
+                    var view = View(map);
+                    if (view == null || (view is UnityEngine.Object uo && uo == null)) continue;
+                    var def = view.GetType().GetProperty("CurrentMapDef");
+                    if (def != null && def.GetValue(view, null) == null) continue;
+                    if (!ReferenceEquals(view, map.View)) { map.View = view; map.Machines.Clear(); map.MachineCount = -1; map.Dp.Clear(); }
+                    Machines_(map, view);
+                    Marks(map, view);
+                }
+                catch (Exception e) { Dbg.Throttled("dynmaps-" + map.Name, 30f, "ERROR", map.Name + ": " + e.GetBaseException().Message); }
             }
-            catch (Exception e) { Dbg.Throttled("dynmaps", 30f, "ERROR", "Dynamic Maps: " + e.GetBaseException().Message); }
         }
 
-        // ---------------------------------------------------------------- maquinas
-        private static void Machines_(object view)
+        private static void Machines_(MapBackend map, object view)
         {
             var placed = Machines.Placed().ToList();
-            // el mapa borra sus marcadores al cambiar de mapa/nivel: si falta alguno, se vuelven a poner todos
-            bool lost = _machines.Any(m => m == null);
-            if (placed.Count == _machineCount && !lost) return;
-            foreach (var m in _machines) Remove(view, m);
-            _machines.Clear();
+            bool lost = map.Machines.Any(m => m == null);
+            if (placed.Count == map.MachineCount && !lost) return;
+            foreach (var m in map.Machines) Remove(map, view, m);
+            map.Machines.Clear();
             foreach (var kv in placed)
             {
-                var def = Activator.CreateInstance(_defType);
+                var def = Activator.CreateInstance(map.DefType);
                 Set(def, "Text", Machines.Name(kv.Key));
                 Set(def, "Category", Category);
+                Set(def, "ImagePath", "");
                 Set(def, "Sprite", Sprite(kv.Key));
                 Set(def, "Color", Color.white);
-                Set(def, "Position", (Vector3)_toMapPos.Invoke(null, new object[] { kv.Value.transform.position }));
-                var mk = _addMarker.Invoke(view, new[] { def }) as UnityEngine.Object;
-                if (mk != null) _machines.Add(mk);
+                Set(def, "Position", (Vector3)map.ToMapPos.Invoke(null, new object[] { kv.Value.transform.position }));
+                var mk = map.AddMarker.Invoke(view, new[] { def }) as UnityEngine.Object;
+                if (mk != null) map.Machines.Add(mk);
             }
-            _machineCount = placed.Count;
-            Dbg.Log("MAPA", "Dynamic Maps: " + _machines.Count + " maquina(s) en el mapa");
+            map.MachineCount = placed.Count;
+            Dbg.Log("MAPA", map.Name + ": " + map.Machines.Count + " maquina(s) en el mapa");
         }
 
-        // ---------------------------------------------------------------- Death Perception: enemigos marcados
-        private static void Marks(object view)
+        private static void Marks(MapBackend map, object view)
         {
             var world = Singleton<GameWorld>.Instance;
             var keep = new HashSet<string>();
@@ -120,14 +164,14 @@ namespace TarkovaCola.Client
                     if (p == null || p.IsYourPlayer || !DeathPerception.IsMarked(p)) continue;
                     keep.Add(p.ProfileId);
                     UnityEngine.Object mk;
-                    if (_dp.TryGetValue(p.ProfileId, out mk) && mk != null) continue;
-                    mk = _addTransform.Invoke(view, new object[] { p.Transform.Original, p.Profile.Nickname, Category, new Color(1f, 0.3f, 0.2f), Sprite(DeathPerception.Id) }) as UnityEngine.Object;
-                    if (mk != null) _dp[p.ProfileId] = mk;
+                    if (map.Dp.TryGetValue(p.ProfileId, out mk) && mk != null) continue;
+                    mk = map.AddTransform.Invoke(view, new object[] { p.Transform.Original, p.Profile.Nickname, Category, new Color(1f, 0.3f, 0.2f), Sprite(DeathPerception.Id) }) as UnityEngine.Object;
+                    if (mk != null) map.Dp[p.ProfileId] = mk;
                 }
-            foreach (var id in _dp.Keys.Where(k => !keep.Contains(k)).ToList())
+            foreach (var id in map.Dp.Keys.Where(k => !keep.Contains(k)).ToList())
             {
-                Remove(view, _dp[id]);
-                _dp.Remove(id);
+                Remove(map, view, map.Dp[id]);
+                map.Dp.Remove(id);
             }
         }
 
@@ -139,10 +183,10 @@ namespace TarkovaCola.Client
 
         private static void Set(object o, string prop, object v) { var p = o.GetType().GetProperty(prop); if (p != null && p.CanWrite) p.SetValue(o, v, null); }
 
-        private static void Remove(object view, UnityEngine.Object marker)
+        private static void Remove(MapBackend map, object view, UnityEngine.Object marker)
         {
             if (marker == null) return;
-            try { _removeMarker.Invoke(view, new object[] { marker }); } catch { }
+            try { map.RemoveMarker.Invoke(view, new object[] { marker }); } catch { }
         }
     }
 }
