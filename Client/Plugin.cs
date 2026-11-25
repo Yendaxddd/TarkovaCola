@@ -15,6 +15,8 @@ using UnityEngine;
 namespace TarkovaCola.Client
 {
     [BepInPlugin("com.tarkovacola.server", "Tarkova-Cola", "4.0.0")]
+    [BepInDependency("com.mpstark.dynamicmaps", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.dark.mapsexpanded", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         internal const string SpeedColaId = "6a1c00000000000000000c01";
@@ -370,7 +372,7 @@ namespace TarkovaCola.Client
             try { Bandolier.Tick(me); VultureAid.Tick(me); MeleeMacchiato.Tick(me, Time.deltaTime); }
             catch (Exception e) { Dbg.Throttled("newperksfail", 10f, "ERROR", "Bandolier/Vulture (frame): " + e); }
             FinalPerks.Tick(me);         // perks finales (3.1)
-            try { SamCompat.Tick(me); DynMapsCompat.Tick(me); }       // compatibilidad: SAM (plancha con PHD) y Dynamic Maps (marcadores)
+            try { SamCompat.Tick(me); DynMapsCompat.Tick(me); }       // compatibilidad: SAM (plancha con PHD) y mapas (marcadores)
             catch (Exception e) { Dbg.Throttled("compatfail", 10f, "ERROR", "compat (frame): " + e); }
             try { PerkFx.Tick(me); }     // efectos por frame de Juggernog, PHD Flopper, Widow's Wine y las mejoras comunes (sale enseguida sin perks activas)
             catch (Exception e) { Dbg.Throttled("perkfxfail", 10f, "ERROR", "perks (frame): " + e); }
@@ -544,7 +546,7 @@ namespace TarkovaCola.Client
             Safe("APEX", Apex.OnRaidStart);                      // APEX equipado y nucleos de la raid
             Safe("guardias", QuestGuards.OnRaidStart);           // puntos de los guardias de las misiones
             Safe("logros", AchTrack.OnRaidStart);
-            Safe("compat", () => { ModCompat.Init(); SamCompat.OnRaidStart(); DynMapsCompat.OnRaidStart(); });   // Advanced Movement (SAM) y Dynamic Maps
+            Safe("compat", () => { ModCompat.Init(); SamCompat.OnRaidStart(); DynMapsCompat.OnRaidStart(); });   // Advanced Movement (SAM), Dynamic Maps y Maps Expanded
             Safe("classic", ClassicMode.OnRaidStart);            // modo Classic: reactiva las perks que persisten de raids anteriores
             Safe("sanear", () => PerkService.Sanitize());        // sin su desventaja, una mejora no puede estar equipada
             Safe("equipo", Perk.Refresh);
